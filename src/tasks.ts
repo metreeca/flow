@@ -40,7 +40,7 @@ import { isNumber } from "@metreeca/core";
 import { ascending } from "@metreeca/core/order";
 import { cpus } from "os";
 import { Data, Task } from "./index.js";
-import { flatten } from "./utils.js";
+import { flatten } from "./index.core.js";
 
 
 /**

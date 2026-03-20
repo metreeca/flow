@@ -42,7 +42,6 @@
     "setup": "npm install && npm audit fix",
     "build": "rm -rf dist docs && npx tsc && npx typedoc",
     "check": "npx vitest run",
-    "watch": "npx tsc --watch",
     "proof": "npx typedoc && (npx typedoc --watch & npx five-server docs --open)"
   },
   "dependencies": {
@@ -51,7 +50,6 @@
   "devDependencies": {
     "five-server": "^0.4.5",
     "typedoc": "^0.28.14",
-    "typedoc-github-theme": "^0.3.1",
     "typescript": "^5.9.3",
     "vitest": "^4.0.13"
   }

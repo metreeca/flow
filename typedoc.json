@@ -1,14 +1,15 @@
 {
   "tsconfig": "./tsconfig.build.json",
-  "plugin": [
-    "typedoc-github-theme"
-  ],
   "includeVersion": true,
+  "excludeExternals": true,
   "sort": [
     "source-order"
   ],
   "sortEntryPoints": false,
+  "categorizeByGroup": true,
   "groupOrder": [
+    "Variables",
+    "Type Aliases",
     "*"
   ],
   "useFirstParagraphOfCommentAsSummary": true,
