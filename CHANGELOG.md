@@ -6,3 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unpublished](https://github.com/metreeca/pipe/commits/HEAD)
+
+### Changed
+
+- `items`, `iterate`, `chain`, and `merge` feeds, `filter`, `distinct`, `map`, and `flatMap` tasks, and `some`,
+  `every`, `find`, `reduce`, and `toMap` sinks accept any thenable wherever a native `Promise` was previously
+  required, as declared by the `Awaitable` type from `@metreeca/core/async`

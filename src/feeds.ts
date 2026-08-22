@@ -42,6 +42,7 @@
  */
 
 import { isPromise } from "@metreeca/core";
+import type { Awaitable } from "@metreeca/core/async";
 import { Data, Pipe, Sink, Task } from "./index.js";
 import { flatten } from "./index.core.js";
 
@@ -54,19 +55,19 @@ import { flatten } from "./index.core.js";
  * - **Primitives** (strings, numbers, booleans, null): Treated as atomic values and yielded as single items
  * - **Arrays/Iterables** (excluding strings): Items are yielded individually (with `undefined` items filtered out)
  * - **Async Iterables/Pipes**: Items are yielded as they become available (with `undefined` items filtered out)
- * - **Promises**: Awaited and then processed according to their resolved value
+ * - **Promises and other thenables**: Awaited and then processed according to their resolved value
  * - **Other values** (objects, etc.): Yielded as single items
  *
- * The feed parameter can be synchronous or asynchronous (returning a Promise).
- * Async feeds are useful for fetching data from APIs, databases, or any async source.
+ * The feed may be supplied either directly or as a promise, which is awaited when the stream is consumed: deferred
+ * feeds are useful for data retrieved from APIs, databases, or any other asynchronous source.
  *
  * @typeParam V The type of items in the stream
  *
- * @param feed The source to create a pipe from
+ * @param feed The source to create a pipe from, either a value or a promise resolving to one
  *
  * @returns A pipe for fluent composition
  */
-export function items<V>(feed: Data<V> | Promise<Data<V>>): Pipe<V>;
+export function items<V>(feed: Awaitable<Data<V>>): Pipe<V>;
 
 /**
  * Creates a pipe from multiple scalar values.
@@ -79,7 +80,7 @@ export function items<V>(feed: Data<V> | Promise<Data<V>>): Pipe<V>;
  */
 export function items<V>(...values: readonly [V, V, ...V[]]): Pipe<V>;
 
-export function items<V>(feed: Data<V> | Promise<Data<V>>, ...values: V[]): Pipe<V> {
+export function items<V>(feed: Awaitable<Data<V>>, ...values: V[]): Pipe<V> {
 
 	async function* generator() {
 		for await (const item of flatten(values.length > 0 ? [await feed, ...values] as V[] : await feed)) {
@@ -159,13 +160,14 @@ export function range(start: number, end: number): Pipe<number> {
  * The generator is called on demand and returned data is flattened into the stream.
  * Iteration stops when the generator returns `undefined`, an empty array, or an empty iterator.
  *
- * The generator can be either synchronous or asynchronous (returning a Promise).
- * Async generators are useful for pagination APIs, database cursors, or any data source
- * where fetching the next batch requires an async operation.
+ * The generator may return its data either directly or as a promise: asynchronous generators are useful for
+ * pagination APIs, database cursors, or any data source where fetching the next batch requires an asynchronous
+ * operation.
  *
  * @typeParam V The type of items in the stream
  *
- * @param generator The function to call repeatedly to generate data, returning `undefined` to terminate
+ * @param generator The possibly asynchronous function to call repeatedly to generate data, returning `undefined` to
+ *   terminate
  *
  * @returns A pipe yielding items from successive generator calls
  *
@@ -180,7 +182,7 @@ export function range(start: number, end: number): Pipe<number> {
  * await iterate(() => count++ < 3 ? count : undefined)(toArray());  // [1, 2, 3]
  * ```
  */
-export function iterate<V>(generator: () => undefined | Data<V> | Promise<undefined | Data<V>>): Pipe<V> {
+export function iterate<V>(generator: () => Awaitable<undefined | Data<V>>): Pipe<V> {
 
 	return items((async function* () {
 
@@ -216,8 +218,7 @@ export function iterate<V>(generator: () => undefined | Data<V> | Promise<undefi
  *
  * @typeParam V The type of items in the streams
  *
- * @param sources The data sources to chain (can be synchronous or asynchronous)
- *
+ * @param sources The data sources to chain, each supplied either directly or as a promise *
  * @returns A pipe containing all items from all sources in order
  *
  * @example
@@ -226,7 +227,7 @@ export function iterate<V>(generator: () => undefined | Data<V> | Promise<undefi
  * await chain(items([1, 2]), items([3, 4]))(toArray());  // [1, 2, 3, 4]
  * ```
  */
-export function chain<V>(...sources: readonly (Data<V> | Promise<Data<V>>)[]): Pipe<V> {
+export function chain<V>(...sources: readonly Awaitable<Data<V>>[]): Pipe<V> {
 
 	return items((async function* () {
 
@@ -246,8 +247,7 @@ export function chain<V>(...sources: readonly (Data<V> | Promise<Data<V>>)[]): P
  *
  * @typeParam V The type of items in the streams
  *
- * @param sources The data sources to merge (can be synchronous or asynchronous)
- *
+ * @param sources The data sources to merge, each supplied either directly or as a promise *
  * @returns A pipe containing all items from all sources
  *
  * @example
@@ -257,7 +257,7 @@ export function chain<V>(...sources: readonly (Data<V> | Promise<Data<V>>)[]): P
  * await merge(items([1, 2]), items([3, 4]))(toArray());  // e.g., [1, 3, 2, 4]
  * ```
  */
-export function merge<V>(...sources: readonly (Data<V> | Promise<Data<V>>)[]): Pipe<V> {
+export function merge<V>(...sources: readonly Awaitable<Data<V>>[]): Pipe<V> {
 
 	return items((async function* () {
 

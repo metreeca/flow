@@ -37,6 +37,7 @@
  */
 
 import { isNumber } from "@metreeca/core";
+import type { Awaitable } from "@metreeca/core/async";
 import { ascending } from "@metreeca/core/order";
 import { cpus } from "os";
 import { Data, Task } from "./index.js";
@@ -161,7 +162,7 @@ export function peek<V>(consumer: (item: V) => unknown): Task<V> {
  *
  * @typeParam V The type of items in the stream
  *
- * @param predicate The function to test each item. When the predicate returns `undefined`,
+ * @param predicate The possibly asynchronous function to test each item. When the predicate returns `undefined`,
  *   it is treated as `false` and the item is filtered out.
  *
  * @returns A task that filters items based on the predicate
@@ -180,7 +181,7 @@ export function peek<V>(consumer: (item: V) => unknown): Task<V> {
  * await items([1, 2, 3, 4, 5])(filter(x => x % 2 === 0))(toArray());  // [2, 4]
  * ```
  */
-export function filter<V>(predicate: (item: V) => undefined | boolean | Promise<undefined | boolean>): Task<V> {
+export function filter<V>(predicate: (item: V) => Awaitable<undefined | boolean>): Task<V> {
 	return async function* (source: AsyncIterable<V>) {
 		for await (const item of source) {
 			if ( await predicate(item) ) {
@@ -199,7 +200,7 @@ export function filter<V>(predicate: (item: V) => undefined | boolean | Promise<
  * @typeParam V The type of items in the stream
  * @typeParam K The type of comparison key
  *
- * @param selector Optional function to extract comparison key from items
+ * @param selector Optional, possibly asynchronous function to extract comparison key from items
  *
  * @returns A task that filters out duplicate items
  *
@@ -218,7 +219,7 @@ export function filter<V>(predicate: (item: V) => undefined | boolean | Promise<
  * // [{id: 1}, {id: 2}]
  * ```
  */
-export function distinct<V, K>(selector?: (item: V) => K | Promise<K>): Task<V> {
+export function distinct<V, K>(selector?: (item: V) => Awaitable<K>): Task<V> {
 	return async function* (source: AsyncIterable<V>) {
 
 		const seen = new Set();
@@ -320,7 +321,7 @@ export function sort<V>(comparator: (a: V, b: V) => number = ascending): Task<V>
  * @typeParam V The type of input values
  * @typeParam R The type of mapped result values
  *
- * @param mapper The function to transform each item (can be sync or async). When the mapper returns `undefined`,
+ * @param mapper The possibly asynchronous function to transform each item. When the mapper returns `undefined`,
  *   that value is filtered out and not included in the output stream.
  * @param parallel Concurrency control: `false`/`undefined`/`1` for sequential (default),
  *   `true` for parallel with auto-detected concurrency (CPU cores), `0` for unbounded concurrency (I/O-heavy tasks),
@@ -343,7 +344,7 @@ export function sort<V>(comparator: (a: V, b: V) => number = ascending): Task<V>
  * ```
  */
 export function map<V, R>(
-	mapper: (item: V) => undefined | R | Promise<undefined | R>,
+	mapper: (item: V) => Awaitable<undefined | R>,
 	{ parallel }: { parallel?: boolean | number } = {}
 ): Task<V, R> {
 
@@ -384,17 +385,17 @@ export function map<V, R>(
  * - **Primitives** (strings, numbers, booleans, null): Yielded as single atomic items
  * - **Arrays/Iterables** (excluding strings): Items are yielded individually from each mapper result
  * - **Async Iterables/Pipes**: Items are yielded as they become available
- * - **Promises**: Awaited and then processed according to their resolved value
+ * - **Promises and other thenables**: Awaited and then processed according to their resolved value
  * - **Other values** (objects, etc.): Yielded as single items
  *
- * The mapper function can be synchronous or asynchronous (returning a Promise).
- * Async mappers are useful for fetching data from APIs, databases, or any async source.
+ * The mapper may return its data source either directly or as a promise: asynchronous mappers are useful for data
+ * retrieved from APIs, databases, or any other asynchronous source.
  *
  * @typeParam V The type of input items
  * @typeParam R The type of output items after flattening
  *
- * @param mapper The function to transform each item into a data source. When the mapper returns `undefined`,
- *   that value is filtered out and not included in the output stream.
+ * @param mapper The possibly asynchronous function to transform each item into a data source. When the mapper returns
+ *   `undefined`, that value is filtered out and not included in the output stream.
  * @param parallel Concurrency control: `false`/`undefined`/`1` for sequential (default),
  *   `true` for parallel with auto-detected concurrency (CPU cores), `0` for unbounded concurrency (I/O-heavy tasks),
  *   or a number > 1 for explicit concurrency limit
@@ -427,7 +428,7 @@ export function map<V, R>(
  * ```
  */
 export function flatMap<V, R>(
-	mapper: (item: V) => undefined | Data<R> | Promise<undefined | Data<R>>,
+	mapper: (item: V) => Awaitable<undefined | Data<R>>,
 	{ parallel }: { parallel?: boolean | number } = {}
 ): Task<V, R> {
 

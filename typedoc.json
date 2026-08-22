@@ -21,7 +21,8 @@
   },
   "externalSymbolLinkMappings": {
     "@metreeca/core": {
-      "ascending": "https://metreeca.github.io/core/functions/ascending.html"
+      "ascending": "https://metreeca.github.io/core/functions/ascending.html",
+      "Awaitable": "https://metreeca.github.io/core/types/async.Awaitable.html"
     }
   },
   "hideGenerator": true,

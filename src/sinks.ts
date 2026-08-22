@@ -25,6 +25,7 @@
  * @module
  */
 
+import type { Awaitable } from "@metreeca/core/async";
 import { Sink } from "./index.js";
 
 /**
@@ -32,8 +33,7 @@ import { Sink } from "./index.js";
  *
  * @typeParam V The type of items in the stream
  *
- * @param predicate The function to test each item
- *
+ * @param predicate The possibly asynchronous function to test each item *
  * @returns A sink that checks if any item satisfies the predicate
  *
  * @example
@@ -43,7 +43,7 @@ import { Sink } from "./index.js";
  * await items([1, 2, 3])(some(x => x > 5));  // false
  * ```
  */
-export function some<V>(predicate: (item: V) => boolean | Promise<boolean>): Sink<V, boolean> {
+export function some<V>(predicate: (item: V) => Awaitable<boolean>): Sink<V, boolean> {
 	return async source => {
 
 		for await (const item of source) {
@@ -61,8 +61,7 @@ export function some<V>(predicate: (item: V) => boolean | Promise<boolean>): Sin
  *
  * @typeParam V The type of items in the stream
  *
- * @param predicate The function to test each item
- *
+ * @param predicate The possibly asynchronous function to test each item *
  * @returns A sink that checks if all items satisfy the predicate
  *
  * @example
@@ -72,7 +71,7 @@ export function some<V>(predicate: (item: V) => boolean | Promise<boolean>): Sin
  * await items([2, 3, 4])(every(x => x%2 === 0));  // false
  * ```
  */
-export function every<V>(predicate: (item: V) => boolean | Promise<boolean>): Sink<V, boolean> {
+export function every<V>(predicate: (item: V) => Awaitable<boolean>): Sink<V, boolean> {
 	return async source => {
 
 		for await (const item of source) {
@@ -118,8 +117,7 @@ export function count<V>(): Sink<V, number> {
  *
  * @typeParam V The type of items in the stream
  *
- * @param predicate The function to test each item
- *
+ * @param predicate The possibly asynchronous function to test each item *
  * @returns A sink that retrieves the first matching item or undefined
  *
  * @example
@@ -129,7 +127,7 @@ export function count<V>(): Sink<V, number> {
  * await items([1, 2, 3])(find(x => x > 5));  // undefined
  * ```
  */
-export function find<V>(predicate: (item: V) => boolean | Promise<boolean>): Sink<V, undefined | V> {
+export function find<V>(predicate: (item: V) => Awaitable<boolean>): Sink<V, undefined | V> {
 	return async source => {
 
 		for await (const item of source) {
@@ -180,8 +178,7 @@ export function forEach<V>(consumer: (item: V) => unknown): Sink<V, number> {
  *
  * @typeParam V The type of items in the stream
  *
- * @param reducer The function to combine the accumulator with each item
- *
+ * @param reducer The possibly asynchronous function to combine the accumulator with each item *
  * @returns A sink that reduces the stream to a single value, the first item for singleton streams,
  * or `undefined` for empty streams
  *
@@ -193,7 +190,7 @@ export function forEach<V>(consumer: (item: V) => unknown): Sink<V, number> {
  * await items([])(reduce((acc, x) => acc + x));  // undefined
  * ```
  */
-export function reduce<V>(reducer: (accumulator: V, item: V) => V | Promise<V>): Sink<V, undefined | V>;
+export function reduce<V>(reducer: (accumulator: V, item: V) => Awaitable<V>): Sink<V, undefined | V>;
 
 /**
  * Creates a sink reducing the stream to a single value with an initial value.
@@ -201,8 +198,7 @@ export function reduce<V>(reducer: (accumulator: V, item: V) => V | Promise<V>):
  * @typeParam V The type of items in the stream
  * @typeParam R The type of the accumulated result
  *
- * @param reducer The function to combine the accumulator with each item
- * @param initial The initial value for the accumulator
+ * @param reducer The possibly asynchronous function to combine the accumulator with each item * @param initial The initial value for the accumulator
  *
  * @returns A sink that reduces the stream to a single value
  *
@@ -214,7 +210,7 @@ export function reduce<V>(reducer: (accumulator: V, item: V) => V | Promise<V>):
  * await items([])(reduce((acc, x) => acc + x, 0));  // 0
  * ```
  */
-export function reduce<V, R>(reducer: (accumulator: R, item: V) => R | Promise<R>, initial: R): Sink<V, R>;
+export function reduce<V, R>(reducer: (accumulator: R, item: V) => Awaitable<R>, initial: R): Sink<V, R>;
 
 export function reduce<V, R>(reducer: Function, initial?: R): Sink<V, undefined | V | R> {
 	return async source => {
@@ -297,8 +293,7 @@ export function toSet<V>(): Sink<V, ReadonlySet<V>> {
  * @typeParam V The type of items in the stream
  * @typeParam K The type of map keys
  *
- * @param key The function to extract the key from each item
- *
+ * @param key The possibly asynchronous function to extract the key from each item *
  * @returns A sink that collects items into a map with keys from the key selector and items as values
  *
  * @example
@@ -309,7 +304,7 @@ export function toSet<V>(): Sink<V, ReadonlySet<V>> {
  * ```
  */
 export function toMap<V, K>(
-	key: (item: V) => K | Promise<K>
+	key: (item: V) => Awaitable<K>
 ): Sink<V, ReadonlyMap<K, V>>;
 /**
  * Creates a sink collecting items into a map using custom keys and values.
@@ -318,8 +313,7 @@ export function toMap<V, K>(
  * @typeParam K The type of map keys
  * @typeParam R The type of map values
  *
- * @param key The function to extract the key from each item
- * @param value The function to transform each item into a map value
+ * @param key The possibly asynchronous function to extract the key from each item * @param value The possibly asynchronous function to transform each item into a map value
  *
  * @returns A sink that collects items into a map with keys and values from the selectors
  *
@@ -332,13 +326,13 @@ export function toMap<V, K>(
  */
 
 export function toMap<V, K, R>(
-	key: (item: V) => K | Promise<K>,
-	value: (item: V) => R | Promise<R>
+	key: (item: V) => Awaitable<K>,
+	value: (item: V) => Awaitable<R>
 ): Sink<V, ReadonlyMap<K, R>>;
 
 export function toMap<V, K, R>(
-	key: (item: V) => K | Promise<K>,
-	value?: (item: V) => R | Promise<R>
+	key: (item: V) => Awaitable<K>,
+	value?: (item: V) => Awaitable<R>
 ): Sink<V, ReadonlyMap<K, V | R>> {
 	return async source => {
 
