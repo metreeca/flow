@@ -17,6 +17,7 @@
 import type { Awaitable } from "@metreeca/core/async";
 import { Sink } from "../index.js";
 
+
 /**
  * Creates a sink retrieving the first item that satisfies the predicate.
  *
@@ -34,6 +35,7 @@ import { Sink } from "../index.js";
  * ```
  */
 export function find<V>(predicate: (item: V) => Awaitable<boolean>): Sink<V, undefined | V> {
+
 	return async source => {
 
 		for await (const item of source) {
@@ -44,4 +46,5 @@ export function find<V>(predicate: (item: V) => Awaitable<boolean>): Sink<V, und
 
 		return undefined;
 	};
+
 }

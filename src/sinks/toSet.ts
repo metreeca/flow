@@ -16,6 +16,7 @@
 
 import { Sink } from "../index.js";
 
+
 /**
  * Creates a sink collecting all unique items into a set.
  *
@@ -31,6 +32,7 @@ import { Sink } from "../index.js";
  * ```
  */
 export function toSet<V>(): Sink<V, ReadonlySet<V>> {
+
 	return async source => {
 
 		const set = new Set<V>();
@@ -41,4 +43,5 @@ export function toSet<V>(): Sink<V, ReadonlySet<V>> {
 
 		return set;
 	};
+
 }

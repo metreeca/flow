@@ -16,6 +16,7 @@
 
 import { Sink } from "../index.js";
 
+
 /**
  * Creates a sink counting the total number of items in the stream.
  *
@@ -31,6 +32,7 @@ import { Sink } from "../index.js";
  * ```
  */
 export function count<V>(): Sink<V, number> {
+
 	return async source => {
 
 		let count = 0;
@@ -42,4 +44,5 @@ export function count<V>(): Sink<V, number> {
 		return count;
 
 	};
+
 }

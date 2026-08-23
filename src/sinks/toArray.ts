@@ -16,6 +16,7 @@
 
 import { Sink } from "../index.js";
 
+
 /**
  * Creates a sink collecting all items into an array.
  *
@@ -31,6 +32,7 @@ import { Sink } from "../index.js";
  * ```
  */
 export function toArray<V>(): Sink<V, readonly V[]> {
+
 	return async source => {
 
 		const array: V[] = [];
@@ -41,4 +43,5 @@ export function toArray<V>(): Sink<V, readonly V[]> {
 
 		return array;
 	};
+
 }

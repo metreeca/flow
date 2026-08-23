@@ -19,6 +19,7 @@ import type { Awaitable } from "@metreeca/core/async";
 import { Data, Pipe, Sink, Task } from "../index.js";
 import { flatten } from "../index.core.js";
 
+
 /**
  * Creates a pipe from a data source.
  *

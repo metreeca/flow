@@ -17,6 +17,7 @@
 import type { Awaitable } from "@metreeca/core/async";
 import { Sink } from "../index.js";
 
+
 /**
  * Creates a sink reducing the stream to a single value without an initial value.
  *
@@ -62,6 +63,7 @@ export function reduce<V, R>(reducer: (accumulator: R, item: V) => Awaitable<R>,
  * Creates a sink reducing the stream to a single value, with or without an initial value.
  */
 export function reduce<V, R>(reducer: Function, initial?: R): Sink<V, undefined | V | R> {
+
 	return async source => {
 
 		let started = arguments.length > 1;
@@ -79,4 +81,5 @@ export function reduce<V, R>(reducer: Function, initial?: R): Sink<V, undefined 
 		return accumulator;
 
 	};
+
 }

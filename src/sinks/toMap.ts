@@ -17,6 +17,7 @@
 import type { Awaitable } from "@metreeca/core/async";
 import { Sink } from "../index.js";
 
+
 /**
  * Creates a sink collecting items into a map using extracted keys and item values.
  *
@@ -81,6 +82,7 @@ export function toMap<V, K, R>(
 	key: (item: V) => Awaitable<K>,
 	value?: (item: V) => Awaitable<R>
 ): Sink<V, ReadonlyMap<K, V | R>> {
+
 	return async source => {
 
 		const map = new Map<K, V | R>();
@@ -99,4 +101,5 @@ export function toMap<V, K, R>(
 
 		return map;
 	};
+
 }

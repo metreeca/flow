@@ -17,6 +17,7 @@
 import type { Awaitable } from "@metreeca/core/async";
 import { Task } from "../index.js";
 
+
 /**
  * Creates a task filtering stream items based on a predicate.
  *
@@ -36,6 +37,7 @@ import { Task } from "../index.js";
  * ```
  */
 export function filter<V>(predicate: (item: V) => Awaitable<undefined | boolean>): Task<V> {
+
 	return async function* (source: AsyncIterable<V>) {
 		for await (const item of source) {
 			if ( await predicate(item) ) {
@@ -43,4 +45,5 @@ export function filter<V>(predicate: (item: V) => Awaitable<undefined | boolean>
 			}
 		}
 	};
+
 }

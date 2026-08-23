@@ -17,6 +17,7 @@
 import { ascending } from "@metreeca/core/order";
 import { Task } from "../index.js";
 
+
 /**
  * Creates a task sorting items in the stream.
  *

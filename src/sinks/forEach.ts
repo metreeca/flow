@@ -16,6 +16,7 @@
 
 import { Sink } from "../index.js";
 
+
 /**
  * Creates a sink executing a side effect for each item and consuming the stream.
  *
@@ -34,6 +35,7 @@ import { Sink } from "../index.js";
  * ```
  */
 export function forEach<V>(consumer: (item: V) => unknown): Sink<V, number> {
+
 	return async source => {
 
 		let count = 0;
@@ -46,4 +48,5 @@ export function forEach<V>(consumer: (item: V) => unknown): Sink<V, number> {
 		return count;
 
 	};
+
 }

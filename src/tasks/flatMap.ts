@@ -20,6 +20,7 @@ import { Data, Task } from "../index.js";
 import { flatten } from "../index.core.js";
 import { cores, parallelize } from "./index.core.js";
 
+
 /**
  * Creates a task that transforms each item into a data source and flattens the results.
  *

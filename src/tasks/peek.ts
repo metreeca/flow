@@ -16,6 +16,7 @@
 
 import { Task } from "../index.js";
 
+
 /**
  * Creates a task executing a side effect for each item without modifying the stream.
  *
@@ -37,10 +38,12 @@ import { Task } from "../index.js";
  * ```
  */
 export function peek<V>(consumer: (item: V) => unknown): Task<V> {
+
 	return async function* (source: AsyncIterable<V>) {
 		for await (const item of source) {
 			await consumer(item);
 			yield item;
 		}
 	};
+
 }

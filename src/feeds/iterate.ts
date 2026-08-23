@@ -19,6 +19,7 @@ import { Data, Pipe } from "../index.js";
 import { flatten } from "../index.core.js";
 import { items } from "./items.js";
 
+
 /**
  * Creates a pipe by repeatedly calling a generator function until exhausted.
  *

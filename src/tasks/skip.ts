@@ -16,6 +16,7 @@
 
 import { Task } from "../index.js";
 
+
 /**
  * Creates a task skipping the first n items from the stream.
  *
@@ -34,6 +35,7 @@ import { Task } from "../index.js";
  * ```
  */
 export function skip<V>(n: number): Task<V> {
+
 	return async function* (source: AsyncIterable<V>) {
 
 		let count = 0;
@@ -46,4 +48,5 @@ export function skip<V>(n: number): Task<V> {
 			}
 		}
 	};
+
 }

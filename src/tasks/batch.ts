@@ -16,6 +16,8 @@
 
 import { Task } from "../index.js";
 
+
+
 /**
  * Creates a task grouping items into batches of a specified size.
  *
@@ -47,6 +49,7 @@ import { Task } from "../index.js";
  * ```
  */
 export function batch<V>(size: number = 0): Task<V, readonly V[]> {
+
 	return async function* (source: AsyncIterable<V>) {
 
 		const batch: V[] = [];
@@ -64,4 +67,5 @@ export function batch<V>(size: number = 0): Task<V, readonly V[]> {
 			yield batch;
 		}
 	};
+
 }

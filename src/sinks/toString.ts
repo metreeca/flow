@@ -16,6 +16,7 @@
 
 import { Sink } from "../index.js";
 
+
 /**
  * Creates a sink joining all items into a string using a separator.
  *
@@ -42,6 +43,7 @@ import { Sink } from "../index.js";
  * ```
  */
 export function toString<V>(separator: string = ","): Sink<V, string> {
+
 	return async source => {
 
 		const items: string[] = [];
@@ -52,4 +54,5 @@ export function toString<V>(separator: string = ","): Sink<V, string> {
 
 		return items.join(separator);
 	};
+
 }

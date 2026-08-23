@@ -17,6 +17,7 @@
 import type { Awaitable } from "@metreeca/core/async";
 import { Task } from "../index.js";
 
+
 /**
  * Creates a task filtering out duplicate items.
  *
@@ -46,6 +47,7 @@ import { Task } from "../index.js";
  * ```
  */
 export function distinct<V, K>(selector?: (item: V) => Awaitable<K>): Task<V> {
+
 	return async function* (source: AsyncIterable<V>) {
 
 		const seen = new Set();
@@ -61,4 +63,5 @@ export function distinct<V, K>(selector?: (item: V) => Awaitable<K>): Task<V> {
 		}
 
 	};
+
 }

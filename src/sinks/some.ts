@@ -17,6 +17,7 @@
 import type { Awaitable } from "@metreeca/core/async";
 import { Sink } from "../index.js";
 
+
 /**
  * Creates a sink checking if any item satisfies the predicate.
  *
@@ -34,6 +35,7 @@ import { Sink } from "../index.js";
  * ```
  */
 export function some<V>(predicate: (item: V) => Awaitable<boolean>): Sink<V, boolean> {
+
 	return async source => {
 
 		for await (const item of source) {
@@ -44,4 +46,5 @@ export function some<V>(predicate: (item: V) => Awaitable<boolean>): Sink<V, boo
 
 		return false;
 	};
+
 }

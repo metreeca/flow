@@ -19,6 +19,7 @@ import type { Awaitable } from "@metreeca/core/async";
 import { Task } from "../index.js";
 import { cores, parallelize } from "./index.core.js";
 
+
 /**
  * Creates a task that maps each input item to an output value using a mapper function.
  *
