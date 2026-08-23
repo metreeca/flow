@@ -195,6 +195,9 @@ export function pipe<V>(source: Promise<V>): Promise<V>;
  */
 export function pipe<V>(source: Pipe<V>): AsyncIterable<V>;
 
+/**
+ * Processes promises and pipes.
+ */
 export function pipe(source: unknown): unknown {
 
 	return isFunction(source) ? source() : source;

@@ -15,10 +15,10 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { items, range } from "./feeds.js";
+import { items, range } from "./feeds/index.js";
 import { pipe } from "./index.js";
-import { toArray } from "./sinks.js";
-import { filter } from "./tasks.js";
+import { toArray } from "./sinks/index.js";
+import { filter } from "./tasks/index.js";
 
 
 describe("pipe()", () => {

@@ -25,9 +25,9 @@
   "sideEffects": false,
   "exports": {
     ".": "./dist/index.js",
-    "./feeds": "./dist/feeds.js",
-    "./tasks": "./dist/tasks.js",
-    "./sinks": "./dist/sinks.js"
+    "./feeds": "./dist/feeds/index.js",
+    "./tasks": "./dist/tasks/index.js",
+    "./sinks": "./dist/sinks/index.js"
   },
   "files": [
     "README.md",
