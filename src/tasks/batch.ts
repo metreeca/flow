@@ -24,6 +24,11 @@ import { Task } from "../index.js";
  * If size is 0 or negative, collects all items into a single batch.
  * The final batch may contain fewer items than the specified size.
  *
+ * > [!WARNING]
+ * >
+ * > When size is 0 or negative, all stream items are accumulated in memory before yielding a single batch. For large
+ * > or infinite streams, this may cause memory issues. Use a positive size for bounded memory consumption.
+ *
  * @typeParam V The type of items in the stream
  *
  * @param size The maximum number of items per batch (0 or negative for unbounded)
@@ -31,12 +36,6 @@ import { Task } from "../index.js";
  * @defaultValue 0
  *
  * @returns A task that groups items into batches
- *
- * @remarks
- *
- * When size is 0 or negative, all stream items are accumulated in memory before
- * yielding a single batch. For large or infinite streams, this may cause
- * memory issues. Use a positive size for bounded memory consumption.
  *
  * @example
  *

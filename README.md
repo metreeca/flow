@@ -75,16 +75,15 @@ merge(                        // concurrent consumption
 ## Transforming Data
 
 Chain [tasks](https://metreeca.github.io/pipe/modules/tasks.html) to transform, filter, and process items. The
-@metreeca/core [comparators](https://metreeca.github.io/core/modules/comparators.html)
-and [predicates](https://metreeca.github.io/core/modules/predicates.html) modules provide helper functions for
-assembling complex sorting and filtering criteria.
+@metreeca/core [order](https://metreeca.github.io/core/modules/order.html) module provides helper functions for
+assembling complex sorting criteria.
 
 ```typescript
 import { pipe } from "@metreeca/pipe";
 import { items } from "@metreeca/pipe/feeds";
 import { toArray } from "@metreeca/pipe/sinks";
-import { by } from "@metreeca/core/comparators";
-import { batch, distinct, filter, map, sort, take } from "@metreeca/pipe/tasks";
+import { by } from "@metreeca/core/order";
+import { batch, distinct, filter, group, map, sort, take } from "@metreeca/pipe/tasks";
 
 await pipe(
 	(items([1, 2, 3, 4, 5]))
@@ -117,6 +116,12 @@ await pipe(
 	(batch(2))
 	(toArray())
 );  // [[1, 2], [3, 4], [5]]
+
+await pipe(
+	(items([1, 2, 3, 4, 5]))
+	(group(x => x%2))
+	(toArray())
+);  // [[1, [1, 3, 5]], [0, [2, 4]]]
 ```
 
 ## Consuming Data

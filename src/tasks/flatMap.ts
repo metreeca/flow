@@ -38,6 +38,11 @@ import { cores, parallelize } from "./index.core.js";
  * The mapper may return its data source either directly or as a promise: asynchronous mappers are useful for data
  * retrieved from APIs, databases, or any other asynchronous source.
  *
+ * > [!NOTE]
+ * >
+ * > In parallel mode, when an error occurs all pending operations are awaited (but not failed) before the error is
+ * > thrown to prevent resource leaks.
+ *
  * @typeParam V The type of input items
  * @typeParam R The type of output items after flattening
  *
@@ -48,11 +53,6 @@ import { cores, parallelize } from "./index.core.js";
  *   or a number > 1 for explicit concurrency limit
  *
  * @returns A task that transforms and flattens items
- *
- * @remarks
- *
- * In parallel mode, when an error occurs all pending operations are awaited
- * (but not failed) before the error is thrown to prevent resource leaks.
  *
  * @example
  *

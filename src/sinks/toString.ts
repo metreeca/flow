@@ -19,22 +19,19 @@ import { Sink } from "../index.js";
 /**
  * Creates a sink joining all items into a string using a separator.
  *
+ * Behaves like `Array.prototype.join()`, converting each item to a string and joining them with the specified
+ * separator.
+ *
+ * > [!NOTE]
+ * >
+ * > Items are converted using their default string representation, except for `null` values, which are converted to
+ * > empty strings.
+ *
  * @typeParam V The type of items in the stream
  *
  * @param separator The string to insert between items
  *
  * @returns A sink that joins all items into a single string
- *
- * @remarks
- *
- * Behaves like `Array.prototype.join()`, converting each item to a string and joining them
- * with the specified separator. Items are converted using their default string representation.
- * `null` values are converted to empty strings.
- *
- * > [!WARNING]
- * >
- * > Unlike `Array.prototype.join()`, `undefined` values are automatically filtered out
- * > by the stream pipeline before reaching this sink, so they will not appear in the output.
  *
  * @example
  *

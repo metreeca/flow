@@ -22,35 +22,32 @@ import { Task } from "../index.js";
  *
  * All items are collected into memory before sorting, then yielded in sorted order.
  *
+ * > [!TIP]
+ * >
+ * > Use comparator utilities from the [@metreeca/core](https://metreeca.github.io/core/modules/order.html) order
+ * > module to create complex sorting criteria.
+ *
+ * > [!NOTE]
+ * >
+ * > The default {@link ascending} comparator sorts values in natural order: numbers numerically, strings
+ * > lexicographically, dates chronologically, and booleans with false before true. Null and undefined values are
+ * > placed at the beginning.
+ *
+ * > [!WARNING]
+ * >
+ * > Accumulates all stream items in memory before sorting. For large or infinite streams, this may cause memory
+ * > issues or never complete.
+ *
  * @typeParam V The type of items in the stream
  *
  * @param comparator Comparison function (defaults to {@link ascending})
  *
  * @returns A task that sorts items
  *
- * @remarks
- *
- * **Comparator Functions:**
- *
- * Use comparator utilities from the
- * [@metreeca/core](https://metreeca.github.io/core/modules/comparators.html)
- * comparators module to create complex sorting criteria.
- *
- * **Default Behavior:**
- *
- * The default {@link ascending} comparator sorts values in natural order: numbers numerically,
- * strings lexicographically, dates chronologically, and booleans with false before true.
- * Null and undefined values are placed at the beginning.
- *
- * **Memory Usage:**
- *
- * Accumulates all stream items in memory before sorting. For large or infinite streams,
- * this may cause memory issues or never complete.
- *
  * @example
  *
  * ```typescript
- * import { ascending, descending, by, chain } from "@metreeca/core/comparators";
+ * import { ascending, by, compound, descending } from "@metreeca/core/order";
  *
  * // Sort numbers (natural ascending order)
  * await items([3, 1, 2])(sort())(toArray());  // [1, 2, 3]
@@ -70,7 +67,7 @@ import { Task } from "../index.js";
  * await items(["Émile", "Alice"])(sort((a, b) => a.localeCompare(b)))(toArray());
  *
  * // Sort by name length, then alphabetically
- * await items(people)(sort(chain(
+ * await items(people)(sort(compound(
  *   by(p => p.name.length),
  *   by(p => p.name)
  * )))(toArray());

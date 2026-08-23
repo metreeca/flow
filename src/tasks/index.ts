@@ -19,10 +19,9 @@
  *
  * Tasks apply to a {@link index.Pipe Pipe} and yield a new pipe, so they chain freely into longer pipelines. Items
  * are processed lazily, sequentially and in source order by default; {@link map} and {@link flatMap} accept a
- * `parallel` option that processes items concurrently, trading output order for throughput. Items yielded as
- * `undefined` are filtered out of the resulting stream.
- *
- * @remarks
+ * `parallel` option that processes items concurrently, trading output order for throughput, while {@link sort} and
+ * {@link group} buffer the whole stream in memory and emit it reordered. Buffering tasks, including {@link batch}
+ * without a size limit, never complete on infinite sources.
  *
  * **Custom Tasks** are functions that transform async iterables by returning async generator functions:
  *
@@ -52,3 +51,4 @@ export * from "./sort.js";
 export * from "./map.js";
 export * from "./flatMap.js";
 export * from "./batch.js";
+export * from "./group.js";

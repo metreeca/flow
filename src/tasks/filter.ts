@@ -29,14 +29,6 @@ import { Task } from "../index.js";
  *
  * @returns A task that filters items based on the predicate
  *
- * @remarks
- *
- * **Predicate Composition:**
- *
- * Use predicate utilities from the
- * [@metreeca/core](https://metreeca.github.io/core/modules/predicates.html)
- * predicates module to create complex filtering criteria.
- *
  * @example
  *
  * ```typescript

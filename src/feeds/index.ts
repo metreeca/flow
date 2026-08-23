@@ -18,10 +18,8 @@
  * Factory functions that create new pipes from various input sources.
  *
  * Feeds open a pipeline by adapting an existing data source (a scalar, array, iterable, async iterable, promise or
- * generator function) into a {@link index.Pipe Pipe} ready for task and sink composition. Every feed filters out
- * `undefined` items and defers all work until a sink consumes the stream.
- *
- * @remarks
+ * generator function) into a {@link index.Pipe Pipe} ready for task and sink composition. Every feed defers all work
+ * until a sink consumes the stream.
  *
  * **Custom Feeds** are functions that create new pipes:
  *

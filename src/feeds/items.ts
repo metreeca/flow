@@ -26,8 +26,8 @@ import { flatten } from "../index.core.js";
  *
  * - `undefined` - filtered out and not yielded
  * - **Primitives** (strings, numbers, booleans, null): Treated as atomic values and yielded as single items
- * - **Arrays/Iterables** (excluding strings): Items are yielded individually (with `undefined` items filtered out)
- * - **Async Iterables/Pipes**: Items are yielded as they become available (with `undefined` items filtered out)
+ * - **Arrays/Iterables** (excluding strings): Items are yielded individually
+ * - **Async Iterables/Pipes**: Items are yielded as they become available
  * - **Promises and other thenables**: Awaited and then processed according to their resolved value
  * - **Other values** (objects, etc.): Yielded as single items
  *

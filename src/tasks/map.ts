@@ -25,6 +25,11 @@ import { cores, parallelize } from "./index.core.js";
  * Items are processed sequentially by default, preserving output order. In parallel mode,
  * items are processed concurrently and emitted as they complete without preserving order.
  *
+ * > [!NOTE]
+ * >
+ * > In parallel mode, when an error occurs all pending operations are awaited (but not failed) before the error is
+ * > thrown to prevent resource leaks.
+ *
  * @typeParam V The type of input values
  * @typeParam R The type of mapped result values
  *
@@ -35,11 +40,6 @@ import { cores, parallelize } from "./index.core.js";
  *   or a number > 1 for explicit concurrency limit
  *
  * @returns A task that transforms items using the mapper function
- *
- * @remarks
- *
- * In parallel mode, when an error occurs all pending operations are awaited
- * (but not failed) before the error is thrown to prevent resource leaks.
  *
  * @example
  *

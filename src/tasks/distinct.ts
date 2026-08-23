@@ -23,17 +23,17 @@ import { Task } from "../index.js";
  * Items are processed sequentially and output order is preserved.
  * Only the first occurrence of each unique item is yielded.
  *
+ * > [!WARNING]
+ * >
+ * > Maintains a `Set` of all seen items in memory. For large or infinite streams with many unique items, this may
+ * > cause memory issues.
+ *
  * @typeParam V The type of items in the stream
  * @typeParam K The type of comparison key
  *
  * @param selector Optional, possibly asynchronous function to extract comparison key from items
  *
  * @returns A task that filters out duplicate items
- *
- * @remarks
- *
- * Maintains a `Set` of all seen items in memory. For large or infinite streams
- * with many unique items, this may cause memory issues.
  *
  * @example
  *

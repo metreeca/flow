@@ -7,6 +7,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unpublished](https://github.com/metreeca/pipe/commits/HEAD)
 
+### Added
+
+- `group` task collecting stream items into groups sharing the same primitive key
+
 ### Changed
 
 - `items`, `iterate`, `chain`, and `merge` feeds, `filter`, `distinct`, `map`, and `flatMap` tasks, and `some`,

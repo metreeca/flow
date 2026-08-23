@@ -17,7 +17,8 @@
 /**
  * Asynchronous stream processing utilities.
  *
- * Provides a composable API for working with async iterables through pipes, tasks, and sinks.
+ * Provides a composable API for working with async iterables through pipes, tasks, and sinks. The library is designed
+ * to be extensible: custom feeds, tasks, and sinks follow the patterns demonstrated in each module.
  *
  * > [!WARNING]
  * >
@@ -28,11 +29,6 @@
  * > - Other falsy values (`null`, `0`, `false`, `""`) are **preserved**
  * > - Custom tasks yielding `undefined` have those values automatically filtered
  * > - This behavior is centralized in the `items()` function, which is used internally for all stream creation
- *
- * @remarks
- *
- * The library is designed to be extensible. You can create custom feeds, tasks, and sinks
- * to suit your specific needs by following the patterns demonstrated in each module.
  *
  * @module index
  */
@@ -54,16 +50,10 @@ import { isFunction } from "@metreeca/core";
  * - Asynchronous iterable: `AsyncIterable<V>` - yields items from the async iterable
  * - Pipe: {@link Pipe}`<V>` - yields items from the pipe's underlying async iterable
  *
+ * Callers may supply data in whichever format is most convenient, as it is normalised to async iterables for uniform
+ * processing: `items()` relies on it to create pipes and `flatMap()` to flatten nested data sources.
+ *
  * @typeParam V The type of values in the data source
- *
- * @remarks
- *
- * Enables functions to accept data in the most convenient format for the caller,
- * internally normalizing it to async iterables for uniform processing.
- * Used by `items()` to create pipes and by `flatMap()` to flatten nested data sources.
- *
- * **`undefined` Handling**: `undefined` values are automatically filtered out by the `items()` function,
- * allowing tasks like `map()` to return `undefined` as a way to filter items from the stream.
  *
  * @example
  *
