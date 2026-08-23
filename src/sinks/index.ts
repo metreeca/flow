@@ -19,9 +19,9 @@
  *
  * Sinks close a pipeline: applying one to a {@link index.Pipe Pipe} triggers execution and returns a promise
  * resolving to the final result. They cover collection ({@link toArray}, {@link toSet}, {@link toMap},
- * {@link toString}), aggregation ({@link count}, {@link reduce}, {@link forEach}) and inspection ({@link some},
- * {@link every}, {@link find}), with the inspection sinks stopping as soon as the outcome is decided rather than
- * draining the source.
+ * {@link toObject}, {@link toString}), aggregation ({@link count}, {@link reduce}, {@link forEach}) and inspection
+ * ({@link some}, {@link every}, {@link find}), with the inspection sinks stopping as soon as the outcome is decided
+ * rather than draining the source.
  *
  * @module
  */
@@ -35,4 +35,5 @@ export * from "./reduce.js";
 export * from "./toArray.js";
 export * from "./toSet.js";
 export * from "./toMap.js";
+export * from "./toObject.js";
 export * from "./toString.js";

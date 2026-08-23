@@ -11,6 +11,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - `group` task collecting stream items into groups sharing the same primitive key
 
+- `toObject` sink collecting stream items into an object keyed by extracted property keys
+
 ### Changed
 
 - `toMap` sink reports duplicate keys as an error rather than silently overwriting previously collected entries

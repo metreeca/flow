@@ -42,6 +42,7 @@ export function toArray<V>(): Sink<V, readonly V[]> {
 		}
 
 		return array;
+
 	};
 
 }

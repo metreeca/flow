@@ -131,7 +131,7 @@ promises with final results.
 
 ```typescript
 import { items } from '@metreeca/pipe/feeds';
-import { some, find, reduce, toArray, forEach } from '@metreeca/pipe/sinks';
+import { some, find, reduce, toArray, toObject, forEach } from '@metreeca/pipe/sinks';
 import { pipe } from '@metreeca/pipe';
 
 await pipe(
@@ -153,6 +153,11 @@ await pipe(
 	(items([1, 2, 3]))
 	(toArray())
 );  // [1, 2, 3]
+
+await pipe(
+	(items([{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }]))
+	(toObject(x => x.id, x => x.name))
+);  // { 1: "Alice", 2: "Bob" }
 
 await pipe(
 	(items([1, 2, 3]))
