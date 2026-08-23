@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { immutable } from "@metreeca/core/structures";
 import { describe, expect, it } from "vitest";
 import { items } from "../feeds/index.js";
 import { toMap } from "./toMap.js";
@@ -104,6 +105,59 @@ describe("toMap()", () => {
 
 		await expect(items([0, -0])(toMap(x => x))).rejects.toThrow("duplicate key <0>");
 		await expect(items([NaN, NaN])(toMap(x => x))).rejects.toThrow("duplicate key <NaN>");
+
+	});
+
+	it("should deeply freeze collected keys and values", async () => {
+
+		const values = await items([{ id: { value: 1 }, nested: { value: 1 } }])(toMap(item => item.id));
+
+		const [[key, value]] = [...values];
+
+		expect(Object.isFrozen(key)).toBeTruthy();
+		expect(Object.isFrozen(value)).toBeTruthy();
+		expect(Object.isFrozen(value.nested)).toBeTruthy();
+
+	});
+
+	it("should retain immutable keys under their own identity", async () => {
+
+		const key = immutable({ id: 1 });
+
+		const values = await items([key])(toMap(item => item));
+
+		expect(values.has(key)).toBeTruthy();
+
+	});
+
+	it("should clone mutable keys as distinct entries", async () => {
+
+		const key = { id: 1 };
+
+		const values = await items([key, key])(toMap(item => item));
+
+		expect(values.has(key)).toBeFalsy();
+		expect(values.size).toBe(2);
+
+	});
+
+	it("should reject mutations", async () => {
+
+		const values = await items([1, 2, 3])(toMap(x => x)) as Map<number, number>; // ;(cast) exercising runtime immutability
+
+		expect(() => values.set(4, 4)).toThrow(TypeError);
+		expect(() => values.delete(1)).toThrow(TypeError);
+		expect(() => values.clear()).toThrow(TypeError);
+
+		expect(values).toEqual(new Map([[1, 1], [2, 2], [3, 3]]));
+
+	});
+
+	it("should reject extensions", async () => {
+
+		const values = await items([1, 2, 3])(toMap(x => x));
+
+		expect(Object.isFrozen(values)).toBeTruthy();
 
 	});
 

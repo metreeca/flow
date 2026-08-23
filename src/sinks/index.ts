@@ -23,6 +23,9 @@
  * ({@link some}, {@link every}, {@link find}), with the inspection sinks stopping as soon as the outcome is decided
  * rather than draining the source.
  *
+ * Collection sinks return deeply immutable results: {@link toArray}, {@link toSet}, {@link toMap} and
+ * {@link toObject} freeze both the container and the items, keys and values collected into it.
+ *
  * @module
  */
 

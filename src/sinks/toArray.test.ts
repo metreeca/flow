@@ -37,4 +37,35 @@ describe("toArray()", () => {
 
 	});
 
+	it("should deeply freeze the collected array", async () => {
+
+		const values = await items([{ nested: { value: 1 } }])(toArray());
+
+		expect(Object.isFrozen(values)).toBeTruthy();
+		expect(Object.isFrozen(values[0])).toBeTruthy();
+		expect(Object.isFrozen(values[0].nested)).toBeTruthy();
+
+	});
+
+	it("should clone plain structures", async () => {
+
+		const item = { nested: { value: 1 } };
+
+		const values = await items([item])(toArray());
+
+		expect(values[0]).not.toBe(item);
+		expect(values[0]).toEqual(item);
+
+	});
+
+	it("should collect non-plain values as-is", async () => {
+
+		const item = new Date();
+
+		const values = await items([item])(toArray());
+
+		expect(values[0]).toBe(item);
+
+	});
+
 });

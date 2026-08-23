@@ -127,7 +127,8 @@ await pipe(
 ## Consuming Data
 
 Apply [sinks](https://metreeca.github.io/pipe/modules/sinks.html) as terminal operations that consume pipes and return
-promises with final results.
+promises with final results. Collection sinks (`toArray()`, `toSet()`, `toMap()`, `toObject()`) return deeply immutable
+results, freezing both the container and the items, keys and values collected into it.
 
 ```typescript
 import { items } from '@metreeca/pipe/feeds';

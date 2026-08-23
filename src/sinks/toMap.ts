@@ -15,22 +15,40 @@
  */
 
 import type { Awaitable } from "@metreeca/core/async";
+import { immutable } from "@metreeca/core/structures";
 import { Sink } from "../index.js";
 
 
+const readonly = () => { throw new TypeError("unsupported mutation of immutable map"); };
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /**
- * Creates a sink collecting items into a map using extracted keys and item values.
+ * Creates a sink collecting items into a map under extracted keys.
  *
  * Keys must be unique: an item whose key was already collected causes the sink to fail rather than silently
  * overwriting the previously collected entry. Keys are compared with `SameValueZero` semantics, so `NaN` matches
  * itself and `-0` matches `0`.
+ *
+ * Keys and values are made {@link immutable} as they are collected.
+ *
+ * > [!WARNING]
+ * > Freezing clones structured keys, giving them a fresh identity: entries are not reachable through the original key
+ * > reference, and the same mutable key extracted twice yields two distinct entries rather than a duplicate key
+ * > error. Extract structured keys as {@link immutable} values to keep their identity stable.
+ *
+ * The returned map is frozen, with `set`, `delete` and `clear` shadowed by own properties that throw: entries cannot
+ * be altered through the map, although mutating methods invoked directly on `Map.prototype` still reach the internal
+ * slots backing them.
  *
  * @typeParam V The type of items in the stream
  * @typeParam K The type of map keys
  *
  * @param key The possibly asynchronous function to extract the key from each item
  *
- * @returns A sink that collects items into a read-only map pairing each extracted key with its item
+ * @returns A sink that collects items into a read-only map pairing each extracted key with its item, made deeply
+ * {@link immutable}
  *
  * @throws {Error} If two items yield the same key
  *
@@ -46,20 +64,32 @@ export function toMap<V, K>(
 ): Sink<V, ReadonlyMap<K, V>>;
 
 /**
- * Creates a sink collecting items into a map using extracted keys and values.
+ * Creates a sink collecting extracted values into a map under extracted keys.
  *
  * Keys must be unique: an item whose key was already collected causes the sink to fail rather than silently
  * overwriting the previously collected entry. Keys are compared with `SameValueZero` semantics, so `NaN` matches
  * itself and `-0` matches `0`.
  *
+ * Keys and values are made {@link immutable} as they are collected.
+ *
+ * > [!WARNING]
+ * > Freezing clones structured keys, giving them a fresh identity: entries are not reachable through the original key
+ * > reference, and the same mutable key extracted twice yields two distinct entries rather than a duplicate key
+ * > error. Extract structured keys as {@link immutable} values to keep their identity stable.
+ *
+ * The returned map is frozen, with `set`, `delete` and `clear` shadowed by own properties that throw: entries cannot
+ * be altered through the map, although mutating methods invoked directly on `Map.prototype` still reach the internal
+ * slots backing them.
+ *
  * @typeParam V The type of items in the stream
  * @typeParam K The type of map keys
- * @typeParam R The type of map values
+ * @typeParam T The type of map values
  *
  * @param key The possibly asynchronous function to extract the key from each item
  * @param value The possibly asynchronous function to transform each item into a map value
  *
- * @returns A sink that collects items into a read-only map pairing each extracted key with its extracted value
+ * @returns A sink that collects items into a read-only map pairing each extracted key with its extracted value, made
+ * deeply {@link immutable}
  *
  * @throws {Error} If two items yield the same key
  *
@@ -76,7 +106,7 @@ export function toMap<V, K, T>(
 ): Sink<V, ReadonlyMap<K, T>>;
 
 /**
- * Creates a sink collecting items into a map using extracted keys, with or without a value selector.
+ * Creates a sink collecting items or extracted values into a map under extracted keys.
  */
 export function toMap<V, K, R>(
 	key: (item: V) => Awaitable<K>,
@@ -89,17 +119,26 @@ export function toMap<V, K, R>(
 
 		for await (const item of source) {
 
-			const entry = await key(item);
+			const entry = immutable(await key(item));
 
 			if ( map.has(entry) ) {
 				throw new Error(`duplicate key <${String(entry)}>`);
 			}
 
-			map.set(entry, value ? await value(item) : item);
+			map.set(entry, immutable(value ? await value(item) : item));
 
 		}
 
-		return map;
+		// shadow mutators with own properties: freezing doesn't reach the internal slots backing map entries
+
+		return Object.freeze(Object.defineProperties(map, {
+
+			set: { value: readonly },
+			delete: { value: readonly },
+			clear: { value: readonly }
+
+		}));
+
 	};
 
 }

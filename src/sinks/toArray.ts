@@ -14,15 +14,19 @@
  * limitations under the License.
  */
 
+import { immutable } from "@metreeca/core/structures";
 import { Sink } from "../index.js";
 
 
 /**
- * Creates a sink collecting all items into an array.
+ * Creates a sink collecting all items into a deeply immutable array.
+ *
+ * Items are made {@link immutable} as they are collected, so items cloned while freezing are not identical to the
+ * source items they were collected from.
  *
  * @typeParam V The type of items in the stream
  *
- * @returns A sink that collects all items into an array
+ * @returns A sink that collects all items into an array made deeply {@link immutable}
  *
  * @example
  *
@@ -41,7 +45,7 @@ export function toArray<V>(): Sink<V, readonly V[]> {
 			array.push(item);
 		}
 
-		return array;
+		return immutable(array);
 
 	};
 

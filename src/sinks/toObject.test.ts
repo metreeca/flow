@@ -137,6 +137,16 @@ describe("toObject()", () => {
 
 	});
 
+	it("should deeply freeze the collected object", async () => {
+
+		const values = await items([{ id: 1, nested: { value: 1 } }])(toObject(item => item.id));
+
+		expect(Object.isFrozen(values)).toBeTruthy();
+		expect(Object.isFrozen(values[1])).toBeTruthy();
+		expect(Object.isFrozen(values[1].nested)).toBeTruthy();
+
+	});
+
 	it("should reject keys that are not property keys", () => {
 
 		// @ts-expect-error object keys don't support property key coercion

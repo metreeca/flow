@@ -15,11 +15,12 @@
  */
 
 import type { Awaitable } from "@metreeca/core/async";
+import { immutable } from "@metreeca/core/structures";
 import { Sink } from "../index.js";
 
 
 /**
- * Creates a sink collecting items into an object using extracted keys and item values.
+ * Creates a sink collecting items into a deeply immutable object under extracted keys.
  *
  * Keys must be unique: an item whose key was already collected causes the sink to fail rather than silently
  * overwriting the previously collected entry. Keys are limited to `PropertyKey` values and compared after property
@@ -29,12 +30,16 @@ import { Sink } from "../index.js";
  * chain of the returned object; they are enumerated in standard property order, that is integer-like keys in
  * ascending numeric order, followed by other string keys and symbol keys in collection order.
  *
+ * Items are made {@link immutable} as they are collected, so items cloned while freezing are not identical to the
+ * source items they were collected from.
+ *
  * @typeParam V The type of items in the stream
  * @typeParam K The type of object keys
  *
  * @param key The possibly asynchronous function to extract the key from each item
  *
- * @returns A sink that collects items into a read-only object pairing each extracted key with its item
+ * @returns A sink that collects items into an object pairing each extracted key with its item, made deeply
+ * {@link immutable}
  *
  * @throws {Error} If two items yield the same key
  *
@@ -50,7 +55,7 @@ export function toObject<V, K extends PropertyKey>(
 ): Sink<V, Readonly<Record<K, V>>>;
 
 /**
- * Creates a sink collecting items into an object using extracted keys and values.
+ * Creates a sink collecting extracted values into a deeply immutable object under extracted keys.
  *
  * Keys must be unique: an item whose key was already collected causes the sink to fail rather than silently
  * overwriting the previously collected entry. Keys are limited to `PropertyKey` values and compared after property
@@ -60,6 +65,9 @@ export function toObject<V, K extends PropertyKey>(
  * chain of the returned object; they are enumerated in standard property order, that is integer-like keys in
  * ascending numeric order, followed by other string keys and symbol keys in collection order.
  *
+ * Values are made {@link immutable} as they are collected, so values cloned while freezing are not identical to the
+ * values returned by `value`.
+ *
  * @typeParam V The type of items in the stream
  * @typeParam K The type of object keys
  * @typeParam T The type of object values
@@ -67,7 +75,8 @@ export function toObject<V, K extends PropertyKey>(
  * @param key The possibly asynchronous function to extract the key from each item
  * @param value The possibly asynchronous function to transform each item into an object value
  *
- * @returns A sink that collects items into a read-only object pairing each extracted key with its extracted value
+ * @returns A sink that collects items into an object pairing each extracted key with its extracted value, made deeply
+ * {@link immutable}
  *
  * @throws {Error} If two items yield the same key
  *
@@ -84,7 +93,7 @@ export function toObject<V, K extends PropertyKey, T>(
 ): Sink<V, Readonly<Record<K, T>>>;
 
 /**
- * Creates a sink collecting items into an object using extracted keys, with or without a value selector.
+ * Creates a sink collecting items or extracted values into a deeply immutable object under extracted keys.
  */
 export function toObject<V, K extends PropertyKey, R>(
 	key: (item: V) => Awaitable<K>,
@@ -107,15 +116,13 @@ export function toObject<V, K extends PropertyKey, R>(
 
 				value: value ? await value(item) : item,
 
-				writable: true,
-				enumerable: true,
-				configurable: true
+				enumerable: true
 
 			});
 
 		}
 
-		return object;
+		return immutable(object);
 
 	};
 
