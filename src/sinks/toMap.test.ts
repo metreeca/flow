@@ -90,18 +90,20 @@ describe("toMap()", () => {
 
 	});
 
-	it("should overwrite duplicate keys", async () => {
+	it("should report duplicate keys", async () => {
 
-		const values = await items([
+		await expect(items([
 			{ id: 1, name: "a" },
 			{ id: 2, name: "b" },
 			{ id: 1, name: "c" }
-		])(toMap(item => item.id, item => item.name));
+		])(toMap(item => item.id, item => item.name))).rejects.toThrow("duplicate key <1>");
 
-		expect(values).toEqual(new Map([
-			[1, "c"],
-			[2, "b"]
-		]));
+	});
+
+	it("should report duplicate keys with SameValueZero semantics", async () => {
+
+		await expect(items([0, -0])(toMap(x => x))).rejects.toThrow("duplicate key <0>");
+		await expect(items([NaN, NaN])(toMap(x => x))).rejects.toThrow("duplicate key <NaN>");
 
 	});
 

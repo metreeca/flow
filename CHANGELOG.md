@@ -13,6 +13,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
+- `toMap` sink reports duplicate keys as an error rather than silently overwriting previously collected entries
+
 - `items`, `iterate`, `chain`, and `merge` feeds, `filter`, `distinct`, `map`, and `flatMap` tasks, and `some`,
   `every`, `find`, `reduce`, and `toMap` sinks accept any thenable wherever a native `Promise` was previously
   required, as declared by the `Awaitable` type from `@metreeca/core/async`

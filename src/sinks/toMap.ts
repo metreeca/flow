@@ -18,14 +18,20 @@ import type { Awaitable } from "@metreeca/core/async";
 import { Sink } from "../index.js";
 
 /**
- * Creates a sink collecting items into a map using item values.
+ * Creates a sink collecting items into a map using extracted keys and item values.
+ *
+ * Keys must be unique: an item whose key was already collected causes the sink to fail rather than silently
+ * overwriting the previously collected entry. Keys are compared with `SameValueZero` semantics, so `NaN` matches
+ * itself and `-0` matches `0`.
  *
  * @typeParam V The type of items in the stream
  * @typeParam K The type of map keys
  *
  * @param key The possibly asynchronous function to extract the key from each item
  *
- * @returns A sink that collects items into a map with keys from the key selector and items as values
+ * @returns A sink that collects items into a read-only map pairing each extracted key with its item
+ *
+ * @throws {Error} If two items yield the same key
  *
  * @example
  *
@@ -39,7 +45,11 @@ export function toMap<V, K>(
 ): Sink<V, ReadonlyMap<K, V>>;
 
 /**
- * Creates a sink collecting items into a map using custom keys and values.
+ * Creates a sink collecting items into a map using extracted keys and values.
+ *
+ * Keys must be unique: an item whose key was already collected causes the sink to fail rather than silently
+ * overwriting the previously collected entry. Keys are compared with `SameValueZero` semantics, so `NaN` matches
+ * itself and `-0` matches `0`.
  *
  * @typeParam V The type of items in the stream
  * @typeParam K The type of map keys
@@ -48,7 +58,9 @@ export function toMap<V, K>(
  * @param key The possibly asynchronous function to extract the key from each item
  * @param value The possibly asynchronous function to transform each item into a map value
  *
- * @returns A sink that collects items into a map with keys and values from the selectors
+ * @returns A sink that collects items into a read-only map pairing each extracted key with its extracted value
+ *
+ * @throws {Error} If two items yield the same key
  *
  * @example
  *
@@ -63,7 +75,7 @@ export function toMap<V, K, T>(
 ): Sink<V, ReadonlyMap<K, T>>;
 
 /**
- * Creates a sink collecting items into a map using item values or custom values.
+ * Creates a sink collecting items into a map using extracted keys, with or without a value selector.
  */
 export function toMap<V, K, R>(
 	key: (item: V) => Awaitable<K>,
@@ -75,10 +87,13 @@ export function toMap<V, K, R>(
 
 		for await (const item of source) {
 
-			map.set(
-				await key(item),
-				value ? await value(item) : item
-			);
+			const entry = await key(item);
+
+			if ( map.has(entry) ) {
+				throw new Error(`duplicate key <${String(entry)}>`);
+			}
+
+			map.set(entry, value ? await value(item) : item);
 
 		}
 
