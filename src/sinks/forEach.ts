@@ -18,20 +18,25 @@ import { Sink } from "../index.js";
 
 
 /**
- * Creates a sink executing a side effect for each item and consuming the stream.
+ * Creates a sink handing every item to a consumer.
  *
- * Terminal operation that triggers stream execution.
+ * The stream is drained without retaining any item, making this the sink of choice for pipelines run for their side
+ * effects rather than for a collected result.
  *
  * @typeParam V The type of items in the stream
  *
- * @param consumer The function to execute for each item (return value is ignored)
+ * @param consumer The function processing each item; a returned promise is awaited before the next item is pulled,
+ *   so items are processed one at a time
  *
- * @returns A sink that executes the consumer for each item and returns the number of processed items
+ * @returns A sink resolving to the number of items handed to `consumer`
  *
  * @example
  *
  * ```typescript
- * await items([1, 2, 3])(forEach(x => console.log(x)));  // logs 1, 2, 3; returns 3
+ * await pipe(
+ *   (items([1, 2, 3]))
+ *   (forEach(n => console.log(n)))
+ * );  // logs 1, 2, 3; 3
  * ```
  */
 export function forEach<V>(consumer: (item: V) => unknown): Sink<V, number> {

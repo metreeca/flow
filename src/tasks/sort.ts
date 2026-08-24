@@ -19,59 +19,54 @@ import { Task } from "../index.js";
 
 
 /**
- * Creates a task sorting items in the stream.
+ * Creates a task reordering the stream.
  *
- * All items are collected into memory before sorting, then yielded in sorted order.
- *
- * > [!TIP]
- * >
- * > Use comparator utilities from the [@metreeca/core](https://metreeca.github.io/core/modules/order.html) order
- * > module to create complex sorting criteria.
- *
- * > [!NOTE]
- * >
- * > The default {@link ascending} comparator sorts values in natural order: numbers numerically, strings
- * > lexicographically, dates chronologically, and booleans with false before true. Null and undefined values are
- * > placed at the beginning.
+ * The whole stream is drained before the first item is emitted, then items are emitted in the order the comparator
+ * establishes; equal items keep their relative source order.
  *
  * > [!WARNING]
  * >
- * > Accumulates all stream items in memory before sorting. For large or infinite streams, this may cause memory
- * > issues or never complete.
+ * > Accumulates the whole stream in memory before sorting. For large or infinite streams, this may exhaust memory or
+ * > never complete.
+ *
+ * > [!TIP]
+ * >
+ * > The @metreeca/core [order](https://metreeca.github.io/core/modules/order.html) module provides helper functions for
+ * > assembling complex sorting criteria.
  *
  * @typeParam V The type of items in the stream
  *
- * @param comparator Comparison function (defaults to {@link ascending})
+ * @param comparator The function establishing the relative order of two items, defaulting to {@link ascending},
+ *   which ranks values in natural order, placing `null` and `undefined` first
  *
- * @returns A task that sorts items
+ * @returns A task yielding the items of the stream in comparator order
  *
  * @example
  *
  * ```typescript
- * import { ascending, by, compound, descending } from "@metreeca/core/order";
+ * await pipe(
+ *   (items([3, 1, 2]))
+ *   (sort())
+ *   (toArray())
+ * );  // [1, 2, 3]
  *
- * // Sort numbers (natural ascending order)
- * await items([3, 1, 2])(sort())(toArray());  // [1, 2, 3]
+ * await pipe(
+ *   (items([3, 1, 2]))
+ *   (sort(descending))
+ *   (toArray())
+ * );  // [3, 2, 1]
  *
- * // Descending order
- * await items([3, 1, 2])(sort(descending))(toArray());  // [3, 2, 1]
+ * await pipe(
+ *   (items([{ age: 30 }, { age: 20 }]))
+ *   (sort(by(x => x.age)))
+ *   (toArray())
+ * );  // [{ age: 20 }, { age: 30 }]
  *
- * // Sort by extracted key
- * await items([{age: 30}, {age: 20}])(sort(by(x => x.age)))(toArray());
- * // [{age: 20}, {age: 30}]
- *
- * // Sort by key in descending order
- * await items([{age: 20}, {age: 30}])(sort(by(x => x.age, descending)))(toArray());
- * // [{age: 30}, {age: 20}]
- *
- * // Custom comparator for locale-aware sorting
- * await items(["Émile", "Alice"])(sort((a, b) => a.localeCompare(b)))(toArray());
- *
- * // Sort by name length, then alphabetically
- * await items(people)(sort(compound(
- *   by(p => p.name.length),
- *   by(p => p.name)
- * )))(toArray());
+ * await pipe(
+ *   (items(["Émile", "Alice"]))
+ *   (sort((a, b) => a.localeCompare(b)))
+ *   (toArray())
+ * );  // ["Alice", "Émile"]
  * ```
  */
 export function sort<V>(comparator: (a: V, b: V) => number = ascending): Task<V> {

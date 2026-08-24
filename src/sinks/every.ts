@@ -19,19 +19,24 @@ import { Sink } from "../index.js";
 
 
 /**
- * Creates a sink checking if all items satisfy the predicate.
+ * Creates a sink reporting whether every item matches a predicate.
+ *
+ * Items are tested in source order and consumption stops at the first mismatch, leaving the rest of the stream
+ * unconsumed; an empty stream reports a match, as no item contradicts the predicate.
  *
  * @typeParam V The type of items in the stream
  *
- * @param predicate The possibly asynchronous function to test each item
+ * @param predicate The function testing each item
  *
- * @returns A sink that checks if all items satisfy the predicate
+ * @returns A sink resolving to `true` if every item matches `predicate`; `false` otherwise
  *
  * @example
  *
  * ```typescript
- * await items([2, 4, 6, 8])(every(x => x%2 === 0));  // true
- * await items([2, 3, 4])(every(x => x%2 === 0));  // false
+ * await pipe(
+ *   (items([2, 4, 6, 8]))
+ *   (every(n => n%2 === 0))
+ * );  // true
  * ```
  */
 export function every<V>(predicate: (item: V) => Awaitable<boolean>): Sink<V, boolean> {

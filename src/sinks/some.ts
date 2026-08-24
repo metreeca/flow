@@ -19,19 +19,24 @@ import { Sink } from "../index.js";
 
 
 /**
- * Creates a sink checking if any item satisfies the predicate.
+ * Creates a sink reporting whether some item matches a predicate.
+ *
+ * Items are tested in source order and consumption stops at the first match, leaving the rest of the stream
+ * unconsumed; an empty stream reports no match.
  *
  * @typeParam V The type of items in the stream
  *
- * @param predicate The possibly asynchronous function to test each item
+ * @param predicate The function testing each item
  *
- * @returns A sink that checks if any item satisfies the predicate
+ * @returns A sink resolving to `true` if at least one item matches `predicate`; `false` otherwise
  *
  * @example
  *
  * ```typescript
- * await items([1, 2, 3, 4, 5])(some(x => x > 3));  // true
- * await items([1, 2, 3])(some(x => x > 5));  // false
+ * await pipe(
+ *   (items([1, 2, 3, 4, 5]))
+ *   (some(n => n > 3))
+ * );  // true
  * ```
  */
 export function some<V>(predicate: (item: V) => Awaitable<boolean>): Sink<V, boolean> {

@@ -112,4 +112,12 @@ describe("take()", () => {
 
 	});
 
+	it("should reject non-integer n", () => {
+
+		expect(() => take(1.5)).toThrow(TypeError);
+		expect(() => take(NaN)).toThrow(TypeError);
+		expect(() => take(Infinity)).toThrow(TypeError);
+
+	});
+
 });

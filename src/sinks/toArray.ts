@@ -19,20 +19,31 @@ import { Sink } from "../index.js";
 
 
 /**
- * Creates a sink collecting all items into a deeply immutable array.
+ * Creates a sink collecting the items of the stream into an array.
  *
- * Items are made {@link immutable} as they are collected, so items cloned while freezing are not identical to the
- * source items they were collected from.
+ * Items are collected in source order and the array is made {@link immutable} once the stream is drained, freezing it
+ * together with the items collected into it.
+ *
+ * > [!WARNING]
+ * >
+ * > Accumulates the whole stream in memory. For large or infinite streams, this may exhaust memory or never complete.
+ *
+ * > [!WARNING]
+ * >
+ * > Freezing clones structured items, giving them a fresh identity: entries are not reachable through the original
+ * > item reference. Feed structured items as {@link immutable} values to keep their identity stable.
  *
  * @typeParam V The type of items in the stream
  *
- * @returns A sink that collects all items into an array made deeply {@link immutable}
+ * @returns A sink resolving to the deeply {@link immutable} read-only array of the items of the stream
  *
  * @example
  *
  * ```typescript
- * await items([1, 2, 3])(toArray());  // [1, 2, 3]
- * await items(new Set([1, 2, 3]))(toArray());  // [1, 2, 3]
+ * await pipe(
+ *   (items([1, 2, 3]))
+ *   (toArray())
+ * );  // [1, 2, 3]
  * ```
  */
 export function toArray<V>(): Sink<V, readonly V[]> {

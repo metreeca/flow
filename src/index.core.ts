@@ -26,19 +26,10 @@ import { Data } from "./index.js";
 
 
 /**
- * Helper to flatten Data<R> into individual items.
+ * Flattens a {@link index.Data Data} value into the items it contributes to a stream.
  *
- * Converts various data sources into an async generator:
- *
- * - Functions (Pipe instances): Invokes and yields from the returned async iterable
- * - Async iterables: Yields items directly from the async iterable
- * - Sync iterables (excluding strings): Yields items from the iterable
- * - All other values (primitives, objects, etc.): Yields the value as a single item
- *
- * > [!NOTE]
- * >
- * > Strings are treated as atomic values and yielded whole, not iterated character by character, ensuring consistent
- * > behaviour where they represent single data items rather than character sequences.
+ * Strings are treated as atomic values and yielded whole rather than character by character, as they stand for single
+ * data items rather than character sequences; every other non-iterable value is likewise yielded as a single item.
  *
  * @internal
  */

@@ -15,40 +15,53 @@
  */
 
 /**
- * Intermediate operations that transform, filter, or process stream items.
+ * Intermediate operations that filter, transform, or process stream items.
  *
  * Tasks apply to a {@link index.Pipe Pipe} and yield a new pipe, so they chain freely into longer pipelines. Items
- * are processed lazily, sequentially and in source order by default; {@link map} and {@link flatMap} accept a
- * `parallel` option that processes items concurrently, trading output order for throughput, while {@link sort} and
- * {@link group} buffer the whole stream in memory and emit it reordered. Buffering tasks, including {@link batch}
- * without a size limit, never complete on infinite sources.
+ * are processed lazily, sequentially and in source order, unless a task reorders them or wraps another to run it
+ * concurrently, trading output order for throughput. Tasks buffering the whole stream in memory never complete on
+ * infinite sources.
  *
  * **Custom Tasks** are functions that transform async iterables by returning async generator functions:
  *
  * ```typescript
+ * import { pipe } from '@metreeca/pipe';
  * import { items } from '@metreeca/pipe/feeds';
  * import { toArray } from '@metreeca/pipe/sinks';
  * import type { Task } from '@metreeca/pipe';
  *
  * function double<V extends number>(): Task<V, V> {
  *   return async function* (source) {
- *     for await (const item of source) { yield item * 2 as V; }
+ *     for await (const item of source) { yield item*2 as V; }
  *   };
  * }
  *
- * await items([1, 2, 3])(double())(toArray());  // [2, 4, 6]
+ * await pipe(
+ *   (items([1, 2, 3]))
+ *   (double())
+ *   (toArray())
+ * );  // [2, 4, 6]
  * ```
  *
  * @module
  */
 
-export * from "./skip.js";
-export * from "./take.js";
-export * from "./peek.js";
+// type preserving
+
 export * from "./filter.js";
 export * from "./distinct.js";
 export * from "./sort.js";
+export * from "./skip.js";
+export * from "./take.js";
+export * from "./peek.js";
+
+// type changing
+
 export * from "./map.js";
 export * from "./flatMap.js";
 export * from "./batch.js";
 export * from "./group.js";
+
+// flow control
+
+export * from "./concurrent.js";

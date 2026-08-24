@@ -17,13 +17,13 @@
 /**
  * Factory functions that create new pipes from various input sources.
  *
- * Feeds open a pipeline by adapting an existing data source (a scalar, array, iterable, async iterable, promise or
- * generator function) into a {@link index.Pipe Pipe} ready for task and sink composition. Every feed defers all work
- * until a sink consumes the stream.
+ * Feeds open a pipeline by adapting an existing data source into a {@link index.Pipe Pipe} ready for task and sink
+ * composition. Every feed defers all work until a sink consumes the stream.
  *
  * **Custom Feeds** are functions that create new pipes:
  *
  * ```typescript
+ * import { pipe } from '@metreeca/pipe';
  * import { items } from '@metreeca/pipe/feeds';
  * import { toArray } from '@metreeca/pipe/sinks';
  * import type { Pipe } from '@metreeca/pipe';
@@ -34,7 +34,10 @@
  *   }());
  * }
  *
- * await repeat(42, 3)(toArray());  // [42, 42, 42]
+ * await pipe(
+ *   (repeat(42, 3))
+ *   (toArray())
+ * );  // [42, 42, 42]
  * ```
  *
  * > [!CAUTION]

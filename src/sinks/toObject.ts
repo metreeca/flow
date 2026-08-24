@@ -20,34 +20,43 @@ import { Sink } from "../index.js";
 
 
 /**
- * Creates a sink collecting items into a deeply immutable object under extracted keys.
+ * Creates a sink collecting the items of the stream into an object under extracted keys.
  *
- * Keys must be unique: an item whose key was already collected causes the sink to fail rather than silently
- * overwriting the previously collected entry. Keys are limited to `PropertyKey` values and compared after property
- * key coercion, so the number `1` and the string `"1"` denote the same entry.
+ * Keys must be unique: an item whose key was already collected fails the sink rather than silently overwriting the
+ * entry standing under it. Keys are limited to `PropertyKey` values and compared after property key coercion, so the
+ * number `1` and the string `"1"` denote the same entry.
  *
  * Entries are collected as own properties, so a `__proto__` key is stored as data rather than altering the prototype
  * chain of the returned object; they are enumerated in standard property order, that is integer-like keys in
- * ascending numeric order, followed by other string keys and symbol keys in collection order.
+ * ascending numeric order, followed by other string keys and symbol keys in collection order. The object is made
+ * {@link immutable} once the stream is drained, freezing it together with the values collected into it.
  *
- * Items are made {@link immutable} as they are collected, so items cloned while freezing are not identical to the
- * source items they were collected from.
+ * > [!WARNING]
+ * >
+ * > Accumulates the whole stream in memory. For large or infinite streams, this may exhaust memory or never complete.
+ *
+ * > [!WARNING]
+ * >
+ * > Freezing clones structured items, giving them a fresh identity: entries are not reachable through the original
+ * > item reference. Feed structured items as {@link immutable} values to keep their identity stable.
  *
  * @typeParam V The type of items in the stream
  * @typeParam K The type of object keys
  *
- * @param key The possibly asynchronous function to extract the key from each item
+ * @param key The function extracting the key from each item
  *
- * @returns A sink that collects items into an object pairing each extracted key with its item, made deeply
- * {@link immutable}
+ * @returns A sink resolving to the deeply {@link immutable} object pairing each extracted key with the item it was
+ *   extracted from
  *
  * @throws {Error} If two items yield the same key
  *
  * @example
  *
  * ```typescript
- * await items([{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }])(toObject(x => x.id));
- * // { 1: { id: 1, name: "Alice" }, 2: { id: 2, name: "Bob" } }
+ * await pipe(
+ *   (items([{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }]))
+ *   (toObject(x => x.id))
+ * );  // { 1: { id: 1, name: "Alice" }, 2: { id: 2, name: "Bob" } }
  * ```
  */
 export function toObject<V, K extends PropertyKey>(
@@ -57,34 +66,28 @@ export function toObject<V, K extends PropertyKey>(
 /**
  * Creates a sink collecting extracted values into a deeply immutable object under extracted keys.
  *
- * Keys must be unique: an item whose key was already collected causes the sink to fail rather than silently
- * overwriting the previously collected entry. Keys are limited to `PropertyKey` values and compared after property
- * key coercion, so the number `1` and the string `"1"` denote the same entry.
- *
- * Entries are collected as own properties, so a `__proto__` key is stored as data rather than altering the prototype
- * chain of the returned object; they are enumerated in standard property order, that is integer-like keys in
- * ascending numeric order, followed by other string keys and symbol keys in collection order.
- *
- * Values are made {@link immutable} as they are collected, so values cloned while freezing are not identical to the
- * values returned by `value`.
+ * Collects like {@link toObject} without a `value` argument, pairing each key with an extracted value rather than
+ * with the item itself.
  *
  * @typeParam V The type of items in the stream
  * @typeParam K The type of object keys
  * @typeParam T The type of object values
  *
- * @param key The possibly asynchronous function to extract the key from each item
- * @param value The possibly asynchronous function to transform each item into an object value
+ * @param key The function extracting the key from each item
+ * @param value The function transforming each item into an object value
  *
- * @returns A sink that collects items into an object pairing each extracted key with its extracted value, made deeply
- * {@link immutable}
+ * @returns A sink resolving to the deeply {@link immutable} object pairing each extracted key with the value
+ *   extracted alongside it
  *
  * @throws {Error} If two items yield the same key
  *
  * @example
  *
  * ```typescript
- * await items([{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }])(toObject(x => x.id, x => x.name));
- * // { 1: "Alice", 2: "Bob" }
+ * await pipe(
+ *   (items([{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }]))
+ *   (toObject(x => x.id, x => x.name))
+ * );  // { 1: "Alice", 2: "Bob" }
  * ```
  */
 export function toObject<V, K extends PropertyKey, T>(

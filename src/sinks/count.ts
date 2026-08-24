@@ -18,17 +18,22 @@ import { Sink } from "../index.js";
 
 
 /**
- * Creates a sink counting the total number of items in the stream.
+ * Creates a sink counting the items of the stream.
+ *
+ * The stream is drained without retaining any item, so counting stays within constant memory whatever its size, but
+ * never completes on an infinite source.
  *
  * @typeParam V The type of items in the stream
  *
- * @returns A sink that counts all items in the stream
+ * @returns A sink resolving to the number of items the stream carried
  *
  * @example
  *
  * ```typescript
- * await items([1, 2, 3, 4, 5])(count());  // 5
- * await items([])(count());  // 0
+ * await pipe(
+ *   (items([1, 2, 3, 4, 5]))
+ *   (count())
+ * );  // 5
  * ```
  */
 export function count<V>(): Sink<V, number> {

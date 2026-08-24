@@ -14,69 +14,39 @@
  * limitations under the License.
  */
 
-import { isNumber } from "@metreeca/core";
 import type { Awaitable } from "@metreeca/core/async";
 import { Task } from "../index.js";
-import { cores, parallelize } from "./index.core.js";
 
 
 /**
- * Creates a task that maps each input item to an output value using a mapper function.
+ * Creates a task converting each item into a new value.
  *
- * Items are processed sequentially by default, preserving output order. In parallel mode,
- * items are processed concurrently and emitted as they complete without preserving order.
+ * Items are converted lazily, one at a time, and emitted in source order.
  *
- * > [!NOTE]
- * >
- * > In parallel mode, when an error occurs all pending operations are awaited (but not failed) before the error is
- * > thrown to prevent resource leaks.
+ * @typeParam V The type of input items
+ * @typeParam R The type of output items
  *
- * @typeParam V The type of input values
- * @typeParam R The type of mapped result values
+ * @param mapper The function converting each item; an `undefined` result contributes nothing, so mapping doubles as
+ *   filtering
  *
- * @param mapper The possibly asynchronous function to transform each item. When the mapper returns `undefined`,
- *   that value is filtered out and not included in the output stream.
- * @param parallel Concurrency control: `false`/`undefined`/`1` for sequential (default),
- *   `true` for parallel with auto-detected concurrency (CPU cores), `0` for unbounded concurrency (I/O-heavy tasks),
- *   or a number > 1 for explicit concurrency limit
- *
- * @returns A task that transforms items using the mapper function
+ * @returns A task yielding the values `mapper` converts the items into
  *
  * @example
  *
  * ```typescript
- * map((n: number) => n * 2)                                            // sequential
- * map(async (id: string) => fetch(`/users/${id}`), { parallel: true }) // parallel (CPU cores)
- * map(async (url: string) => fetch(url), { parallel: 0 })              // unbounded (I/O-heavy)
- * map(heavyOperation, { parallel: 4 })                                 // parallel with limit
+ * await pipe(
+ *   (items([1, 2, 3]))
+ *   (map(n => n*2))
+ *   (toArray())
+ * );  // [2, 4, 6]
  * ```
  */
-export function map<V, R>(
-	mapper: (item: V) => Awaitable<undefined | R>,
-	{ parallel }: { parallel?: boolean | number } = {}
-): Task<V, R> {
+export function map<V, R>(mapper: (item: V) => Awaitable<undefined | R>): Task<V, R> {
 
-	if ( parallel === true || isNumber(parallel) && parallel !== 1 ) {
-
-		const concurrency = parallel === true ? cores
-			: parallel === 0 ? Infinity
-				: parallel;
-
-		return source => parallelize(
-			source,
-			item => Promise.resolve(mapper(item)),
-			concurrency,
-			async function* (result) { yield result; }
-		);
-
-	} else {
-
-		return async function* (source: AsyncIterable<V>) {
-			for await (const item of source) {
-				yield await mapper(item);
-			}
-		};
-
-	}
+	return async function* (source: AsyncIterable<V>) {
+		for await (const item of source) {
+			yield await mapper(item);
+		}
+	};
 
 }

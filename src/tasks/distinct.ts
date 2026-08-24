@@ -19,31 +19,39 @@ import { Task } from "../index.js";
 
 
 /**
- * Creates a task filtering out duplicate items.
+ * Creates a task discarding repeated items.
  *
- * Items are processed sequentially and output order is preserved.
- * Only the first occurrence of each unique item is yielded.
+ * Items are emitted lazily, in source order, keeping the first occurrence of each key and discarding the ones
+ * following it. Keys are compared with `SameValueZero` semantics, so `NaN` matches itself and `-0` matches `0`, and
+ * structured keys are matched by identity rather than by content.
  *
  * > [!WARNING]
  * >
- * > Maintains a `Set` of all seen items in memory. For large or infinite streams with many unique items, this may
- * > cause memory issues.
+ * > Retains every key seen so far in memory. For large or infinite streams carrying many distinct keys, this may
+ * > exhaust memory.
  *
  * @typeParam V The type of items in the stream
- * @typeParam K The type of comparison key
+ * @typeParam K The type of the comparison key
  *
- * @param selector Optional, possibly asynchronous function to extract comparison key from items
+ * @param selector The function extracting the comparison key from each item; items are compared directly when
+ *   omitted
  *
- * @returns A task that filters out duplicate items
+ * @returns A task yielding the first item bearing each distinct key
  *
  * @example
  *
  * ```typescript
- * await items([1, 2, 2, 3, 1])(distinct())(toArray());  // [1, 2, 3]
+ * await pipe(
+ *   (items([1, 2, 2, 3, 1]))
+ *   (distinct())
+ *   (toArray())
+ * );  // [1, 2, 3]
  *
- * // With selector
- * await items([{id: 1}, {id: 2}, {id: 1}])(distinct(x => x.id))(toArray());
- * // [{id: 1}, {id: 2}]
+ * await pipe(
+ *   (items([{ id: 1 }, { id: 2 }, { id: 1 }]))
+ *   (distinct(x => x.id))
+ *   (toArray())
+ * );  // [{ id: 1 }, { id: 2 }]
  * ```
  */
 export function distinct<V, K>(selector?: (item: V) => Awaitable<K>): Task<V> {

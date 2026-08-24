@@ -19,42 +19,50 @@ import { Sink } from "../index.js";
 
 
 /**
- * Creates a sink reducing the stream to a single value without an initial value.
+ * Creates a sink folding the stream into a single item.
+ *
+ * The first item seeds the accumulator and every following one is folded into it, in source order, so the stream is
+ * drained without retaining more than the accumulator.
  *
  * @typeParam V The type of items in the stream
  *
- * @param reducer The possibly asynchronous function to combine the accumulator with each item
+ * @param reducer The function folding an item into the accumulator and returning the updated one
  *
- * @returns A sink that reduces the stream to a single value, the first item for singleton streams, or `undefined` for
- *   empty streams
+ * @returns A sink resolving to the final accumulator, to the only item of a singleton stream, or to `undefined` for
+ *   an empty stream
  *
  * @example
  *
  * ```typescript
- * await items([1, 2, 3, 4, 5])(reduce((acc, x) => acc + x));  // 15
- * await items([42])(reduce((acc, x) => acc + x));  // 42
- * await items([])(reduce((acc, x) => acc + x));  // undefined
+ * await pipe(
+ *   (items([1, 2, 3, 4, 5]))
+ *   (reduce((total, n) => total+n))
+ * );  // 15
  * ```
  */
 export function reduce<V>(reducer: (accumulator: V, item: V) => Awaitable<V>): Sink<V, undefined | V>;
 
 /**
- * Creates a sink reducing the stream to a single value with an initial value.
+ * Creates a sink folding the stream into a value of a different type.
+ *
+ * Folds like {@link reduce} without an `initial` argument, seeding the accumulator with the supplied value rather
+ * than with the first item, so the result type is free of the item type and an empty stream resolves to the seed.
  *
  * @typeParam V The type of items in the stream
  * @typeParam R The type of the accumulated result
  *
- * @param reducer The possibly asynchronous function to combine the accumulator with each item
- * @param initial The initial value for the accumulator
+ * @param reducer The function folding an item into the accumulator and returning the updated one
+ * @param initial The value seeding the accumulator
  *
- * @returns A sink that reduces the stream to a single value
+ * @returns A sink resolving to the final accumulator
  *
  * @example
  *
  * ```typescript
- * await items([1, 2, 3, 4, 5])(reduce((acc, x) => acc + x, 0));  // 15
- * await items([1, 2, 3, 4, 5])(reduce((acc, x) => acc + x, 10));  // 25
- * await items([])(reduce((acc, x) => acc + x, 0));  // 0
+ * await pipe(
+ *   (items([1, 2, 3, 4, 5]))
+ *   (reduce((total, n) => total+n, 10))
+ * );  // 25
  * ```
  */
 export function reduce<V, R>(reducer: (accumulator: R, item: V) => Awaitable<R>, initial: R): Sink<V, R>;

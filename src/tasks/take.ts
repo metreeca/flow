@@ -14,34 +14,44 @@
  * limitations under the License.
  */
 
+import { assert } from "@metreeca/core";
 import { Task } from "../index.js";
 
 
 /**
- * Creates a task taking only the first n items from the stream.
+ * Creates a task truncating the stream to a prefix.
  *
- * Items are processed sequentially and output order is preserved.
+ * Items are emitted lazily, in source order, and the stream ends as soon as the quota is met rather than draining the
+ * source: this is the standard way to bound an otherwise infinite stream.
  *
  * @typeParam V The type of items in the stream
  *
- * @param n The maximum number of items to take (negative values treated as zero)
+ * @param n The maximum number of leading items to emit; values less than 1 empty the stream
  *
- * @returns A task that takes the first n items
+ * @returns A task yielding at most the first `n` items
+ *
+ * @throws {TypeError} If `n` is not an integer
  *
  * @example
  *
  * ```typescript
- * await items([1, 2, 3, 4, 5])(take(3))(toArray());  // [1, 2, 3]
+ * await pipe(
+ *   (items([1, 2, 3, 4, 5]))
+ *   (take(3))
+ *   (toArray())
+ * );  // [1, 2, 3]
  * ```
  */
 export function take<V>(n: number): Task<V> {
+
+	const limit = assert(n, Number.isInteger, value => `expected integer count <${value}>`);
 
 	return async function* (source: AsyncIterable<V>) {
 
 		let count = 0;
 
 		for await (const item of source) {
-			if ( count < n ) {
+			if ( count < limit ) {
 				yield item;
 				count++;
 			} else {

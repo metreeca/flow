@@ -19,21 +19,25 @@ import { Task } from "../index.js";
 
 
 /**
- * Creates a task filtering stream items based on a predicate.
+ * Creates a task retaining only the items matching a predicate.
  *
- * Items are processed sequentially and output order is preserved.
+ * Items are tested lazily, one at a time, and emitted in source order.
  *
  * @typeParam V The type of items in the stream
  *
- * @param predicate The possibly asynchronous function to test each item. When the predicate returns `undefined`,
- *   it is treated as `false` and the item is filtered out.
+ * @param predicate The function testing each item; an `undefined` result is treated as `false` and the item is
+ *   discarded
  *
- * @returns A task that filters items based on the predicate
+ * @returns A task yielding the items matching `predicate`
  *
  * @example
  *
  * ```typescript
- * await items([1, 2, 3, 4, 5])(filter(x => x % 2 === 0))(toArray());  // [2, 4]
+ * await pipe(
+ *   (items([1, 2, 3, 4, 5]))
+ *   (filter(n => n%2 === 0))
+ *   (toArray())
+ * );  // [2, 4]
  * ```
  */
 export function filter<V>(predicate: (item: V) => Awaitable<undefined | boolean>): Task<V> {

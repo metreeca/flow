@@ -18,23 +18,26 @@ import { Task } from "../index.js";
 
 
 /**
- * Creates a task executing a side effect for each item without modifying the stream.
+ * Creates a task observing the stream without altering it.
  *
- * Items are processed sequentially and output order is preserved.
- * Useful for debugging or monitoring items as they flow through the pipeline.
+ * Every item is handed to the consumer before being emitted unchanged, making the stream observable at any point of a
+ * pipeline for tracing, logging or metering purposes.
  *
  * @typeParam V The type of items in the stream
  *
- * @param consumer The function to execute for each item (return value is ignored)
+ * @param consumer The function observing each item; a returned promise is awaited before the item moves on, so
+ *   asynchronous side effects hold the stream back until they complete
  *
- * @returns A task that executes the consumer for each item
+ * @returns A task yielding the items of the stream unchanged
  *
  * @example
  *
  * ```typescript
- * await items([1, 2, 3])(peek(x => console.log(x)))(toArray());
- * // Logs: 1, 2, 3
- * // Returns: [1, 2, 3]
+ * await pipe(
+ *   (items([1, 2, 3]))
+ *   (peek(n => console.log(n)))
+ *   (toArray())
+ * );  // logs 1, 2, 3; [1, 2, 3]
  * ```
  */
 export function peek<V>(consumer: (item: V) => unknown): Task<V> {

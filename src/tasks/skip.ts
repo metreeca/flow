@@ -14,34 +14,44 @@
  * limitations under the License.
  */
 
+import { assert } from "@metreeca/core";
 import { Task } from "../index.js";
 
 
 /**
- * Creates a task skipping the first n items from the stream.
+ * Creates a task discarding a prefix of the stream.
  *
- * Items are processed sequentially and output order is preserved.
+ * The leading items are pulled from the source and dropped, then the rest of the stream is emitted lazily, in source
+ * order; a shorter stream is consumed entirely and nothing is emitted.
  *
  * @typeParam V The type of items in the stream
  *
- * @param n The number of items to skip (negative values treated as zero)
+ * @param n The number of leading items to discard; values less than 1 leave the stream untouched
  *
- * @returns A task that skips the first n items
+ * @returns A task yielding the items following the first `n`
+ *
+ * @throws {TypeError} If `n` is not an integer
  *
  * @example
  *
  * ```typescript
- * await items([1, 2, 3, 4, 5])(skip(2))(toArray());  // [3, 4, 5]
+ * await pipe(
+ *   (items([1, 2, 3, 4, 5]))
+ *   (skip(2))
+ *   (toArray())
+ * );  // [3, 4, 5]
  * ```
  */
 export function skip<V>(n: number): Task<V> {
+
+	const limit = assert(n, Number.isInteger, value => `expected integer count <${value}>`);
 
 	return async function* (source: AsyncIterable<V>) {
 
 		let count = 0;
 
 		for await (const item of source) {
-			if ( count >= n ) {
+			if ( count >= limit ) {
 				yield item;
 			} else {
 				count++;

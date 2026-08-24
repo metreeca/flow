@@ -14,42 +14,59 @@
  * limitations under the License.
  */
 
+import { assert } from "@metreeca/core";
 import { Pipe } from "../index.js";
 import { items } from "./items.js";
 
 
 /**
- * Creates a pipe that yields a sequence of numbers within a range.
+ * Creates a pipe from a range of consecutive integers.
  *
- * Generates numbers in ascending order if `start` < `end`, or descending order if `start` > `end`.
- * Returns an empty sequence if `start` === `end`.
+ * Numbers are generated in ascending order if `start` is less than `end`, in descending order if it is greater; equal
+ * bounds yield an empty stream.
  *
- * @param start The starting value (inclusive)
- * @param end The ending value (exclusive)
+ * @param start The first value of the range, included
+ * @param end The value the range stops at, excluded
  *
- * @returns A pipe yielding numbers from start to end
+ * @returns A pipe yielding the numbers from `start` towards `end`
+ *
+ * @throws {TypeError} If either `start` or `end` is not an integer
  *
  * @example
  *
  * ```typescript
- * await range(1, 5)(toArray());   // [1, 2, 3, 4]
- * await range(5, 1)(toArray());   // [5, 4, 3, 2]
- * await range(3, 3)(toArray());   // []
+ * await pipe(
+ *   (range(1, 5))
+ *   (toArray())
+ * );  // [1, 2, 3, 4]
+ *
+ * await pipe(
+ *   (range(5, 1))
+ *   (toArray())
+ * );  // [5, 4, 3, 2]
+ *
+ * await pipe(
+ *   (range(3, 3))
+ *   (toArray())
+ * );  // []
  * ```
  */
 export function range(start: number, end: number): Pipe<number> {
 
+	const from = assert(start, Number.isInteger, value => `expected integer bound <${value}>`);
+	const to = assert(end, Number.isInteger, value => `expected integer bound <${value}>`);
+
 	return items((function* () {
 
-		if ( start < end ) {
+		if ( from < to ) {
 
-			for (let i = start; i < end; i++) {
+			for (let i = from; i < to; i++) {
 				yield i;
 			}
 
-		} else if ( start > end ) {
+		} else if ( from > to ) {
 
-			for (let i = start; i > end; i--) {
+			for (let i = from; i > to; i--) {
 				yield i;
 			}
 

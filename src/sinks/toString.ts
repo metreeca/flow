@@ -18,28 +18,30 @@ import { Sink } from "../index.js";
 
 
 /**
- * Creates a sink joining all items into a string using a separator.
+ * Creates a sink joining the items of the stream into a string.
  *
- * Behaves like `Array.prototype.join()`, converting each item to a string and joining them with the specified
- * separator.
- *
- * > [!NOTE]
- * >
- * > Items are converted using their default string representation, except for `null` values, which are converted to
- * > empty strings.
+ * Items are rendered and joined as `Array.prototype.join()` would, that is through their default string
+ * representation, `null` values excepted, which are rendered as empty strings; an empty stream joins to an empty
+ * string.
  *
  * @typeParam V The type of items in the stream
  *
- * @param separator The string to insert between items
+ * @param separator The string inserted between consecutive items, defaulting to `,`
  *
- * @returns A sink that joins all items into a single string
+ * @returns A sink resolving to the string joining the items of the stream
  *
  * @example
  *
  * ```typescript
- * await items([1, 2, 3])(toString());  // "1,2,3"
- * await items([1, 2, 3])(toString(" - "));  // "1 - 2 - 3"
- * await items(["a", "b", "c"])(toString());  // "a,b,c"
+ * await pipe(
+ *   (items([1, 2, 3]))
+ *   (toString())
+ * );  // "1,2,3"
+ *
+ * await pipe(
+ *   (items([1, 2, 3]))
+ *   (toString(" - "))
+ * );  // "1 - 2 - 3"
  * ```
  */
 export function toString<V>(separator: string = ","): Sink<V, string> {

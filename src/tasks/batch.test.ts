@@ -74,4 +74,12 @@ describe("batch()", () => {
 
 	});
 
+	it("should reject non-integer size", () => {
+
+		expect(() => batch(1.5)).toThrow(TypeError);
+		expect(() => batch(NaN)).toThrow(TypeError);
+		expect(() => batch(Infinity)).toThrow(TypeError);
+
+	});
+
 });

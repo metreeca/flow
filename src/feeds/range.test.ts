@@ -80,4 +80,13 @@ describe("range()", () => {
 
 	});
 
+	it("should reject non-integer bounds", () => {
+
+		expect(() => range(1.5, 4)).toThrow(TypeError);
+		expect(() => range(1, 4.5)).toThrow(TypeError);
+		expect(() => range(NaN, 4)).toThrow(TypeError);
+		expect(() => range(1, Infinity)).toThrow(TypeError);
+
+	});
+
 });

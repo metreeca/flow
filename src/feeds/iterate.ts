@@ -21,31 +21,30 @@ import { items } from "./items.js";
 
 
 /**
- * Creates a pipe by repeatedly calling a generator function until exhausted.
+ * Creates a pipe from repeated calls to a generator function.
  *
- * The generator is called on demand and returned data is flattened into the stream.
- * Iteration stops when the generator returns `undefined`, an empty array, or an empty iterator.
+ * The generator is called on demand, once the data it returned last has been fully consumed, and the stream ends as
+ * soon as a call contributes no item, that is when it returns `undefined` or an empty {@link index.Data Data} value.
+ * A promised result is awaited before being contributed, so pagination endpoints, database cursors and any other
+ * source fetching a batch at a time are driven directly by the stream.
  *
- * The generator may return its data either directly or as a promise: asynchronous generators are useful for
- * pagination APIs, database cursors, or any data source where fetching the next batch requires an asynchronous
- * operation.
+ * Generators that never run dry produce an infinite stream, to be bounded downstream by a task such as
+ * {@link tasks.take take} or by a sink deciding its outcome early.
  *
  * @typeParam V The type of items in the stream
  *
- * @param generator The possibly asynchronous function to call repeatedly to generate data, returning `undefined` to
- *   terminate
+ * @param generator The function called repeatedly to produce the next batch of data
  *
- * @returns A pipe yielding items from successive generator calls
+ * @returns A pipe yielding the items contributed by successive generator calls
  *
  * @example
  *
  * ```typescript
- * // Infinite random numbers
- * await iterate(() => Math.random())(take(3))(toArray());  // [0.123, 0.456, 0.789]
- *
- * // Counter that stops at 3
- * let count = 0;
- * await iterate(() => count++ < 3 ? count : undefined)(toArray());  // [1, 2, 3]
+ * await pipe(
+ *   (iterate(() => Math.random()))
+ *   (take(3))
+ *   (toArray())
+ * );  // [0.123, 0.456, 0.789]
  * ```
  */
 export function iterate<V>(generator: () => Awaitable<undefined | Data<V>>): Pipe<V> {

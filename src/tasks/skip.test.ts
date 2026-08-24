@@ -54,4 +54,12 @@ describe("skip()", () => {
 
 	});
 
+	it("should reject non-integer n", () => {
+
+		expect(() => skip(1.5)).toThrow(TypeError);
+		expect(() => skip(NaN)).toThrow(TypeError);
+		expect(() => skip(Infinity)).toThrow(TypeError);
+
+	});
+
 });

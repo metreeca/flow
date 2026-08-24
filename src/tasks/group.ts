@@ -20,32 +20,38 @@ import type { Task } from "../index.js";
 
 
 /**
- * Creates a task grouping items sharing the same key.
+ * Creates a task collecting items sharing the same key.
  *
- * Items are processed sequentially: groups are emitted in first-appearance order of their key, with items inside each
- * group in source order. Keys are limited to {@link Primitive} values and compared with `SameValueZero` semantics, so
- * `NaN` matches itself and `-0` matches `0`.
+ * The whole stream is drained before the first group is emitted, then groups are emitted in first-appearance order of
+ * their key, with items inside each group in source order. Keys are limited to {@link Primitive} values and compared
+ * with `SameValueZero` semantics, so `NaN` matches itself and `-0` matches `0`.
  *
  * > [!WARNING]
  * >
- * > Accumulates all stream items in memory before yielding the first group. For large or infinite streams, this may
- * > cause memory issues or never complete.
+ * > Accumulates the whole stream in memory before grouping. For large or infinite streams, this may exhaust memory or
+ * > never complete.
  *
  * @typeParam V The type of items in the stream
  * @typeParam K The type of the grouping key
  *
- * @param key The possibly asynchronous function extracting the grouping key from each item
+ * @param key The function extracting the grouping key from each item
  *
  * @returns A task pairing each distinct key with the read-only list of the items sharing it
  *
  * @example
  *
  * ```typescript
- * await items([1, 2, 3, 4])(group(n => n%2))(toArray());  // [[1, [1, 3]], [0, [2, 4]]]
+ * await pipe(
+ *   (items([1, 2, 3, 4]))
+ *   (group(n => n%2))
+ *   (toArray())
+ * );  // [[1, [1, 3]], [0, [2, 4]]]
  *
- * // Group by extracted key
- * await items([{id: 1}, {id: 2}, {id: 1}])(group(x => x.id))(toArray());
- * // [[1, [{id: 1}, {id: 1}]], [2, [{id: 2}]]]
+ * await pipe(
+ *   (items([{ id: 1 }, { id: 2 }, { id: 1 }]))
+ *   (group(x => x.id))
+ *   (toArray())
+ * );  // [[1, [{ id: 1 }, { id: 1 }]], [2, [{ id: 2 }]]]
  * ```
  */
 export function group<V, K extends Primitive>(key: (item: V) => Awaitable<K>): Task<V, readonly [K, readonly V[]]> {

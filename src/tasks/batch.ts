@@ -14,41 +14,51 @@
  * limitations under the License.
  */
 
+import { assert } from "@metreeca/core";
 import { Task } from "../index.js";
 
 
-
 /**
- * Creates a task grouping items into batches of a specified size.
+ * Creates a task collecting consecutive items into fixed-size batches.
  *
- * Items are processed sequentially and order is preserved both across batches and within each batch.
- *
- * If size is 0 or negative, collects all items into a single batch.
- * The final batch may contain fewer items than the specified size.
+ * Batches are emitted as soon as they fill up, in source order and with items in source order, so only one batch is
+ * held in memory at a time; the last batch is emitted short if the stream ends before it fills up, and no batch is
+ * emitted at all for an empty stream.
  *
  * > [!WARNING]
  * >
- * > When size is 0 or negative, all stream items are accumulated in memory before yielding a single batch. For large
- * > or infinite streams, this may cause memory issues. Use a positive size for bounded memory consumption.
+ * > An unbounded `size` accumulates the whole stream in memory before emitting the single batch holding it. For large
+ * > or infinite streams, this may exhaust memory or never complete: batch by a positive size to keep consumption
+ * > bounded.
  *
  * @typeParam V The type of items in the stream
  *
- * @param size The maximum number of items per batch (0 or negative for unbounded)
+ * @param size The maximum number of items per batch, defaulting to `0`; values less than 1 are treated as unbounded,
+ *   collecting the whole stream into a single batch
  *
- * @defaultValue 0
+ * @returns A task yielding the read-only lists of the items collected into each batch
  *
- * @returns A task that groups items into batches
+ * @throws {TypeError} If `size` is not an integer
  *
  * @example
  *
  * ```typescript
- * await items([1, 2, 3, 4, 5])(batch(2))(toArray());  // [[1, 2], [3, 4], [5]]
+ * await pipe(
+ *   (items([1, 2, 3, 4, 5]))
+ *   (batch(2))
+ *   (toArray())
+ * );  // [[1, 2], [3, 4], [5]]
  *
- * // Collect all into single batch
- * await items([1, 2, 3])(batch())(toArray());  // [[1, 2, 3]]
+ * await pipe(
+ *   (items([1, 2, 3]))
+ *   (batch())
+ *   (toArray())
+ * );  // [[1, 2, 3]]
  * ```
  */
 export function batch<V>(size: number = 0): Task<V, readonly V[]> {
+
+	const limit = assert(size, Number.isInteger, value => `expected integer size <${value}>`);
 
 	return async function* (source: AsyncIterable<V>) {
 
@@ -58,7 +68,7 @@ export function batch<V>(size: number = 0): Task<V, readonly V[]> {
 
 			batch.push(item);
 
-			if ( size > 0 && batch.length >= size ) {
+			if ( limit > 0 && batch.length >= limit ) {
 				yield batch.splice(0);
 			}
 		}

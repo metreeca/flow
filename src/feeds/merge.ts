@@ -21,22 +21,30 @@ import { items } from "./items.js";
 
 
 /**
- * Merges multiple data sources into a single stream, yielding items as they become available.
+ * Creates a pipe interleaving multiple data sources.
  *
- * Items are emitted in the order they resolve, not in source order.
- * All sources are consumed concurrently.
+ * All sources are opened together and consumed concurrently, each kept one item ahead, so items are emitted as they
+ * become available rather than in source order and a slow source never holds back the others. Promised sources are
+ * all awaited before the stream starts.
+ *
+ * > [!WARNING]
+ * >
+ * > Output order is not preserved: items interleave and overtake each other according to how quickly every source
+ * > produces them.
  *
  * @typeParam V The type of items in the streams
  *
- * @param sources The data sources to merge, each supplied either directly or as a promise
+ * @param sources The data sources to interleave, each supplied either directly or as a promise
  *
- * @returns A pipe containing all items from all sources
+ * @returns A pipe yielding the items of all sources as they become available
  *
  * @example
  *
  * ```typescript
- * // Order depends on async timing
- * await merge(items([1, 2]), items([3, 4]))(toArray());  // e.g., [1, 3, 2, 4]
+ * await pipe(
+ *   (merge(items([1, 2]), items([3, 4])))
+ *   (toArray())
+ * );  // [1, 3, 2, 4], depending on async timing
  * ```
  */
 export function merge<V>(...sources: readonly Awaitable<Data<V>>[]): Pipe<V> {

@@ -19,19 +19,24 @@ import { Sink } from "../index.js";
 
 
 /**
- * Creates a sink retrieving the first item that satisfies the predicate.
+ * Creates a sink retrieving the first item matching a predicate.
+ *
+ * Items are tested in source order and consumption stops at the first match, leaving the rest of the stream
+ * unconsumed.
  *
  * @typeParam V The type of items in the stream
  *
- * @param predicate The possibly asynchronous function to test each item
+ * @param predicate The function testing each item
  *
- * @returns A sink that retrieves the first matching item or undefined
+ * @returns A sink resolving to the first item matching `predicate`, or to `undefined` if no item does
  *
  * @example
  *
  * ```typescript
- * await items([1, 2, 3, 4, 5])(find(x => x > 3));  // 4
- * await items([1, 2, 3])(find(x => x > 5));  // undefined
+ * await pipe(
+ *   (items([1, 2, 3, 4, 5]))
+ *   (find(n => n > 3))
+ * );  // 4
  * ```
  */
 export function find<V>(predicate: (item: V) => Awaitable<boolean>): Sink<V, undefined | V> {

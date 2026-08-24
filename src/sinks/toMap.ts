@@ -25,38 +25,43 @@ const readonly = () => { throw new TypeError("unsupported mutation of immutable 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * Creates a sink collecting items into a map under extracted keys.
+ * Creates a sink collecting the items of the stream into a map under extracted keys.
  *
- * Keys must be unique: an item whose key was already collected causes the sink to fail rather than silently
- * overwriting the previously collected entry. Keys are compared with `SameValueZero` semantics, so `NaN` matches
- * itself and `-0` matches `0`.
- *
- * Keys and values are made {@link immutable} as they are collected.
- *
- * > [!WARNING]
- * > Freezing clones structured keys, giving them a fresh identity: entries are not reachable through the original key
- * > reference, and the same mutable key extracted twice yields two distinct entries rather than a duplicate key
- * > error. Extract structured keys as {@link immutable} values to keep their identity stable.
+ * Keys and values are made {@link immutable} as they are collected, in source order. Keys must be unique: an item
+ * whose key was already collected fails the sink rather than silently overwriting the entry standing under it. Keys
+ * are compared with `SameValueZero` semantics, so `NaN` matches itself and `-0` matches `0`.
  *
  * The returned map is frozen, with `set`, `delete` and `clear` shadowed by own properties that throw: entries cannot
  * be altered through the map, although mutating methods invoked directly on `Map.prototype` still reach the internal
  * slots backing them.
  *
+ * > [!WARNING]
+ * >
+ * > Accumulates the whole stream in memory. For large or infinite streams, this may exhaust memory or never complete.
+ *
+ * > [!WARNING]
+ * >
+ * > Freezing clones structured keys, giving them a fresh identity: entries are not reachable through the original key
+ * > reference, and the same mutable key extracted twice yields two distinct entries rather than a duplicate key
+ * > error. Extract structured keys as {@link immutable} values to keep their identity stable.
+ *
  * @typeParam V The type of items in the stream
  * @typeParam K The type of map keys
  *
- * @param key The possibly asynchronous function to extract the key from each item
+ * @param key The function extracting the key from each item
  *
- * @returns A sink that collects items into a read-only map pairing each extracted key with its item, made deeply
- * {@link immutable}
+ * @returns A sink resolving to the deeply {@link immutable} read-only map pairing each extracted key with the item it
+ *   was extracted from
  *
  * @throws {Error} If two items yield the same key
  *
  * @example
  *
  * ```typescript
- * await items([{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }])(toMap(x => x.id));
- * // Map(2) { 1 => { id: 1, name: "Alice" }, 2 => { id: 2, name: "Bob" } }
+ * await pipe(
+ *   (items([{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }]))
+ *   (toMap(x => x.id))
+ * );  // Map(2) { 1 => { id: 1, name: "Alice" }, 2 => { id: 2, name: "Bob" } }
  * ```
  */
 export function toMap<V, K>(
@@ -66,38 +71,28 @@ export function toMap<V, K>(
 /**
  * Creates a sink collecting extracted values into a map under extracted keys.
  *
- * Keys must be unique: an item whose key was already collected causes the sink to fail rather than silently
- * overwriting the previously collected entry. Keys are compared with `SameValueZero` semantics, so `NaN` matches
- * itself and `-0` matches `0`.
- *
- * Keys and values are made {@link immutable} as they are collected.
- *
- * > [!WARNING]
- * > Freezing clones structured keys, giving them a fresh identity: entries are not reachable through the original key
- * > reference, and the same mutable key extracted twice yields two distinct entries rather than a duplicate key
- * > error. Extract structured keys as {@link immutable} values to keep their identity stable.
- *
- * The returned map is frozen, with `set`, `delete` and `clear` shadowed by own properties that throw: entries cannot
- * be altered through the map, although mutating methods invoked directly on `Map.prototype` still reach the internal
- * slots backing them.
+ * Collects like {@link toMap} without a `value` argument, pairing each key with an extracted value rather than with
+ * the item itself.
  *
  * @typeParam V The type of items in the stream
  * @typeParam K The type of map keys
  * @typeParam T The type of map values
  *
- * @param key The possibly asynchronous function to extract the key from each item
- * @param value The possibly asynchronous function to transform each item into a map value
+ * @param key The function extracting the key from each item
+ * @param value The function transforming each item into a map value
  *
- * @returns A sink that collects items into a read-only map pairing each extracted key with its extracted value, made
- * deeply {@link immutable}
+ * @returns A sink resolving to the deeply {@link immutable} read-only map pairing each extracted key with the value
+ *   extracted alongside it
  *
  * @throws {Error} If two items yield the same key
  *
  * @example
  *
  * ```typescript
- * await items([{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }])(toMap(x => x.id, x => x.name));
- * // Map(2) { 1 => "Alice", 2 => "Bob" }
+ * await pipe(
+ *   (items([{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }]))
+ *   (toMap(x => x.id, x => x.name))
+ * );  // Map(2) { 1 => "Alice", 2 => "Bob" }
  * ```
  */
 export function toMap<V, K, T>(

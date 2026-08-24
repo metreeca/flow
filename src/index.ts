@@ -15,20 +15,17 @@
  */
 
 /**
- * Asynchronous stream processing utilities.
+ * Composable asynchronous stream processing.
  *
- * Provides a composable API for working with async iterables through pipes, tasks, and sinks. The library is designed
- * to be extensible: custom feeds, tasks, and sinks follow the patterns demonstrated in each module.
+ * Defines the contracts a pipeline is assembled from: the pipe carrying a stream, the tasks and sinks applied to it,
+ * and the data shapes a stream can be opened from. The companion feed, task and sink modules build on these contracts,
+ * and custom operations honouring them compose with the built-in ones interchangeably.
  *
- * > [!WARNING]
+ * > [!IMPORTANT]
  * >
- * > **All streams automatically filter out `undefined` values.** This filtering occurs at stream creation
- * > and when tasks are chained together, ensuring that `undefined` never flows through your pipeline.
- * >
- * > - `undefined` values are **removed** from all streams
- * > - Other falsy values (`null`, `0`, `false`, `""`) are **preserved**
- * > - Custom tasks yielding `undefined` have those values automatically filtered
- * > - This behavior is centralized in the `items()` function, which is used internally for all stream creation
+ * > Streams never carry `undefined`: values are dropped both as they enter a pipe and as tasks hand them downstream,
+ * > so no task or sink ever observes one, including those yielded by custom tasks. Other falsy values, `null`, `0`,
+ * > `false` and `""` among them, are preserved.
  *
  * @module index
  */
@@ -39,31 +36,31 @@ import { isFunction } from "@metreeca/core";
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * Flexible data source for stream processing.
+ * Data accepted wherever a stream is opened or extended.
  *
- * Represents various data formats that can be converted into async streams:
+ * Callers supply data in whichever shape is most convenient, each contributing items to the stream as follows:
  *
- * - `undefined` - filtered out and not yielded
- * - Single value: `V` - yields one item
- * - Array: `readonly V[]` - yields items from the array
- * - Synchronous iterable: `Iterable<V>` - yields items from the iterable
- * - Asynchronous iterable: `AsyncIterable<V>` - yields items from the async iterable
- * - Pipe: {@link Pipe}`<V>` - yields items from the pipe's underlying async iterable
+ * - `undefined` — contributes nothing
+ * - `V` — contributes the value itself as a single item
+ * - `readonly V[]` — contributes the items of the array
+ * - `Iterable<V>` — contributes the items of the iterable, strings excepted, as they are treated as atomic values and
+ *   contributed whole rather than character by character
+ * - `AsyncIterable<V>` — contributes the items of the async iterable
+ * - {@link Pipe}`<V>` — contributes the items of the pipe
  *
- * Callers may supply data in whichever format is most convenient, as it is normalised to async iterables for uniform
- * processing: `items()` relies on it to create pipes and `flatMap()` to flatten nested data sources.
+ * Feeds accept this shape to open a stream; {@link tasks.flatMap flatMap} accepts it to expand each item of a stream
+ * already open into further ones.
  *
- * @typeParam V The type of values in the data source
+ * @typeParam V The type of values contributed to the stream
  *
  * @example
  *
  * ```typescript
- * // All of these are valid Data<number> values:
- * const scalarData: Data<number> = 42;
- * const arrayData: Data<number> = [1, 2, 3];
- * const iterableData: Data<number> = new Set([1, 2, 3]);
- * const asyncData: Data<number> = (async function*() { yield 1; yield 2; })();
- * const pipeData: Data<number> = items([1, 2, 3]);
+ * const scalar: Data<number> = 42;
+ * const array: Data<number> = [1, 2, 3];
+ * const iterable: Data<number> = new Set([1, 2, 3]);
+ * const asynchronous: Data<number> = (async function* () { yield 1; yield 2; })();
+ * const nested: Data<number> = items([1, 2, 3]);
  * ```
  */
 export type Data<V> =
@@ -75,13 +72,12 @@ export type Data<V> =
 
 
 /**
- * Fluent interface for composing async stream operations.
+ * Stream under composition.
  *
- * Supports three call patterns:
- *
- * - Apply a task: returns a new {@link Pipe} for continued chaining
- * - Apply a sink: returns a Promise with the final result
- * - Get iterator: returns the underlying AsyncIterable
+ * A pipe is called to advance the pipeline: with a {@link Task} to obtain a new pipe carrying the transformed stream,
+ * with a {@link Sink} to consume it and obtain the final result, or without arguments to take over iteration
+ * manually. Composition is lazy, as nothing is pulled from the source until a sink or a manual iteration consumes the
+ * stream.
  *
  * @typeParam V The type of values in the stream
  */
@@ -117,42 +113,42 @@ export interface Pipe<V> {
 }
 
 /**
- * Transformation that processes stream items and yields results.
+ * Intermediate operation applied to a stream.
  *
- * Tasks are intermediate operations that can be chained together.
- * They transform, filter, or otherwise process items while maintaining the stream.
+ * A task consumes the stream of a {@link Pipe} and produces another, transforming, filtering, reordering or
+ * regrouping items along the way; the resulting pipe accepts further tasks, so tasks chain into longer pipelines.
  *
  * @typeParam V The type of input values
- * @typeParam R The type of output values (defaults to V)
+ * @typeParam R The type of output values, defaulting to `V` for tasks preserving the item type
  */
 export interface Task<V, R = V> {
 
 	/**
-	 * Processes an async iterable and yields transformed results.
+	 * Transforms the stream.
 	 *
-	 * @param value The source async iterable to process
+	 * @param value The source stream to process
 	 *
-	 * @returns An async iterable of transformed values (may include `undefined` for filtering)
+	 * @returns The transformed stream; yielded `undefined` values are dropped before reaching the next stage
 	 */
 	(value: AsyncIterable<V>): AsyncIterable<undefined | R>;
 
 }
 
 /**
- * Terminal operation that consumes a stream and produces a result.
+ * Terminal operation applied to a stream.
  *
- * Sinks trigger stream execution and return a promise that resolves
- * when all items have been processed.
+ * A sink consumes the stream of a {@link Pipe}, driving the pipeline that feeds it and resolving to the final result;
+ * one able to decide its outcome early may stop consuming before the source runs dry.
  *
  * @typeParam V The type of input values
- * @typeParam R The type of result (defaults to V)
+ * @typeParam R The type of result, defaulting to `V` for sinks resolving to a stream item
  */
 export interface Sink<V, R = V> {
 
 	/**
-	 * Consumes an async iterable and produces a final result.
+	 * Consumes the stream.
 	 *
-	 * @param value The source async iterable to consume
+	 * @param value The source stream to consume
 	 *
 	 * @returns A promise resolving to the final result
 	 */

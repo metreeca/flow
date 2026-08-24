@@ -21,22 +21,25 @@ import { items } from "./items.js";
 
 
 /**
- * Chains multiple data sources into a single stream, preserving source order.
+ * Creates a pipe concatenating multiple data sources.
  *
- * Items are emitted in source order: all items from the first source,
- * then all items from the second source, and so on.
- * Each source is fully consumed before moving to the next.
+ * Sources are consumed one at a time, each fully drained before the next is opened, so items are emitted in source
+ * order and a source that never runs dry starves the ones behind it. A promised source is awaited when its turn
+ * comes, deferring retrieval until then.
  *
  * @typeParam V The type of items in the streams
  *
- * @param sources The data sources to chain, each supplied either directly or as a promise
+ * @param sources The data sources to concatenate, each supplied either directly or as a promise
  *
- * @returns A pipe containing all items from all sources in order
+ * @returns A pipe yielding the items of all sources in source order
  *
  * @example
  *
  * ```typescript
- * await chain(items([1, 2]), items([3, 4]))(toArray());  // [1, 2, 3, 4]
+ * await pipe(
+ *   (chain(items([1, 2]), items([3, 4])))
+ *   (toArray())
+ * );  // [1, 2, 3, 4]
  * ```
  */
 export function chain<V>(...sources: readonly Awaitable<Data<V>>[]): Pipe<V> {
