@@ -17,7 +17,7 @@
 import type { Awaitable } from "@metreeca/core/async";
 import { Data, Pipe } from "../index.js";
 import { flatten } from "../index.core.js";
-import { items } from "./items.js";
+import { data } from "./data.js";
 
 
 /**
@@ -37,14 +37,14 @@ import { items } from "./items.js";
  *
  * ```typescript
  * await pipe(
- *   (chain(items([1, 2]), items([3, 4])))
+ *   (chain(items(1, 2), items(3, 4)))
  *   (toArray())
  * );  // [1, 2, 3, 4]
  * ```
  */
 export function chain<V>(...sources: readonly Awaitable<Data<V>>[]): Pipe<V> {
 
-	return items((async function* () {
+	return data((async function* () {
 
 		for (const source of sources) {
 			yield* flatten(await source);

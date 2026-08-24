@@ -34,7 +34,7 @@ import { Task } from "../index.js";
  *
  * ```typescript
  * await pipe(
- *   (items([1, 2, 3]))
+ *   (items(1, 2, 3))
  *   (peek(n => console.log(n)))
  *   (toArray())
  * );  // logs 1, 2, 3; [1, 2, 3]

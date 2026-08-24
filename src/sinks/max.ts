@@ -47,17 +47,17 @@ import { reduce } from "./reduce.js";
  *
  * ```typescript
  * await pipe(
- *   (items([3, 1, 2]))
+ *   (items(3, 1, 2))
  *   (max())
  * );  // 3
  *
  * await pipe(
- *   (items([{ age: 30 }, { age: 20 }]))
+ *   (items({ age: 30 }, { age: 20 }))
  *   (max(by(x => x.age)))
  * );  // { age: 30 }
  *
  * await pipe(
- *   (items([] as number[]))
+ *   (items<number>())
  *   (max())
  * );  // undefined
  * ```

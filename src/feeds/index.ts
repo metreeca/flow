@@ -17,20 +17,25 @@
 /**
  * Factory functions that create new pipes from various input sources.
  *
- * Feeds open a pipeline, either adapting a single data source into a {@link index.Pipe Pipe} ready for task and sink
- * composition, or combining several sources into one stream, drawn either in sequence or concurrently. Every feed
- * defers all work until a sink consumes the stream.
+ * Feeds open a pipeline, either adapting values and data sources into a {@link index.Pipe Pipe} ready for task and
+ * sink composition, or combining several sources into one stream, drawn either in sequence or concurrently. Every
+ * feed defers all work until a sink consumes the stream.
+ *
+ * > [!CAUTION]
+ * >
+ * > When creating custom feeds, always wrap async generators, async generator functions or `AsyncIterable<T>` objects
+ * > with {@link data} to ensure `undefined` filtering and proper pipe interface integration.
  *
  * **Custom Feeds** are functions that create new pipes:
  *
  * ```typescript
  * import { pipe } from '@metreeca/pipe';
- * import { items } from '@metreeca/pipe/feeds';
+ * import { data } from '@metreeca/pipe/feeds';
  * import { toArray } from '@metreeca/pipe/sinks';
  * import type { Pipe } from '@metreeca/pipe';
  *
  * function repeat<V>(value: V, count: number): Pipe<V> {
- *   return items(async function* () {
+ *   return data(async function* () {
  *     for (let i = 0; i < count; i++) { yield value; }
  *   }());
  * }
@@ -41,16 +46,12 @@
  * );  // [42, 42, 42]
  * ```
  *
- * > [!CAUTION]
- * >
- * > When creating custom feeds, always wrap async generators, async generator functions or `AsyncIterable<T>` objects
- * > with {@link items} to ensure `undefined` filtering and proper pipe interface integration.
- *
  * @module
  */
 
 // generators
 
+export * from "./data.js";
 export * from "./items.js";
 export * from "./range.js";
 export * from "./iterate.js";

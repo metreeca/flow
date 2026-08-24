@@ -24,7 +24,7 @@ describe("map()", () => {
 
 	it("should transform items", async () => {
 
-		const values = await items([1, 2, 3])(map(x => x*2))(toArray());
+		const values = await items(1, 2, 3)(map(x => x*2))(toArray());
 
 		expect(values).toEqual([2, 4, 6]);
 
@@ -32,7 +32,7 @@ describe("map()", () => {
 
 	it("should support async mappers", async () => {
 
-		const values = await items([1, 2, 3])(map(async x => {
+		const values = await items(1, 2, 3)(map(async x => {
 			await Promise.resolve();
 			return x*2;
 		}))(toArray());
@@ -43,7 +43,7 @@ describe("map()", () => {
 
 	it("should change item types", async () => {
 
-		const values = await items([1, 2, 3])(map(x => `value-${x}`))(toArray());
+		const values = await items(1, 2, 3)(map(x => `value-${x}`))(toArray());
 
 		expect(values).toEqual(["value-1", "value-2", "value-3"]);
 
@@ -51,7 +51,7 @@ describe("map()", () => {
 
 	it("should filter out undefined results", async () => {
 
-		const values = await items([1, 2, 3, 4])(map(x => x%2 === 0 ? x*2 : undefined))(toArray());
+		const values = await items(1, 2, 3, 4)(map(x => x%2 === 0 ? x*2 : undefined))(toArray());
 
 		expect(values).toEqual([4, 8]);
 
@@ -59,7 +59,7 @@ describe("map()", () => {
 
 	it("should propagate mapper errors", async () => {
 
-		await expect(items([1, 2, 3])(map(x => {
+		await expect(items(1, 2, 3)(map(x => {
 			if ( x === 2 ) { throw new Error("mapper failed"); }
 			return x*2;
 		}))(toArray())).rejects.toThrow("mapper failed");
@@ -68,7 +68,7 @@ describe("map()", () => {
 
 	it("should handle an empty source", async () => {
 
-		const values = await items<number>([])(map(x => x*2))(toArray());
+		const values = await items<number>()(map(x => x*2))(toArray());
 
 		expect(values).toEqual([]);
 

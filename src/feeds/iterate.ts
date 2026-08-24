@@ -17,7 +17,7 @@
 import type { Awaitable } from "@metreeca/core/async";
 import { Data, Pipe } from "../index.js";
 import { flatten } from "../index.core.js";
-import { items } from "./items.js";
+import { data } from "./data.js";
 
 
 /**
@@ -49,7 +49,7 @@ import { items } from "./items.js";
  */
 export function iterate<V>(generator: () => Awaitable<undefined | Data<V>>): Pipe<V> {
 
-	return items((async function* () {
+	return data((async function* () {
 
 		for (let data = await generator(); data !== undefined; data = await generator()) {
 

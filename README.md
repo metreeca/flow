@@ -46,23 +46,23 @@ npm install @metreeca/pipe
 
 ## Creating Feeds
 
-Open pipes with [feeds](https://metreeca.github.io/pipe/modules/feeds.html), either adapting a single data source or
-combining several into one stream.
+Open pipes with [feeds](https://metreeca.github.io/pipe/modules/feeds.html), either adapting values and data sources
+or combining several sources into one stream.
 
 ### Generators
 
 Open a pipe over values, ranges or repeated generator calls.
 
 ```typescript
-import { items, iterate, range } from '@metreeca/pipe/feeds';
+import { data, items, iterate, range } from '@metreeca/pipe/feeds';
 
-items(42);                    // from single values
-items(1, 2, 3, 4, 5);         // from multiple scalar values
-items([1, 2, 3, 4, 5]);       // from arrays
-items(new Set([1, 2, 3]));    // from iterables
-items(asyncGenerator());      // from async iterables
-items(fetchReport());         // from promises, awaited on consumption
-items(items([1, 2, 3]));      // from other pipes
+items(1, 2, 3, 4, 5);         // from values contributed as they are
+data(42);                     // from single values
+data([1, 2, 3, 4, 5]);        // from arrays
+data(new Set([1, 2, 3]));     // from iterables
+data(asyncGenerator());       // from async iterables
+data(fetchReport());          // from promises, awaited on consumption
+data(items(1, 2, 3));         // from other pipes
 range(10, 0);                 // from numeric ranges
 
 iterate(() => Math.random()); // from repeated generator calls
@@ -76,13 +76,13 @@ Open a pipe over the items of several data sources, drawn either in sequence or 
 import { chain, merge } from '@metreeca/pipe/feeds';
 
 chain(                        // sequential consumption
-	items([1, 2, 3]),
-	items([4, 5, 6])
+	items(1, 2, 3),
+	items(4, 5, 6)
 );
 
 merge(                        // concurrent consumption
-	items([1, 2, 3]),
-	items([4, 5, 6])
+	items(1, 2, 3),
+	items(4, 5, 6)
 );
 ```
 
@@ -103,43 +103,43 @@ Select, reorder and inspect items, leaving their type unchanged.
 import { distinct, filter, peek, skip, sort, take } from '@metreeca/pipe/tasks';
 
 await pipe(
-	(items([1, 2, 3, 4, 5]))
+	(items(1, 2, 3, 4, 5))
 	(filter(n => n%2 === 0))
 	(toArray())
 );  // [2, 4]
 
 await pipe(
-	(items([1, 2, 2, 3, 1]))
+	(items(1, 2, 2, 3, 1))
 	(distinct())
 	(toArray())
 );  // [1, 2, 3]
 
 await pipe(
-	(items([3, 1, 4, 1, 5]))
+	(items(3, 1, 4, 1, 5))
 	(sort())
 	(toArray())
 );  // [1, 1, 3, 4, 5]
 
 await pipe(
-	(items([{ name: "Alice", age: 30 }, { name: "Bob", age: 25 }]))
+	(items({ name: "Alice", age: 30 }, { name: "Bob", age: 25 }))
 	(sort(by(x => x.age)))
 	(toArray())
 );  // [{ name: "Bob", age: 25 }, { name: "Alice", age: 30 }]
 
 await pipe(
-	(items([1, 2, 3, 4, 5]))
+	(items(1, 2, 3, 4, 5))
 	(skip(2))
 	(toArray())
 );  // [3, 4, 5]
 
 await pipe(
-	(items([1, 2, 3, 4, 5]))
+	(items(1, 2, 3, 4, 5))
 	(take(3))
 	(toArray())
 );  // [1, 2, 3]
 
 await pipe(
-	(items([1, 2, 3]))
+	(items(1, 2, 3))
 	(peek(n => console.log(n)))
 	(toArray())
 );  // logs 1, 2, 3; [1, 2, 3]
@@ -153,25 +153,25 @@ Map items to values of a different type, either one by one or in groups.
 import { batch, flatMap, group, map } from '@metreeca/pipe/tasks';
 
 await pipe(
-	(items([1, 2, 3]))
+	(items(1, 2, 3))
 	(map(n => n*2))
 	(toArray())
 );  // [2, 4, 6]
 
 await pipe(
-	(items([1, 2, 3]))
+	(items(1, 2, 3))
 	(flatMap(n => [n, n*10]))
 	(toArray())
 );  // [1, 10, 2, 20, 3, 30]
 
 await pipe(
-	(items([1, 2, 3, 4, 5]))
+	(items(1, 2, 3, 4, 5))
 	(batch(2))
 	(toArray())
 );  // [[1, 2], [3, 4], [5]]
 
 await pipe(
-	(items([1, 2, 3, 4, 5]))
+	(items(1, 2, 3, 4, 5))
 	(group(n => n%2))
 	(toArray())
 );  // [[1, [1, 3, 5]], [0, [2, 4]]]
@@ -190,12 +190,12 @@ Test the stream against a condition, stopping as soon as the outcome is decided.
 import { every, some } from '@metreeca/pipe/sinks';
 
 await pipe(
-	(items([1, 2, 3]))
+	(items(1, 2, 3))
 	(some(n => n > 2))
 );  // true
 
 await pipe(
-	(items([2, 4, 6]))
+	(items(2, 4, 6))
 	(every(n => n%2 === 0))
 );  // true
 ```
@@ -216,32 +216,32 @@ ranking ones.
 import { avg, count, max, min, sum } from '@metreeca/pipe/sinks';
 
 await pipe(
-	(items([1, 2, 3, 4, 5]))
+	(items(1, 2, 3, 4, 5))
 	(count())
 );  // 5
 
 await pipe(
-	(items([1, 2, 3, 4, 5]))
+	(items(1, 2, 3, 4, 5))
 	(sum())
 );  // 15
 
 await pipe(
-	(items([1, 2, 3, 4]))
+	(items(1, 2, 3, 4))
 	(avg())
 );  // 2.5
 
 await pipe(
-	(items([1n, 2n, 4n]))
+	(items(1n, 2n, 4n))
 	(avg())
 );  // 2n
 
 await pipe(
-	(items([3, 1, 4, 1, 5]))
+	(items(3, 1, 4, 1, 5))
 	(min())
 );  // 1
 
 await pipe(
-	(items([{ name: "Alice", age: 30 }, { name: "Bob", age: 25 }]))
+	(items({ name: "Alice", age: 30 }, { name: "Bob", age: 25 }))
 	(max(by(x => x.age)))
 );  // { name: "Alice", age: 30 }
 ```
@@ -254,12 +254,12 @@ Retrieve a single item from the stream or fold it into a value of an arbitrary t
 import { find, reduce } from '@metreeca/pipe/sinks';
 
 await pipe(
-	(items([1, 2, 3, 4]))
+	(items(1, 2, 3, 4))
 	(find(n => n > 2))
 );  // 3
 
 await pipe(
-	(items([1, 2, 3, 4]))
+	(items(1, 2, 3, 4))
 	(reduce((total, n) => total+n, 0))
 );  // 10
 ```
@@ -273,27 +273,27 @@ values collected into it.
 import { toArray, toMap, toObject, toSet, toString } from '@metreeca/pipe/sinks';
 
 await pipe(
-	(items([1, 2, 3]))
+	(items(1, 2, 3))
 	(toArray())
 );  // [1, 2, 3]
 
 await pipe(
-	(items([1, 2, 2, 3]))
+	(items(1, 2, 2, 3))
 	(toSet())
 );  // Set(3) { 1, 2, 3 }
 
 await pipe(
-	(items([{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }]))
+	(items({ id: 1, name: "Alice" }, { id: 2, name: "Bob" }))
 	(toMap(x => x.id, x => x.name))
 );  // Map(2) { 1 => "Alice", 2 => "Bob" }
 
 await pipe(
-	(items([{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }]))
+	(items({ id: 1, name: "Alice" }, { id: 2, name: "Bob" }))
 	(toObject(x => x.id, x => x.name))
 );  // { 1: "Alice", 2: "Bob" }
 
 await pipe(
-	(items([1, 2, 3]))
+	(items(1, 2, 3))
 	(toString(" - "))
 );  // "1 - 2 - 3"
 ```
@@ -306,7 +306,7 @@ Consume the stream for its side effects, resolving to the number of items proces
 import { forEach } from '@metreeca/pipe/sinks';
 
 await pipe(
-	(items([1, 2, 3]))
+	(items(1, 2, 3))
 	(forEach(n => console.log(n)))
 );  // logs 1, 2, 3; 3
 ```
@@ -324,7 +324,7 @@ import { filter } from '@metreeca/pipe/tasks';
 import { pipe } from '@metreeca/pipe';
 
 const iterable = pipe(
-	(items([1, 2, 3]))
+	(items(1, 2, 3))
 	(filter(n => n > 1))
 );  // AsyncIterable<number>
 
@@ -340,13 +340,13 @@ source, each item going to exactly one of them, and results are emitted as soon 
 source order.
 
 ```typescript
-import { items } from '@metreeca/pipe/feeds';
+import { data } from '@metreeca/pipe/feeds';
 import { concurrent } from '@metreeca/pipe/tasks';
 import { toArray } from '@metreeca/pipe/sinks';
 import { pipe } from '@metreeca/pipe';
 
 await pipe( // at most 4 items in flight
-	(items(ids))
+	(data(ids))
 	(concurrent(4, retrieve()))
 	(toArray())
 );
@@ -374,14 +374,14 @@ Control the rate at which work is submitted with utilities from the @metreeca/co
 ```typescript
 import { createThrottle } from "@metreeca/core/async";
 import { pipe } from "@metreeca/pipe";
-import { items } from "@metreeca/pipe/feeds";
+import { data } from "@metreeca/pipe/feeds";
 import { forEach } from "@metreeca/pipe/sinks";
 import { concurrent } from "@metreeca/pipe/tasks";
 
 const throttle = createThrottle({ minimum: 1000 });  // limit to max 1 request per second
 
 await pipe(
-	(items(ids))
+	(data(ids))
 	(concurrent(4, retrieve(throttle)))  // inject delays to enforce the rate limit
 	(forEach(x => console.log(x)))
 );
@@ -417,12 +417,12 @@ Feeds are functions that create new pipes.
 
 ```typescript
 import { pipe } from '@metreeca/pipe';
-import { items } from '@metreeca/pipe/feeds';
+import { data } from '@metreeca/pipe/feeds';
 import { toArray } from '@metreeca/pipe/sinks';
 import type { Pipe } from '@metreeca/pipe';
 
 function repeat<V>(value: V, count: number): Pipe<V> {
-	return items(async function* () {
+	return data(async function* () {
 		for (let i = 0; i < count; i++) { yield value; }
 	}());
 }
@@ -436,7 +436,7 @@ await pipe(
 > [!CAUTION]
 >
 > When creating custom feeds, always wrap async generators, async generator functions, or `AsyncIterable<T>` objects
-> with [`items()`](https://metreeca.github.io/pipe/functions/items.html) to ensure `undefined` filtering and proper
+> with [`data()`](https://metreeca.github.io/pipe/functions/data.html) to ensure `undefined` filtering and proper
 > pipe interface integration.
 
 ## Creating Custom Tasks
@@ -456,7 +456,7 @@ function double<V extends number>(): Task<V, V> {
 }
 
 await pipe(
-	(items([1, 2, 3]))
+	(items(1, 2, 3))
 	(double())
 	(toArray())
 );  // [2, 4, 6]
@@ -483,7 +483,7 @@ function histogram<V>(): Sink<V, Map<V, number>> {
 }
 
 await pipe(
-	(items(["a", "b", "a"]))
+	(items("a", "b", "a"))
 	(histogram())
 );  // Map(2) { "a" => 2, "b" => 1 }
 ```

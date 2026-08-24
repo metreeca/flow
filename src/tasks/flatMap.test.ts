@@ -15,7 +15,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { items } from "../feeds/index.js";
+import { data, items } from "../feeds/index.js";
 import { pipe } from "../index.js";
 import { toArray } from "../sinks/index.js";
 import { flatMap } from "./flatMap.js";
@@ -26,7 +26,7 @@ describe("flatMap()", () => {
 
 	it("should flatten mapped async iterables", async () => {
 
-		const values = await items([1, 2, 3])(flatMap(async function* (x) {
+		const values = await items(1, 2, 3)(flatMap(async function* (x) {
 			yield x;
 			yield x*10;
 		}))(toArray());
@@ -37,7 +37,7 @@ describe("flatMap()", () => {
 
 	it("should flatten mapped arrays", async () => {
 
-		const values = await items([1, 2, 3])(flatMap(x => [x, x*2]))(toArray());
+		const values = await items(1, 2, 3)(flatMap(x => [x, x*2]))(toArray());
 
 		expect(values).toEqual([1, 2, 2, 4, 3, 6]);
 
@@ -45,7 +45,7 @@ describe("flatMap()", () => {
 
 	it("should yield single values as atomic items", async () => {
 
-		const values = await items([1, 2, 3])(flatMap(x => x*2))(toArray());
+		const values = await items(1, 2, 3)(flatMap(x => x*2))(toArray());
 
 		expect(values).toEqual([2, 4, 6]);
 
@@ -53,8 +53,8 @@ describe("flatMap()", () => {
 
 	it("should flatten nested pipes", async () => {
 
-		const values = await items([1, 2])(flatMap(x => pipe(
-			items(x)
+		const values = await items(1, 2)(flatMap(x => pipe(
+			data(x)
 			(map(v => v*2))
 		)))(toArray());
 
@@ -64,7 +64,7 @@ describe("flatMap()", () => {
 
 	it("should handle empty iterables", async () => {
 
-		const values = await items([1, 2, 3])(flatMap(async function* (x) {
+		const values = await items(1, 2, 3)(flatMap(async function* (x) {
 			if ( x === 2 ) {
 				yield x;
 			}
@@ -76,7 +76,7 @@ describe("flatMap()", () => {
 
 	it("should treat returned strings as atomic values", async () => {
 
-		const values = await items([1, 2, 3])(flatMap(x => `value${x}`))(toArray());
+		const values = await items(1, 2, 3)(flatMap(x => `value${x}`))(toArray());
 
 		expect(values).toEqual(["value1", "value2", "value3"]);
 
@@ -84,7 +84,7 @@ describe("flatMap()", () => {
 
 	it("should treat strings in arrays as items to yield", async () => {
 
-		const values = await items([1, 2])(flatMap(x => [`a${x}`, `b${x}`]))(toArray());
+		const values = await items(1, 2)(flatMap(x => [`a${x}`, `b${x}`]))(toArray());
 
 		expect(values).toEqual(["a1", "b1", "a2", "b2"]);
 
@@ -92,7 +92,7 @@ describe("flatMap()", () => {
 
 	it("should propagate mapper errors", async () => {
 
-		await expect(items([1, 2, 3])(flatMap(x => {
+		await expect(items(1, 2, 3)(flatMap(x => {
 			if ( x === 2 ) { throw new Error("mapper failed"); }
 			return [x, x*2];
 		}))(toArray())).rejects.toThrow("mapper failed");
@@ -101,7 +101,7 @@ describe("flatMap()", () => {
 
 	it("should propagate errors thrown while flattening", async () => {
 
-		await expect(items([1, 2, 3])(flatMap(x => function* () {
+		await expect(items(1, 2, 3)(flatMap(x => function* () {
 			yield x;
 			if ( x === 2 ) { throw new Error("flatten failed"); }
 			yield x*2;
@@ -111,7 +111,7 @@ describe("flatMap()", () => {
 
 	it("should handle an empty source", async () => {
 
-		const values = await items<number>([])(flatMap(x => [x, x*2]))(toArray());
+		const values = await items<number>()(flatMap(x => [x, x*2]))(toArray());
 
 		expect(values).toEqual([]);
 

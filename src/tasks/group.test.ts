@@ -24,7 +24,7 @@ describe("group()", () => {
 
 	it("should group items sharing the same key", async () => {
 
-		const values = await items([1, 2, 3, 4])(group(n => n%2))(toArray());
+		const values = await items(1, 2, 3, 4)(group(n => n%2))(toArray());
 
 		expect(values).toEqual([[1, [1, 3]], [0, [2, 4]]]);
 
@@ -32,7 +32,7 @@ describe("group()", () => {
 
 	it("should emit groups in first-appearance order of their key", async () => {
 
-		const values = await items(["bb", "a", "cc", "d"])(group(s => s.length))(toArray());
+		const values = await items("bb", "a", "cc", "d")(group(s => s.length))(toArray());
 
 		expect(values).toEqual([[2, ["bb", "cc"]], [1, ["a", "d"]]]);
 
@@ -40,7 +40,7 @@ describe("group()", () => {
 
 	it("should preserve source order inside groups", async () => {
 
-		const values = await items([3, 1, 5, 2])(group(() => "all"))(toArray());
+		const values = await items(3, 1, 5, 2)(group(() => "all"))(toArray());
 
 		expect(values).toEqual([["all", [3, 1, 5, 2]]]);
 
@@ -48,7 +48,7 @@ describe("group()", () => {
 
 	it("should emit nothing for an empty source", async () => {
 
-		const values = await items<number>([])(group(n => n))(toArray());
+		const values = await items<number>()(group(n => n))(toArray());
 
 		expect(values).toEqual([]);
 
@@ -56,7 +56,7 @@ describe("group()", () => {
 
 	it("should support asynchronous key functions", async () => {
 
-		const values = await items([1, 2, 3])(group(async n => n%2))(toArray());
+		const values = await items(1, 2, 3)(group(async n => n%2))(toArray());
 
 		expect(values).toEqual([[1, [1, 3]], [0, [2]]]);
 
@@ -64,7 +64,7 @@ describe("group()", () => {
 
 	it("should collapse keys sharing SameValueZero identity", async () => {
 
-		const values = await items([1, 2, 3])(group(n => n === 2 ? -0 : NaN))(toArray());
+		const values = await items(1, 2, 3)(group(n => n === 2 ? -0 : NaN))(toArray());
 
 		expect(values).toEqual([[NaN, [1, 3]], [0, [2]]]);
 
@@ -72,7 +72,7 @@ describe("group()", () => {
 
 	it("should group items under boolean keys", async () => {
 
-		const values = await items([1, 2, 3, 4])(group(n => n%2 === 1))(toArray());
+		const values = await items(1, 2, 3, 4)(group(n => n%2 === 1))(toArray());
 
 		expect(values).toEqual([[true, [1, 3]], [false, [2, 4]]]);
 
@@ -80,7 +80,7 @@ describe("group()", () => {
 
 	it("should group items under nullish keys", async () => {
 
-		const values = await items([1, 2, 3])(group(n => n === 2 ? null : undefined))(toArray());
+		const values = await items(1, 2, 3)(group(n => n === 2 ? null : undefined))(toArray());
 
 		expect(values).toEqual([[undefined, [1, 3]], [null, [2]]]);
 

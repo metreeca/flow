@@ -24,7 +24,7 @@ describe("count()", () => {
 
 	it("should count all items in stream", async () => {
 
-		const result = await items([1, 2, 3, 4, 5])(count());
+		const result = await items(1, 2, 3, 4, 5)(count());
 
 		expect(result).toBe(5);
 
@@ -32,7 +32,7 @@ describe("count()", () => {
 
 	it("should return zero for empty stream", async () => {
 
-		const result = await items([] as number[])(count());
+		const result = await items<number>()(count());
 
 		expect(result).toBe(0);
 
@@ -40,7 +40,7 @@ describe("count()", () => {
 
 	it("should count items after filtering", async () => {
 
-		const result = await items([1, 2, 3, 4, 5, 6])(filter(x => x%2 === 0))(count());
+		const result = await items(1, 2, 3, 4, 5, 6)(filter(x => x%2 === 0))(count());
 
 		expect(result).toBe(3);
 
@@ -56,7 +56,7 @@ describe("count()", () => {
 
 	it("should count items after mapping", async () => {
 
-		const result = await items([1, 2, 3])(map(x => x*2))(count());
+		const result = await items(1, 2, 3)(map(x => x*2))(count());
 
 		expect(result).toBe(3);
 

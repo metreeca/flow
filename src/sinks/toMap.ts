@@ -59,7 +59,7 @@ const readonly = () => { throw new TypeError("unsupported mutation of immutable 
  *
  * ```typescript
  * await pipe(
- *   (items([{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }]))
+ *   (items({ id: 1, name: "Alice" }, { id: 2, name: "Bob" }))
  *   (toMap(x => x.id))
  * );  // Map(2) { 1 => { id: 1, name: "Alice" }, 2 => { id: 2, name: "Bob" } }
  * ```
@@ -90,7 +90,7 @@ export function toMap<V, K>(
  *
  * ```typescript
  * await pipe(
- *   (items([{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }]))
+ *   (items({ id: 1, name: "Alice" }, { id: 2, name: "Bob" }))
  *   (toMap(x => x.id, x => x.name))
  * );  // Map(2) { 1 => "Alice", 2 => "Bob" }
  * ```

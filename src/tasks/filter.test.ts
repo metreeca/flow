@@ -24,7 +24,7 @@ describe("filter()", () => {
 
 	it("should filter items by predicate", async () => {
 
-		const values = await items([1, 2, 3, 4, 5])(filter(x => x%2 === 0))(toArray());
+		const values = await items(1, 2, 3, 4, 5)(filter(x => x%2 === 0))(toArray());
 
 		expect(values).toEqual([2, 4]);
 
@@ -32,7 +32,7 @@ describe("filter()", () => {
 
 	it("should support async predicates", async () => {
 
-		const values = await items([1, 2, 3, 4, 5])(filter(async x => {
+		const values = await items(1, 2, 3, 4, 5)(filter(async x => {
 			await Promise.resolve();
 			return x > 2;
 		}))(toArray());
@@ -43,7 +43,7 @@ describe("filter()", () => {
 
 	it("should handle empty results", async () => {
 
-		const values = await items([1, 2, 3])(filter(() => false))(toArray());
+		const values = await items(1, 2, 3)(filter(() => false))(toArray());
 
 		expect(values).toEqual([]);
 
@@ -51,7 +51,7 @@ describe("filter()", () => {
 
 	it("should treat undefined as false", async () => {
 
-		const values = await items([1, 2, 3, 4, 5])(filter(x => x > 3 ? true : undefined))(toArray());
+		const values = await items(1, 2, 3, 4, 5)(filter(x => x > 3 ? true : undefined))(toArray());
 
 		expect(values).toEqual([4, 5]);
 
@@ -59,7 +59,7 @@ describe("filter()", () => {
 
 	it("should handle async predicates returning undefined", async () => {
 
-		const values = await items([1, 2, 3, 4, 5])(filter(async x => {
+		const values = await items(1, 2, 3, 4, 5)(filter(async x => {
 			await Promise.resolve();
 			return x%2 === 0 ? true : undefined;
 		}))(toArray());

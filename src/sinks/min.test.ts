@@ -25,7 +25,7 @@ describe("min()", () => {
 
 	it("should select the least item in stream", async () => {
 
-		const result = await items([3, 1, 4, 1, 5])(min());
+		const result = await items(3, 1, 4, 1, 5)(min());
 
 		expect(result).toBe(1);
 
@@ -33,7 +33,7 @@ describe("min()", () => {
 
 	it("should return undefined for empty stream", async () => {
 
-		const result = await items([] as number[])(min());
+		const result = await items<number>()(min());
 
 		expect(result).toBeUndefined();
 
@@ -41,7 +41,7 @@ describe("min()", () => {
 
 	it("should return the only item of a singleton stream", async () => {
 
-		const result = await items([42])(min());
+		const result = await items(42)(min());
 
 		expect(result).toBe(42);
 
@@ -49,7 +49,7 @@ describe("min()", () => {
 
 	it("should select the least of negative and fractional items", async () => {
 
-		const result = await items([1.5, -2.5, 3])(min());
+		const result = await items(1.5, -2.5, 3)(min());
 
 		expect(result).toBe(-2.5);
 
@@ -57,7 +57,7 @@ describe("min()", () => {
 
 	it("should select the least item lexicographically", async () => {
 
-		const result = await items(["cherry", "apple", "banana"])(min());
+		const result = await items("cherry", "apple", "banana")(min());
 
 		expect(result).toBe("apple");
 
@@ -65,7 +65,7 @@ describe("min()", () => {
 
 	it("should select the least item after filtering", async () => {
 
-		const result = await items([1, 2, 3, 4, 5, 6])(filter(x => x%2 === 0))(min());
+		const result = await items(1, 2, 3, 4, 5, 6)(filter(x => x%2 === 0))(min());
 
 		expect(result).toBe(2);
 
@@ -83,11 +83,11 @@ describe("min()", () => {
 
 		it("should use selector to extract ranking key", async () => {
 
-			const result = await items([
+			const result = await items(
 				{ id: 3, name: "c" },
 				{ id: 1, name: "a" },
 				{ id: 2, name: "b" }
-			])(min(by(item => item.id)));
+			)(min(by(item => item.id)));
 
 			expect(result).toEqual({ id: 1, name: "a" });
 
@@ -95,11 +95,11 @@ describe("min()", () => {
 
 		it("should support custom comparators", async () => {
 
-			const result = await items([
+			const result = await items(
 				{ id: 3, name: "c" },
 				{ id: 1, name: "a" },
 				{ id: 2, name: "b" }
-			])(min((a, b) => a.id-b.id));
+			)(min((a, b) => a.id-b.id));
 
 			expect(result).toEqual({ id: 1, name: "a" });
 
@@ -107,7 +107,7 @@ describe("min()", () => {
 
 		it("should invert ranking with a descending comparator", async () => {
 
-			const result = await items([3, 1, 4, 1, 5])(min(descending));
+			const result = await items(3, 1, 4, 1, 5)(min(descending));
 
 			expect(result).toBe(5);
 
@@ -120,7 +120,7 @@ describe("min()", () => {
 		const first = { key: 1, value: "a" };
 		const other = { key: 1, value: "b" };
 
-		const result = await items([first, other])(min(by(item => item.key)));
+		const result = await items(first, other)(min(by(item => item.key)));
 
 		expect(result).toBe(first);
 

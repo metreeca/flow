@@ -15,7 +15,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { items } from "../feeds/index.js";
+import { data, items } from "../feeds/index.js";
 import { toObject } from "./toObject.js";
 
 
@@ -23,11 +23,11 @@ describe("toObject()", () => {
 
 	it("should collect items into object using key selector", async () => {
 
-		const values = await items([
+		const values = await items(
 			{ id: 1, name: "a" },
 			{ id: 2, name: "b" },
 			{ id: 3, name: "c" }
-		])(toObject(item => item.id));
+		)(toObject(item => item.id));
 
 		expect(values).toEqual({
 			1: { id: 1, name: "a" },
@@ -39,11 +39,11 @@ describe("toObject()", () => {
 
 	it("should collect items into object using key and value selectors", async () => {
 
-		const values = await items([
+		const values = await items(
 			{ id: 1, name: "a" },
 			{ id: 2, name: "b" },
 			{ id: 3, name: "c" }
-		])(toObject(item => item.id, item => item.name));
+		)(toObject(item => item.id, item => item.name));
 
 		expect(values).toEqual({ 1: "a", 2: "b", 3: "c" });
 
@@ -51,10 +51,10 @@ describe("toObject()", () => {
 
 	it("should support async key selectors", async () => {
 
-		const values = await items([
+		const values = await items(
 			{ id: 1, name: "a" },
 			{ id: 2, name: "b" }
-		])(toObject(async item => {
+		)(toObject(async item => {
 			await Promise.resolve();
 			return item.id;
 		}));
@@ -68,10 +68,10 @@ describe("toObject()", () => {
 
 	it("should support async value selectors", async () => {
 
-		const values = await items([
+		const values = await items(
 			{ id: 1, name: "a" },
 			{ id: 2, name: "b" }
-		])(toObject(
+		)(toObject(
 			item => item.id,
 			async item => {
 				await Promise.resolve();
@@ -88,7 +88,7 @@ describe("toObject()", () => {
 		const one = Symbol("one");
 		const two = Symbol("two");
 
-		const values = await items([1, 2])(toObject(n => n === 1 ? one : two));
+		const values = await items(1, 2)(toObject(n => n === 1 ? one : two));
 
 		expect(values[one]).toBe(1);
 		expect(values[two]).toBe(2);
@@ -97,7 +97,7 @@ describe("toObject()", () => {
 
 	it("should collect reserved keys as own properties", async () => {
 
-		const values = await items(["__proto__"])(toObject(k => k, () => "polluted"));
+		const values = await items("__proto__")(toObject(k => k, () => "polluted"));
 
 		expect(Object.hasOwn(values, "__proto__")).toBe(true);
 		expect(Object.getPrototypeOf(values)).toBe(Object.prototype);
@@ -106,24 +106,24 @@ describe("toObject()", () => {
 
 	it("should report duplicate keys", async () => {
 
-		await expect(items([
+		await expect(items(
 			{ id: 1, name: "a" },
 			{ id: 2, name: "b" },
 			{ id: 1, name: "c" }
-		])(toObject(item => item.id, item => item.name))).rejects.toThrow("duplicate key <1>");
+		)(toObject(item => item.id, item => item.name))).rejects.toThrow("duplicate key <1>");
 
 	});
 
 	it("should report duplicate keys after property key coercion", async () => {
 
-		await expect(items<number | string>([1, "1"])(toObject(x => x)))
+		await expect(data<number | string>([1, "1"])(toObject(x => x)))
 			.rejects.toThrow("duplicate key <1>");
 
 	});
 
 	it("should handle empty stream", async () => {
 
-		const values = await items([] as { id: number; name: string }[])(toObject(item => item.id));
+		const values = await items<{ id: number; name: string }>()(toObject(item => item.id));
 
 		expect(values).toEqual({});
 
@@ -131,7 +131,7 @@ describe("toObject()", () => {
 
 	it("should preserve insertion order", async () => {
 
-		const values = await items(["c", "a", "b"])(toObject(x => x));
+		const values = await items("c", "a", "b")(toObject(x => x));
 
 		expect(Object.keys(values)).toEqual(["c", "a", "b"]);
 
@@ -139,7 +139,7 @@ describe("toObject()", () => {
 
 	it("should deeply freeze the collected object", async () => {
 
-		const values = await items([{ id: 1, nested: { value: 1 } }])(toObject(item => item.id));
+		const values = await items({ id: 1, nested: { value: 1 } })(toObject(item => item.id));
 
 		expect(Object.isFrozen(values)).toBeTruthy();
 		expect(Object.isFrozen(values[1])).toBeTruthy();

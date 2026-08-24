@@ -45,25 +45,25 @@ import { Task } from "../index.js";
  *
  * ```typescript
  * await pipe(
- *   (items([3, 1, 2]))
+ *   (items(3, 1, 2))
  *   (sort())
  *   (toArray())
  * );  // [1, 2, 3]
  *
  * await pipe(
- *   (items([3, 1, 2]))
+ *   (items(3, 1, 2))
  *   (sort(descending))
  *   (toArray())
  * );  // [3, 2, 1]
  *
  * await pipe(
- *   (items([{ age: 30 }, { age: 20 }]))
+ *   (items({ age: 30 }, { age: 20 }))
  *   (sort(by(x => x.age)))
  *   (toArray())
  * );  // [{ age: 20 }, { age: 30 }]
  *
  * await pipe(
- *   (items(["Émile", "Alice"]))
+ *   (items("Émile", "Alice"))
  *   (sort((a, b) => a.localeCompare(b)))
  *   (toArray())
  * );  // ["Alice", "Émile"]

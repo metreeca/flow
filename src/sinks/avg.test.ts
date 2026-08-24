@@ -24,7 +24,7 @@ describe("avg()", () => {
 
 	it("should average all items in stream", async () => {
 
-		const result = await items([1, 2, 3, 4])(avg());
+		const result = await items(1, 2, 3, 4)(avg());
 
 		expect(result).toBe(2.5);
 
@@ -32,7 +32,7 @@ describe("avg()", () => {
 
 	it("should return undefined for empty stream", async () => {
 
-		const result = await items([] as number[])(avg());
+		const result = await items<number>()(avg());
 
 		expect(result).toBeUndefined();
 
@@ -40,7 +40,7 @@ describe("avg()", () => {
 
 	it("should return the only item of a singleton stream", async () => {
 
-		const result = await items([42])(avg());
+		const result = await items(42)(avg());
 
 		expect(result).toBe(42);
 
@@ -48,7 +48,7 @@ describe("avg()", () => {
 
 	it("should average negative items", async () => {
 
-		const result = await items([-1, -2, -6])(avg());
+		const result = await items(-1, -2, -6)(avg());
 
 		expect(result).toBe(-3);
 
@@ -56,7 +56,7 @@ describe("avg()", () => {
 
 	it("should average items after filtering", async () => {
 
-		const result = await items([1, 2, 3, 4, 5, 6])(filter(x => x%2 === 0))(avg());
+		const result = await items(1, 2, 3, 4, 5, 6)(filter(x => x%2 === 0))(avg());
 
 		expect(result).toBe(4);
 
@@ -66,7 +66,7 @@ describe("avg()", () => {
 
 		it("should average items dividing evenly", async () => {
 
-			const result = await items([2n, 4n])(avg());
+			const result = await items(2n, 4n)(avg());
 
 			expect(result).toBe(3n);
 
@@ -74,7 +74,7 @@ describe("avg()", () => {
 
 		it("should round means down when the remainder falls below half", async () => {
 
-			const result = await items([1n, 2n, 4n])(avg());
+			const result = await items(1n, 2n, 4n)(avg());
 
 			expect(result).toBe(2n);
 
@@ -82,7 +82,7 @@ describe("avg()", () => {
 
 		it("should round means up when the remainder rises above half", async () => {
 
-			const result = await items([1n, 2n, 5n])(avg());
+			const result = await items(1n, 2n, 5n)(avg());
 
 			expect(result).toBe(3n);
 
@@ -90,7 +90,7 @@ describe("avg()", () => {
 
 		it("should round positive halves away from zero", async () => {
 
-			const result = await items([1n, 2n])(avg());
+			const result = await items(1n, 2n)(avg());
 
 			expect(result).toBe(2n);
 
@@ -98,7 +98,7 @@ describe("avg()", () => {
 
 		it("should round negative halves away from zero", async () => {
 
-			const result = await items([-1n, -2n])(avg());
+			const result = await items(-1n, -2n)(avg());
 
 			expect(result).toBe(-2n);
 
@@ -106,7 +106,7 @@ describe("avg()", () => {
 
 		it("should average beyond the safe integer range", async () => {
 
-			const result = await items([2n**64n, 2n**64n])(avg());
+			const result = await items(2n**64n, 2n**64n)(avg());
 
 			expect(result).toBe(2n**64n);
 
@@ -116,7 +116,7 @@ describe("avg()", () => {
 
 	it("should report streams mixing number and bigint items", async () => {
 
-		await expect(items([1, 2n])(avg())).rejects.toThrow(TypeError);
+		await expect(items<number | bigint>(1, 2n)(avg())).rejects.toThrow(TypeError);
 
 	});
 

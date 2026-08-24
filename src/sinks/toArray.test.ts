@@ -23,7 +23,7 @@ describe("toArray()", () => {
 
 	it("should collect all items into array", async () => {
 
-		const values = await items([1, 2, 3])(toArray());
+		const values = await items(1, 2, 3)(toArray());
 
 		expect(values).toEqual([1, 2, 3]);
 
@@ -31,7 +31,7 @@ describe("toArray()", () => {
 
 	it("should handle empty stream", async () => {
 
-		const values = await items([] as number[])(toArray());
+		const values = await items<number>()(toArray());
 
 		expect(values).toEqual([]);
 
@@ -39,7 +39,7 @@ describe("toArray()", () => {
 
 	it("should deeply freeze the collected array", async () => {
 
-		const values = await items([{ nested: { value: 1 } }])(toArray());
+		const values = await items({ nested: { value: 1 } })(toArray());
 
 		expect(Object.isFrozen(values)).toBeTruthy();
 		expect(Object.isFrozen(values[0])).toBeTruthy();
@@ -51,7 +51,7 @@ describe("toArray()", () => {
 
 		const item = { nested: { value: 1 } };
 
-		const values = await items([item])(toArray());
+		const values = await items(item)(toArray());
 
 		expect(values[0]).not.toBe(item);
 		expect(values[0]).toEqual(item);
@@ -62,7 +62,7 @@ describe("toArray()", () => {
 
 		const item = new Date();
 
-		const values = await items([item])(toArray());
+		const values = await items(item)(toArray());
 
 		expect(values[0]).toBe(item);
 

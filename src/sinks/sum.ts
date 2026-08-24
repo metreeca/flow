@@ -38,17 +38,17 @@ import { Sink } from "../index.js";
  *
  * ```typescript
  * await pipe(
- *   (items([1, 2, 3, 4, 5]))
+ *   (items(1, 2, 3, 4, 5))
  *   (sum())
  * );  // 15
  *
  * await pipe(
- *   (items([1n, 2n, 3n]))
+ *   (items(1n, 2n, 3n))
  *   (sum())
  * );  // 6n
  *
  * await pipe(
- *   (items([] as number[]))
+ *   (items<number>())
  *   (sum())
  * ) ?? 0;  // 0
  * ```

@@ -75,7 +75,7 @@ import { Task } from "../index.js";
  *
  * ```typescript
  * await pipe(
- *   (items(ids))
+ *   (data(ids))
  *   (concurrent(8, retrieve()))
  *   (toArray())
  * );  // 8 runs, at most 8 items in flight

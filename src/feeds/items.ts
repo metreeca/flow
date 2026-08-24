@@ -14,56 +14,20 @@
  * limitations under the License.
  */
 
-import { isPromise } from "@metreeca/core";
-import type { Awaitable } from "@metreeca/core/async";
-import { Data, Pipe, Sink, Task } from "../index.js";
-import { flatten } from "../index.core.js";
+import { Pipe } from "../index.js";
+import { data } from "./data.js";
 
 
 /**
- * Creates a pipe from a data source.
+ * Creates a pipe from a list of values.
  *
- * The feed is a {@link index.Data Data} value, normalised into the stream according to its shape, with `undefined`
- * values dropped as they enter it. A promised feed is awaited when the stream is consumed, deferring retrieval from
- * APIs, databases or any other asynchronous source until then. This is also the adapter custom feeds wrap their
- * async generators in, to enter the pipeline under the same guarantees.
- *
- * @typeParam V The type of items in the stream
- *
- * @param feed The source to open the stream from
- *
- * @returns A pipe carrying the items contributed by `feed`
- *
- * @example
- *
- * ```typescript
- * await pipe(
- *   (items([1, 2, 3]))
- *   (toArray())
- * );  // [1, 2, 3]
- *
- * await pipe(
- *   (items(new Set([1, 2, 3])))
- *   (toArray())
- * );  // [1, 2, 3]
- *
- * await pipe(
- *   (items(fetchReport()))
- *   (toArray())
- * );  // the items of the awaited report
- * ```
- */
-export function items<V>(feed: Awaitable<Data<V>>): Pipe<V>;
-
-/**
- * Creates a pipe from a list of scalar values.
- *
- * Each value is contributed to the stream as a single item, in argument order, without being expanded further;
- * `undefined` values are dropped as they enter it.
+ * Each argument is contributed to the stream as a single item, in argument order, whatever its shape and without
+ * being expanded further; `undefined` arguments are dropped as they enter it and an empty argument list opens an
+ * empty stream.
  *
  * @typeParam V The type of items in the stream
  *
- * @param values The two or more scalar values to open the stream from
+ * @param values The values to open the stream from
  *
  * @returns A pipe carrying `values` in argument order
  *
@@ -80,40 +44,11 @@ export function items<V>(feed: Awaitable<Data<V>>): Pipe<V>;
  *   (toArray())
  * );  // [[1, 2], [3, 4]], as each argument is contributed whole rather than expanded
  * ```
+ *
+ * @see {@link data} to open a stream from a source expanded according to its shape
  */
-export function items<V>(...values: readonly [V, V, ...V[]]): Pipe<V>;
+export function items<V>(...values: V[]): Pipe<V> {
 
-/**
- * Creates a pipe from a data source or from multiple scalar values.
- */
-export function items<V>(feed: Awaitable<Data<V>>, ...values: V[]): Pipe<V> {
-
-	async function* generator() {
-		for await (const item of flatten(values.length > 0 ? [await feed, ...values] as V[] : await feed)) {
-			if ( item !== undefined ) {
-				yield item;
-			}
-		}
-	}
-
-	function pipe(): AsyncIterable<V>;
-	function pipe<R>(task: Task<V, R>): Pipe<R>;
-	function pipe<R>(sink: Sink<V, R>): Promise<R>;
-	function pipe<R>(step?: Task<V, R> | Sink<V, R>): unknown {
-
-		if ( step ) {
-
-			const result = step(generator());
-
-			return isPromise(result) ? result : items(result);
-
-		} else {
-
-			return generator();
-
-		}
-	}
-
-	return pipe;
+	return data(values);
 
 }

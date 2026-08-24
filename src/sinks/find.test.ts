@@ -15,7 +15,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { items } from "../feeds/index.js";
+import { data, items } from "../feeds/index.js";
 import { find } from "./find.js";
 
 
@@ -23,7 +23,7 @@ describe("find()", () => {
 
 	it("should find first matching item", async () => {
 
-		const result = await items([1, 2, 3, 4, 5])(find(x => x > 2));
+		const result = await items(1, 2, 3, 4, 5)(find(x => x > 2));
 
 		expect(result).toBe(3);
 
@@ -31,7 +31,7 @@ describe("find()", () => {
 
 	it("should return undefined when no match", async () => {
 
-		const result = await items([1, 2, 3])(find(x => x > 10));
+		const result = await items(1, 2, 3)(find(x => x > 10));
 
 		expect(result).toBeUndefined();
 
@@ -39,7 +39,7 @@ describe("find()", () => {
 
 	it("should support async predicates", async () => {
 
-		const result = await items([1, 2, 3, 4])(find(async x => {
+		const result = await items(1, 2, 3, 4)(find(async x => {
 			await Promise.resolve();
 			return x === 3;
 		}));
@@ -53,7 +53,7 @@ describe("find()", () => {
 		let generatorCalls = 0;
 		let iteratorReturned = false;
 
-		const infiniteGenerator = items((async function* () {
+		const infiniteGenerator = data((async function* () {
 			try {
 				let i = 0;
 				while ( true ) {

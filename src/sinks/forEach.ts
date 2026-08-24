@@ -34,7 +34,7 @@ import { Sink } from "../index.js";
  *
  * ```typescript
  * await pipe(
- *   (items([1, 2, 3]))
+ *   (items(1, 2, 3))
  *   (forEach(n => console.log(n)))
  * );  // logs 1, 2, 3; 3
  * ```

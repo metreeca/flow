@@ -35,7 +35,7 @@ import { Sink } from "../index.js";
  *
  * ```typescript
  * await pipe(
- *   (items([1, 2, 3, 4, 5]))
+ *   (items(1, 2, 3, 4, 5))
  *   (reduce((total, n) => total+n))
  * );  // 15
  * ```
@@ -60,7 +60,7 @@ export function reduce<V>(reducer: (accumulator: V, item: V) => Awaitable<V>): S
  *
  * ```typescript
  * await pipe(
- *   (items([1, 2, 3, 4, 5]))
+ *   (items(1, 2, 3, 4, 5))
  *   (reduce((total, n) => total+n, 10))
  * );  // 25
  * ```

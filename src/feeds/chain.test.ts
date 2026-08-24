@@ -19,6 +19,7 @@ import { Pipe, pipe } from "../index.js";
 import { reduce, toArray } from "../sinks/index.js";
 import { filter, map } from "../tasks/index.js";
 import { chain } from "./chain.js";
+import { data } from "./data.js";
 import { items } from "./items.js";
 import { range } from "./range.js";
 
@@ -62,7 +63,7 @@ describe("chain()", () => {
 		const order: string[] = [];
 
 		function tracked(name: string, values: number[]): Pipe<number> {
-			return items((async function* () {
+			return data((async function* () {
 				for (const item of values) {
 					order.push(`${name}:${item}`);
 					yield item;
@@ -94,7 +95,7 @@ describe("chain()", () => {
 
 	it("should accept mixed Data<V> types", async () => {
 
-		const values = await chain([1, 2], items([3, 4]), 5)(toArray());
+		const values = await chain([1, 2], items(3, 4), 5)(toArray());
 
 		expect(values).toEqual([1, 2, 3, 4, 5]);
 
@@ -218,7 +219,7 @@ describe("chain()", () => {
 			Promise.resolve([3, 4]),
 			asyncGen(),
 			new Set([5, 6]),
-			Promise.resolve(items([7, 8])),
+			Promise.resolve(items(7, 8)),
 			9
 		)(toArray());
 

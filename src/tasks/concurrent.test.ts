@@ -17,7 +17,7 @@
 import { sleep } from "@metreeca/core/async";
 import { ascending } from "@metreeca/core/order";
 import { describe, expect, it } from "vitest";
-import { items } from "../feeds/index.js";
+import { data, items } from "../feeds/index.js";
 import { Task } from "../index.js";
 import { toArray } from "../sinks/index.js";
 import { flatMap } from "./flatMap.js";
@@ -102,7 +102,7 @@ describe("sequential concurrent()", () => {
 
 		const { task, peak } = busy();
 
-		const values = await items([1, 2, 3, 4])(concurrent(1, task))(toArray());
+		const values = await items(1, 2, 3, 4)(concurrent(1, task))(toArray());
 
 		expect(values).toEqual([2, 4, 6, 8]);
 		expect(peak()).toBe(1);
@@ -113,7 +113,7 @@ describe("sequential concurrent()", () => {
 
 		const { task } = busy(item => (5-item)*20); // reverse delays
 
-		const values = await items([1, 2, 3, 4])(concurrent(1, task))(toArray());
+		const values = await items(1, 2, 3, 4)(concurrent(1, task))(toArray());
 
 		expect(values).toEqual([2, 4, 6, 8]);
 
@@ -123,7 +123,7 @@ describe("sequential concurrent()", () => {
 
 		const { task, peak } = busy();
 
-		const values = await items([1, 2, 3])(concurrent(0, task))(toArray());
+		const values = await items(1, 2, 3)(concurrent(0, task))(toArray());
 
 		expect(values).toEqual([2, 4, 6]);
 		expect(peak()).toBe(1);
@@ -138,7 +138,7 @@ describe("overlapping concurrent()", () => {
 
 		const { task, peak } = busy();
 
-		const values = await items([1, 2, 3, 4, 5])(concurrent(2, task))(toArray());
+		const values = await items(1, 2, 3, 4, 5)(concurrent(2, task))(toArray());
 
 		expect([...values].sort(ascending)).toEqual([2, 4, 6, 8, 10]);
 		expect(peak()).toBe(2);
@@ -149,7 +149,7 @@ describe("overlapping concurrent()", () => {
 
 		const { task, peak } = busy();
 
-		const values = await items([1, 2, 3, 4, 5, 6, 7, 8])(concurrent(8, task))(toArray());
+		const values = await items(1, 2, 3, 4, 5, 6, 7, 8)(concurrent(8, task))(toArray());
 
 		expect([...values].sort(ascending)).toEqual([2, 4, 6, 8, 10, 12, 14, 16]);
 		expect(peak()).toBe(8);
@@ -169,7 +169,7 @@ describe("overlapping concurrent()", () => {
 			}
 		};
 
-		const values = await items([1, 2, 3, 4, 5])(concurrent(5, task))(toArray());
+		const values = await items(1, 2, 3, 4, 5)(concurrent(5, task))(toArray());
 
 		expect([...values].sort(ascending)).toEqual([2, 4, 6, 8, 10]);
 		expect(Math.max(...starts)-Math.min(...starts)).toBeLessThan(10);
@@ -180,7 +180,7 @@ describe("overlapping concurrent()", () => {
 
 		const { task } = busy(item => (5-item)*20); // reverse delays
 
-		const values = await items([1, 2, 3, 4])(concurrent(4, task))(toArray());
+		const values = await items(1, 2, 3, 4)(concurrent(4, task))(toArray());
 
 		expect(values).toEqual([8, 6, 4, 2]);
 
@@ -197,7 +197,7 @@ describe("overlapping concurrent()", () => {
 			return task(source);
 		};
 
-		const values = await items(slow([1, 2, 3, 4], 20))(concurrent(10, counted))(toArray());
+		const values = await data(slow([1, 2, 3, 4], 20))(concurrent(10, counted))(toArray());
 
 		expect([...values].sort(ascending)).toEqual([2, 4, 6, 8]);
 		expect(runs).toBe(10); // every run started, even though the source never keeps them all busy
@@ -208,7 +208,7 @@ describe("overlapping concurrent()", () => {
 
 		const { task } = busy();
 
-		const values = await items<number>([])(concurrent(4, task))(toArray());
+		const values = await items<number>()(concurrent(4, task))(toArray());
 
 		expect(values).toEqual([]);
 
@@ -230,7 +230,7 @@ describe("concurrent() task independence", () => {
 			}
 		};
 
-		const values = await items([1, 2, 3])(concurrent(3, task))(toArray());
+		const values = await items(1, 2, 3)(concurrent(3, task))(toArray());
 
 		expect([...processed].sort(ascending)).toEqual([1, 2, 3]);
 		expect([...values].sort(ascending)).toEqual([2, 4, 6]);
@@ -247,7 +247,7 @@ describe("concurrent() task independence", () => {
 			}
 		};
 
-		const values = await items([1, 2, 3])(concurrent(2, task))(toArray());
+		const values = await items(1, 2, 3)(concurrent(2, task))(toArray());
 
 		expect([...values].sort(ascending)).toEqual([1, 2, 3, 10, 20, 30]);
 
@@ -262,7 +262,7 @@ describe("concurrent() task independence", () => {
 			}
 		};
 
-		const values = await items([1, 2, 3, 4])(concurrent(2, task))(toArray());
+		const values = await items(1, 2, 3, 4)(concurrent(2, task))(toArray());
 
 		expect([...values].sort(ascending)).toEqual([2, 4]);
 
@@ -277,7 +277,7 @@ describe("concurrent() task independence", () => {
 			}
 		};
 
-		const values = await items([1, 2, 3, 4])(concurrent(2, task))(toArray());
+		const values = await items(1, 2, 3, 4)(concurrent(2, task))(toArray());
 
 		expect([...values].sort(ascending)).toEqual([2, 4]);
 
@@ -297,7 +297,7 @@ describe("concurrent() task independence", () => {
 
 		};
 
-		const values = await items([1, 2, 3, 4])(concurrent(2, task))(toArray());
+		const values = await items(1, 2, 3, 4)(concurrent(2, task))(toArray());
 
 		expect([...values].sort(ascending)).toEqual([1, 1, 2, 2]); // per-run counters, not a stream-wide one
 
@@ -314,7 +314,7 @@ describe("concurrent() task independence", () => {
 			}
 		};
 
-		const values = await items([1, 2])(concurrent(2, task))(toArray());
+		const values = await items(1, 2)(concurrent(2, task))(toArray());
 
 		expect([...values].sort(ascending)).toEqual([
 			100, 101, 102, 103, 104, 105, 106, 107, 108, 109,
@@ -337,7 +337,7 @@ describe("concurrent() error handling", () => {
 			}
 		};
 
-		await expect(items([1, 2, 3, 4])(concurrent(2, task))(toArray())).rejects.toThrow("task failed");
+		await expect(items(1, 2, 3, 4)(concurrent(2, task))(toArray())).rejects.toThrow("task failed");
 
 	});
 
@@ -351,7 +351,7 @@ describe("concurrent() error handling", () => {
 			}
 		};
 
-		await expect(items([1, 2, 3])(concurrent(2, task))(toArray())).rejects.toThrow("yield failed");
+		await expect(items(1, 2, 3)(concurrent(2, task))(toArray())).rejects.toThrow("yield failed");
 
 	});
 
@@ -365,7 +365,7 @@ describe("concurrent() error handling", () => {
 
 		const { task } = busy(() => 1);
 
-		await expect(items(failing())(concurrent(2, task))(toArray())).rejects.toThrow("source failed");
+		await expect(data(failing())(concurrent(2, task))(toArray())).rejects.toThrow("source failed");
 
 	});
 
@@ -382,7 +382,7 @@ describe("concurrent() error handling", () => {
 			}
 		};
 
-		const iterator = items([1, 2, 3, 4])(concurrent(2, task))()[Symbol.asyncIterator]();
+		const iterator = items(1, 2, 3, 4)(concurrent(2, task))()[Symbol.asyncIterator]();
 
 		process.on("unhandledRejection", collect);
 
@@ -427,7 +427,7 @@ describe("concurrent() error handling", () => {
 
 		};
 
-		await expect(items(source())(concurrent(3, failing))(toArray())).rejects.toThrow("run failed");
+		await expect(data(source())(concurrent(3, failing))(toArray())).rejects.toThrow("run failed");
 
 		await sleep(20); // leave any started run time to pull
 
@@ -445,7 +445,7 @@ describe("concurrent() error handling", () => {
 			}
 		};
 
-		await expect(items(brittle([1, 2, 3, 4]))(concurrent(2, task))(toArray())).rejects.toThrow("task failed");
+		await expect(data(brittle([1, 2, 3, 4]))(concurrent(2, task))(toArray())).rejects.toThrow("task failed");
 
 	});
 
@@ -453,7 +453,7 @@ describe("concurrent() error handling", () => {
 
 		const { task } = busy(() => 10);
 
-		const iterator = items(brittle([1, 2, 3, 4]))(concurrent(2, task))()[Symbol.asyncIterator]();
+		const iterator = data(brittle([1, 2, 3, 4]))(concurrent(2, task))()[Symbol.asyncIterator]();
 
 		await iterator.next();
 
@@ -479,7 +479,7 @@ describe("concurrent() error handling", () => {
 			}
 		};
 
-		await expect(items([1, 2, 3])(concurrent(3, task))(toArray())).rejects.toThrow("task failed");
+		await expect(items(1, 2, 3)(concurrent(3, task))(toArray())).rejects.toThrow("task failed");
 
 		expect(settled).toBe(started);
 
@@ -503,7 +503,7 @@ describe("concurrent() early termination", () => {
 
 		const { task } = busy(() => 10);
 
-		const iterator = items(source())(concurrent(2, task))()[Symbol.asyncIterator]();
+		const iterator = data(source())(concurrent(2, task))()[Symbol.asyncIterator]();
 
 		await iterator.next();
 		await iterator.return?.();
@@ -527,7 +527,7 @@ describe("concurrent() early termination", () => {
 			}
 		};
 
-		const iterator = items([1, 2, 3, 4, 5])(concurrent(2, task))()[Symbol.asyncIterator]();
+		const iterator = items(1, 2, 3, 4, 5)(concurrent(2, task))()[Symbol.asyncIterator]();
 
 		await iterator.next();
 		await iterator.return?.();
@@ -549,7 +549,7 @@ describe("concurrent() early termination", () => {
 
 		const { task } = busy(() => 10);
 
-		const iterator = items(source())(concurrent(2, task))()[Symbol.asyncIterator]();
+		const iterator = data(source())(concurrent(2, task))()[Symbol.asyncIterator]();
 
 		await iterator.next();
 		await iterator.return?.();
@@ -564,7 +564,7 @@ describe("concurrent() composition", () => {
 
 	it("should wrap map()", async () => {
 
-		const values = await items([1, 2, 3, 4])(concurrent(2, map(async (item: number) => {
+		const values = await items(1, 2, 3, 4)(concurrent(2, map(async (item: number) => {
 			await sleep(10);
 			return item*2;
 		})))(toArray());
@@ -575,7 +575,7 @@ describe("concurrent() composition", () => {
 
 	it("should wrap flatMap()", async () => {
 
-		const values = await items([1, 2, 3])(concurrent(2, flatMap(async (item: number) => {
+		const values = await items(1, 2, 3)(concurrent(2, flatMap(async (item: number) => {
 			await sleep(10);
 			return [item, item*2];
 		})))(toArray());
@@ -587,11 +587,11 @@ describe("concurrent() composition", () => {
 	it("should complete faster than sequential processing", async () => {
 
 		const sequentialStart = Date.now();
-		await items([1, 2, 3, 4])(concurrent(1, busy(() => 50).task))(toArray());
+		await items(1, 2, 3, 4)(concurrent(1, busy(() => 50).task))(toArray());
 		const sequentialTime = Date.now()-sequentialStart;
 
 		const concurrentStart = Date.now();
-		await items([1, 2, 3, 4])(concurrent(4, busy(() => 50).task))(toArray());
+		await items(1, 2, 3, 4)(concurrent(4, busy(() => 50).task))(toArray());
 		const concurrentTime = Date.now()-concurrentStart;
 
 		expect(sequentialTime).toBeGreaterThanOrEqual(190);

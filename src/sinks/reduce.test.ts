@@ -23,7 +23,7 @@ describe("reduce()", () => {
 
 	it("should reduce with initial value", async () => {
 
-		const sum = await items([1, 2, 3, 4])(reduce((acc, x) => acc+x, 0));
+		const sum = await items(1, 2, 3, 4)(reduce((acc, x) => acc+x, 0));
 
 		expect(sum).toBe(10);
 
@@ -31,7 +31,7 @@ describe("reduce()", () => {
 
 	it("should reduce without initial value", async () => {
 
-		const sum = await items([1, 2, 3, 4])(reduce((acc, x) => acc+x));
+		const sum = await items(1, 2, 3, 4)(reduce((acc, x) => acc+x));
 
 		expect(sum).toBe(10);
 
@@ -39,7 +39,7 @@ describe("reduce()", () => {
 
 	it("should return undefined for empty stream without initial", async () => {
 
-		const result = await items([] as number[])(reduce((acc, x) => acc+x));
+		const result = await items<number>()(reduce((acc, x) => acc+x));
 
 		expect(result).toBeUndefined();
 
@@ -47,7 +47,7 @@ describe("reduce()", () => {
 
 	it("should return initial for empty stream with initial", async () => {
 
-		const result = await items([] as number[])(reduce((acc, x) => acc+x, 100));
+		const result = await items<number>()(reduce((acc, x) => acc+x, 100));
 
 		expect(result).toBe(100);
 
@@ -55,7 +55,7 @@ describe("reduce()", () => {
 
 	it("should support async reducers", async () => {
 
-		const sum = await items([1, 2, 3])(reduce(async (acc, x) => {
+		const sum = await items(1, 2, 3)(reduce(async (acc, x) => {
 			await Promise.resolve();
 			return acc+x;
 		}, 0));

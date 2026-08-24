@@ -18,6 +18,7 @@ import { describe, expect, it } from "vitest";
 import { Pipe, pipe } from "../index.js";
 import { reduce, toArray } from "../sinks/index.js";
 import { filter, map } from "../tasks/index.js";
+import { data } from "./data.js";
 import { items } from "./items.js";
 import { merge } from "./merge.js";
 import { range } from "./range.js";
@@ -46,7 +47,7 @@ describe("merge()", () => {
 		const cleanup: string[] = [];
 
 		function tracked(name: string): Pipe<number> {
-			return items((async function* () {
+			return data((async function* () {
 				try {
 					yield 1;
 					yield 2;
@@ -84,7 +85,7 @@ describe("merge()", () => {
 
 	it("should accept mixed Data<V> types", async () => {
 
-		const values = await merge([1, 2], items([3, 4]), 5)(toArray());
+		const values = await merge([1, 2], items(3, 4), 5)(toArray());
 
 		expect([...values].sort((a, b) => a-b)).toEqual([1, 2, 3, 4, 5]);
 
@@ -184,7 +185,7 @@ describe("merge()", () => {
 			Promise.resolve([3, 4]),
 			asyncGen(),
 			new Set([5, 6]),
-			Promise.resolve(items([7, 8])),
+			Promise.resolve(items(7, 8)),
 			9
 		)(toArray());
 

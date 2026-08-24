@@ -24,7 +24,7 @@ describe("skip()", () => {
 
 	it("should skip first n items", async () => {
 
-		const values = await items([1, 2, 3, 4, 5])(skip(2))(toArray());
+		const values = await items(1, 2, 3, 4, 5)(skip(2))(toArray());
 
 		expect(values).toEqual([3, 4, 5]);
 
@@ -32,7 +32,7 @@ describe("skip()", () => {
 
 	it("should skip all items when n >= length", async () => {
 
-		const values = await items([1, 2, 3])(skip(5))(toArray());
+		const values = await items(1, 2, 3)(skip(5))(toArray());
 
 		expect(values).toEqual([]);
 
@@ -40,7 +40,7 @@ describe("skip()", () => {
 
 	it("should skip zero items", async () => {
 
-		const values = await items([1, 2, 3])(skip(0))(toArray());
+		const values = await items(1, 2, 3)(skip(0))(toArray());
 
 		expect(values).toEqual([1, 2, 3]);
 
@@ -48,7 +48,7 @@ describe("skip()", () => {
 
 	it("should treat negative n as zero", async () => {
 
-		const values = await items([1, 2, 3])(skip(-5))(toArray());
+		const values = await items(1, 2, 3)(skip(-5))(toArray());
 
 		expect(values).toEqual([1, 2, 3]);
 

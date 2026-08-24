@@ -25,7 +25,7 @@ describe("max()", () => {
 
 	it("should select the greatest item in stream", async () => {
 
-		const result = await items([3, 1, 4, 1, 5])(max());
+		const result = await items(3, 1, 4, 1, 5)(max());
 
 		expect(result).toBe(5);
 
@@ -33,7 +33,7 @@ describe("max()", () => {
 
 	it("should return undefined for empty stream", async () => {
 
-		const result = await items([] as number[])(max());
+		const result = await items<number>()(max());
 
 		expect(result).toBeUndefined();
 
@@ -41,7 +41,7 @@ describe("max()", () => {
 
 	it("should return the only item of a singleton stream", async () => {
 
-		const result = await items([42])(max());
+		const result = await items(42)(max());
 
 		expect(result).toBe(42);
 
@@ -49,7 +49,7 @@ describe("max()", () => {
 
 	it("should select the greatest of negative and fractional items", async () => {
 
-		const result = await items([-1.5, -2.5, -3])(max());
+		const result = await items(-1.5, -2.5, -3)(max());
 
 		expect(result).toBe(-1.5);
 
@@ -57,7 +57,7 @@ describe("max()", () => {
 
 	it("should select the greatest item lexicographically", async () => {
 
-		const result = await items(["cherry", "apple", "banana"])(max());
+		const result = await items("cherry", "apple", "banana")(max());
 
 		expect(result).toBe("cherry");
 
@@ -65,7 +65,7 @@ describe("max()", () => {
 
 	it("should select the greatest item after filtering", async () => {
 
-		const result = await items([1, 2, 3, 4, 5, 6])(filter(x => x%2 === 0))(max());
+		const result = await items(1, 2, 3, 4, 5, 6)(filter(x => x%2 === 0))(max());
 
 		expect(result).toBe(6);
 
@@ -83,11 +83,11 @@ describe("max()", () => {
 
 		it("should use selector to extract ranking key", async () => {
 
-			const result = await items([
+			const result = await items(
 				{ id: 3, name: "c" },
 				{ id: 1, name: "a" },
 				{ id: 2, name: "b" }
-			])(max(by(item => item.id)));
+			)(max(by(item => item.id)));
 
 			expect(result).toEqual({ id: 3, name: "c" });
 
@@ -95,11 +95,11 @@ describe("max()", () => {
 
 		it("should support custom comparators", async () => {
 
-			const result = await items([
+			const result = await items(
 				{ id: 3, name: "c" },
 				{ id: 1, name: "a" },
 				{ id: 2, name: "b" }
-			])(max((a, b) => a.id-b.id));
+			)(max((a, b) => a.id-b.id));
 
 			expect(result).toEqual({ id: 3, name: "c" });
 
@@ -107,7 +107,7 @@ describe("max()", () => {
 
 		it("should invert ranking with a descending comparator", async () => {
 
-			const result = await items([3, 1, 4, 1, 5])(max(descending));
+			const result = await items(3, 1, 4, 1, 5)(max(descending));
 
 			expect(result).toBe(1);
 
@@ -120,7 +120,7 @@ describe("max()", () => {
 		const first = { key: 1, value: "a" };
 		const other = { key: 1, value: "b" };
 
-		const result = await items([first, other])(max(by(item => item.key)));
+		const result = await items(first, other)(max(by(item => item.key)));
 
 		expect(result).toBe(first);
 

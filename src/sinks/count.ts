@@ -31,9 +31,14 @@ import { Sink } from "../index.js";
  *
  * ```typescript
  * await pipe(
- *   (items([1, 2, 3, 4, 5]))
+ *   (items(1, 2, 3, 4, 5))
  *   (count())
  * );  // 5
+ *
+ * await pipe(
+ *   (items<number>())
+ *   (count())
+ * );  // 0
  * ```
  */
 export function count<V>(): Sink<V, number> {

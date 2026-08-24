@@ -42,13 +42,13 @@ import type { Task } from "../index.js";
  *
  * ```typescript
  * await pipe(
- *   (items([1, 2, 3, 4]))
+ *   (items(1, 2, 3, 4))
  *   (group(n => n%2))
  *   (toArray())
  * );  // [[1, [1, 3]], [0, [2, 4]]]
  *
  * await pipe(
- *   (items([{ id: 1 }, { id: 2 }, { id: 1 }]))
+ *   (items({ id: 1 }, { id: 2 }, { id: 1 }))
  *   (group(x => x.id))
  *   (toArray())
  * );  // [[1, [{ id: 1 }, { id: 1 }]], [2, [{ id: 2 }]]]

@@ -25,7 +25,7 @@ describe("peek()", () => {
 	it("should execute side effect for each item", async () => {
 
 		const sideEffects: number[] = [];
-		const values = await items([1, 2, 3])(peek(x => {
+		const values = await items(1, 2, 3)(peek(x => {
 			sideEffects.push(x*10);
 		}))(toArray());
 
@@ -37,7 +37,7 @@ describe("peek()", () => {
 	it("should support async consumers", async () => {
 
 		const sideEffects: number[] = [];
-		const values = await items([1, 2, 3])(peek(async x => {
+		const values = await items(1, 2, 3)(peek(async x => {
 			await Promise.resolve();
 			sideEffects.push(x);
 		}))(toArray());

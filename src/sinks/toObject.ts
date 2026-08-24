@@ -54,7 +54,7 @@ import { Sink } from "../index.js";
  *
  * ```typescript
  * await pipe(
- *   (items([{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }]))
+ *   (items({ id: 1, name: "Alice" }, { id: 2, name: "Bob" }))
  *   (toObject(x => x.id))
  * );  // { 1: { id: 1, name: "Alice" }, 2: { id: 2, name: "Bob" } }
  * ```
@@ -85,7 +85,7 @@ export function toObject<V, K extends PropertyKey>(
  *
  * ```typescript
  * await pipe(
- *   (items([{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }]))
+ *   (items({ id: 1, name: "Alice" }, { id: 2, name: "Bob" }))
  *   (toObject(x => x.id, x => x.name))
  * );  // { 1: "Alice", 2: "Bob" }
  * ```

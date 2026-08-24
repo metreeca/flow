@@ -44,13 +44,13 @@ import { Task } from "../index.js";
  *
  * ```typescript
  * await pipe(
- *   (items([1, 2, 3, 4, 5]))
+ *   (items(1, 2, 3, 4, 5))
  *   (batch(2))
  *   (toArray())
  * );  // [[1, 2], [3, 4], [5]]
  *
  * await pipe(
- *   (items([1, 2, 3]))
+ *   (items(1, 2, 3))
  *   (batch())
  *   (toArray())
  * );  // [[1, 2, 3]]

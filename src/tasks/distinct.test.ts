@@ -24,7 +24,7 @@ describe("distinct()", () => {
 
 	it("should filter out duplicate primitives", async () => {
 
-		const values = await items([1, 2, 2, 3, 1, 4])(distinct())(toArray());
+		const values = await items(1, 2, 2, 3, 1, 4)(distinct())(toArray());
 
 		expect(values).toEqual([1, 2, 3, 4]);
 
@@ -32,11 +32,11 @@ describe("distinct()", () => {
 
 	it("should use selector for comparison", async () => {
 
-		const values = await items([
+		const values = await items(
 			{ id: 1, name: "a" },
 			{ id: 2, name: "b" },
 			{ id: 1, name: "c" }
-		])(distinct(item => item.id))(toArray());
+		)(distinct(item => item.id))(toArray());
 
 		expect(values).toEqual([
 			{ id: 1, name: "a" },
@@ -47,7 +47,7 @@ describe("distinct()", () => {
 
 	it("should handle empty stream", async () => {
 
-		const values = await items([] as number[])(distinct())(toArray());
+		const values = await items<number>()(distinct())(toArray());
 
 		expect(values).toEqual([]);
 

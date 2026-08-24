@@ -34,7 +34,7 @@ import { Sink } from "../index.js";
  *
  * ```typescript
  * await pipe(
- *   (items([1, 2, 3, 4, 5]))
+ *   (items(1, 2, 3, 4, 5))
  *   (find(n => n > 3))
  * );  // 4
  * ```

@@ -24,11 +24,11 @@ describe("toMap()", () => {
 
 	it("should collect items into map using key selector", async () => {
 
-		const values = await items([
+		const values = await items(
 			{ id: 1, name: "a" },
 			{ id: 2, name: "b" },
 			{ id: 3, name: "c" }
-		])(toMap(item => item.id));
+		)(toMap(item => item.id));
 
 		expect(values).toEqual(new Map([
 			[1, { id: 1, name: "a" }],
@@ -40,11 +40,11 @@ describe("toMap()", () => {
 
 	it("should collect items into map using key and value selectors", async () => {
 
-		const values = await items([
+		const values = await items(
 			{ id: 1, name: "a" },
 			{ id: 2, name: "b" },
 			{ id: 3, name: "c" }
-		])(toMap(item => item.id, item => item.name));
+		)(toMap(item => item.id, item => item.name));
 
 		expect(values).toEqual(new Map([
 			[1, "a"],
@@ -56,10 +56,10 @@ describe("toMap()", () => {
 
 	it("should support async key selectors", async () => {
 
-		const values = await items([
+		const values = await items(
 			{ id: 1, name: "a" },
 			{ id: 2, name: "b" }
-		])(toMap(async item => {
+		)(toMap(async item => {
 			await Promise.resolve();
 			return item.id;
 		}));
@@ -73,10 +73,10 @@ describe("toMap()", () => {
 
 	it("should support async value selectors", async () => {
 
-		const values = await items([
+		const values = await items(
 			{ id: 1, name: "a" },
 			{ id: 2, name: "b" }
-		])(toMap(
+		)(toMap(
 			item => item.id,
 			async item => {
 				await Promise.resolve();
@@ -93,24 +93,24 @@ describe("toMap()", () => {
 
 	it("should report duplicate keys", async () => {
 
-		await expect(items([
+		await expect(items(
 			{ id: 1, name: "a" },
 			{ id: 2, name: "b" },
 			{ id: 1, name: "c" }
-		])(toMap(item => item.id, item => item.name))).rejects.toThrow("duplicate key <1>");
+		)(toMap(item => item.id, item => item.name))).rejects.toThrow("duplicate key <1>");
 
 	});
 
 	it("should report duplicate keys with SameValueZero semantics", async () => {
 
-		await expect(items([0, -0])(toMap(x => x))).rejects.toThrow("duplicate key <0>");
-		await expect(items([NaN, NaN])(toMap(x => x))).rejects.toThrow("duplicate key <NaN>");
+		await expect(items(0, -0)(toMap(x => x))).rejects.toThrow("duplicate key <0>");
+		await expect(items(NaN, NaN)(toMap(x => x))).rejects.toThrow("duplicate key <NaN>");
 
 	});
 
 	it("should deeply freeze collected keys and values", async () => {
 
-		const values = await items([{ id: { value: 1 }, nested: { value: 1 } }])(toMap(item => item.id));
+		const values = await items({ id: { value: 1 }, nested: { value: 1 } })(toMap(item => item.id));
 
 		const [[key, value]] = [...values];
 
@@ -124,7 +124,7 @@ describe("toMap()", () => {
 
 		const key = immutable({ id: 1 });
 
-		const values = await items([key])(toMap(item => item));
+		const values = await items(key)(toMap(item => item));
 
 		expect(values.has(key)).toBeTruthy();
 
@@ -134,7 +134,7 @@ describe("toMap()", () => {
 
 		const key = { id: 1 };
 
-		const values = await items([key, key])(toMap(item => item));
+		const values = await items(key, key)(toMap(item => item));
 
 		expect(values.has(key)).toBeFalsy();
 		expect(values.size).toBe(2);
@@ -143,7 +143,7 @@ describe("toMap()", () => {
 
 	it("should reject mutations", async () => {
 
-		const values = await items([1, 2, 3])(toMap(x => x)) as Map<number, number>; // ;(cast) exercising runtime immutability
+		const values = await items(1, 2, 3)(toMap(x => x)) as Map<number, number>; // ;(cast) exercising runtime immutability
 
 		expect(() => values.set(4, 4)).toThrow(TypeError);
 		expect(() => values.delete(1)).toThrow(TypeError);
@@ -155,7 +155,7 @@ describe("toMap()", () => {
 
 	it("should reject extensions", async () => {
 
-		const values = await items([1, 2, 3])(toMap(x => x));
+		const values = await items(1, 2, 3)(toMap(x => x));
 
 		expect(Object.isFrozen(values)).toBeTruthy();
 
@@ -163,7 +163,7 @@ describe("toMap()", () => {
 
 	it("should handle empty stream", async () => {
 
-		const values = await items([] as { id: number; name: string }[])(toMap(item => item.id));
+		const values = await items<{ id: number; name: string }>()(toMap(item => item.id));
 
 		expect(values).toEqual(new Map());
 
@@ -171,7 +171,7 @@ describe("toMap()", () => {
 
 	it("should preserve insertion order", async () => {
 
-		const values = await items([3, 1, 2])(toMap(x => x));
+		const values = await items(3, 1, 2)(toMap(x => x));
 
 		expect([...values.keys()]).toEqual([3, 1, 2]);
 

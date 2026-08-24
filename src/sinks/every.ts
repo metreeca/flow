@@ -34,7 +34,7 @@ import { Sink } from "../index.js";
  *
  * ```typescript
  * await pipe(
- *   (items([2, 4, 6, 8]))
+ *   (items(2, 4, 6, 8))
  *   (every(n => n%2 === 0))
  * );  // true
  * ```

@@ -34,12 +34,12 @@ import { Sink } from "../index.js";
  *
  * ```typescript
  * await pipe(
- *   (items([1, 2, 3]))
+ *   (items(1, 2, 3))
  *   (toString())
  * );  // "1,2,3"
  *
  * await pipe(
- *   (items([1, 2, 3]))
+ *   (items(1, 2, 3))
  *   (toString(" - "))
  * );  // "1 - 2 - 3"
  * ```

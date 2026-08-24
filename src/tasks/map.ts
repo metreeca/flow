@@ -35,7 +35,7 @@ import { Task } from "../index.js";
  *
  * ```typescript
  * await pipe(
- *   (items([1, 2, 3]))
+ *   (items(1, 2, 3))
  *   (map(n => n*2))
  *   (toArray())
  * );  // [2, 4, 6]

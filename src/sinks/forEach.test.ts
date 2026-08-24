@@ -25,7 +25,7 @@ describe("forEach()", () => {
 
 		const sideEffects: number[] = [];
 
-		const count = await items([1, 2, 3])(forEach(x => {
+		const count = await items(1, 2, 3)(forEach(x => {
 			sideEffects.push(x);
 		}));
 
@@ -38,7 +38,7 @@ describe("forEach()", () => {
 
 		const sideEffects: number[] = [];
 
-		const count = await items([1, 2, 3])(forEach(async x => {
+		const count = await items(1, 2, 3)(forEach(async x => {
 			await Promise.resolve();
 			sideEffects.push(x*2);
 		}));
@@ -52,7 +52,7 @@ describe("forEach()", () => {
 
 		const sideEffects: number[] = [];
 
-		const count = await items([] as number[])(forEach(x => {
+		const count = await items<number>()(forEach(x => {
 			sideEffects.push(x);
 		}));
 

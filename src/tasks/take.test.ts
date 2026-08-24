@@ -15,7 +15,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { items } from "../feeds/index.js";
+import { data, items } from "../feeds/index.js";
 import { toArray } from "../sinks/index.js";
 import { filter } from "./filter.js";
 import { take } from "./take.js";
@@ -25,7 +25,7 @@ describe("take()", () => {
 
 	it("should take first n items", async () => {
 
-		const values = await items([1, 2, 3, 4, 5])(take(3))(toArray());
+		const values = await items(1, 2, 3, 4, 5)(take(3))(toArray());
 
 		expect(values).toEqual([1, 2, 3]);
 
@@ -33,7 +33,7 @@ describe("take()", () => {
 
 	it("should take all items when n >= length", async () => {
 
-		const values = await items([1, 2, 3])(take(5))(toArray());
+		const values = await items(1, 2, 3)(take(5))(toArray());
 
 		expect(values).toEqual([1, 2, 3]);
 
@@ -41,7 +41,7 @@ describe("take()", () => {
 
 	it("should take zero items", async () => {
 
-		const values = await items([1, 2, 3])(take(0))(toArray());
+		const values = await items(1, 2, 3)(take(0))(toArray());
 
 		expect(values).toEqual([]);
 
@@ -49,7 +49,7 @@ describe("take()", () => {
 
 	it("should treat negative n as zero", async () => {
 
-		const values = await items([1, 2, 3])(take(-5))(toArray());
+		const values = await items(1, 2, 3)(take(-5))(toArray());
 
 		expect(values).toEqual([]);
 
@@ -61,7 +61,7 @@ describe("take()", () => {
 		let iteratorReturned = false;
 
 		// Create an infinite generator that tracks cleanup
-		const infiniteGenerator = items((async function* () {
+		const infiniteGenerator = data((async function* () {
 			try {
 				let i = 0;
 				while ( true ) {
@@ -87,7 +87,7 @@ describe("take()", () => {
 		let iteratorReturned = false;
 
 		// Create an infinite generator that tracks cleanup
-		const infiniteGenerator = items((async function* () {
+		const infiniteGenerator = data((async function* () {
 			try {
 				let i = 0;
 				while ( true ) {

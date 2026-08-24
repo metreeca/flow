@@ -40,7 +40,7 @@
  * }
  *
  * await pipe(
- *   (items(["a", "b", "a"]))
+ *   (items("a", "b", "a"))
  *   (histogram())
  * );  // Map(2) { "a" => 2, "b" => 1 }
  * ```

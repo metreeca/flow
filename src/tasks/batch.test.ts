@@ -25,7 +25,7 @@ describe("batch()", () => {
 
 	it("should group items into batches of specified size", async () => {
 
-		const values = await items([1, 2, 3, 4, 5])(batch(2))(toArray());
+		const values = await items(1, 2, 3, 4, 5)(batch(2))(toArray());
 
 		expect(values).toEqual([[1, 2], [3, 4], [5]]);
 
@@ -33,7 +33,7 @@ describe("batch()", () => {
 
 	it("should collect all items when size is 0", async () => {
 
-		const values = await items([1, 2, 3, 4, 5])(batch(0))(toArray());
+		const values = await items(1, 2, 3, 4, 5)(batch(0))(toArray());
 
 		expect(values).toEqual([[1, 2, 3, 4, 5]]);
 
@@ -41,7 +41,7 @@ describe("batch()", () => {
 
 	it("should handle empty stream", async () => {
 
-		const values = await items([] as number[])(batch(2))(toArray());
+		const values = await items<number>()(batch(2))(toArray());
 
 		expect(values).toEqual([]);
 
@@ -49,7 +49,7 @@ describe("batch()", () => {
 
 	it("should yield final partial batch", async () => {
 
-		const values = await items([1, 2, 3])(batch(2))(toArray());
+		const values = await items(1, 2, 3)(batch(2))(toArray());
 
 		expect(values).toEqual([[1, 2], [3]]);
 
@@ -57,7 +57,7 @@ describe("batch()", () => {
 
 	it("should create individual batches when size is 1", async () => {
 
-		const values = await items([1, 2, 3, 4])(batch(1))(toArray());
+		const values = await items(1, 2, 3, 4)(batch(1))(toArray());
 
 		expect(values).toEqual([[1], [2], [3], [4]]);
 
@@ -65,7 +65,7 @@ describe("batch()", () => {
 
 	it("should process batches through pipeline", async () => {
 
-		const result = await items([1, 2, 3, 4, 5, 6, 7])
+		const result = await items(1, 2, 3, 4, 5, 6, 7)
 		(batch(3))
 		(map(batch => batch.reduce((sum, n) => sum+n, 0)))
 		(toArray());

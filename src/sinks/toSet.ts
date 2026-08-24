@@ -51,7 +51,7 @@ const readonly = () => { throw new TypeError("unsupported mutation of immutable 
  *
  * ```typescript
  * await pipe(
- *   (items([1, 2, 2, 3, 3, 3]))
+ *   (items(1, 2, 2, 3, 3, 3))
  *   (toSet())
  * );  // Set(3) { 1, 2, 3 }
  * ```

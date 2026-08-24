@@ -24,7 +24,7 @@ describe("toSet()", () => {
 
 	it("should collect all items into set", async () => {
 
-		const values = await items([1, 2, 3])(toSet());
+		const values = await items(1, 2, 3)(toSet());
 
 		expect(values).toEqual(new Set([1, 2, 3]));
 
@@ -32,7 +32,7 @@ describe("toSet()", () => {
 
 	it("should remove duplicates", async () => {
 
-		const values = await items([1, 2, 2, 3, 1, 4])(toSet());
+		const values = await items(1, 2, 2, 3, 1, 4)(toSet());
 
 		expect(values).toEqual(new Set([1, 2, 3, 4]));
 
@@ -40,7 +40,7 @@ describe("toSet()", () => {
 
 	it("should remove duplicates with SameValueZero semantics", async () => {
 
-		const values = await items([NaN, NaN, 0, -0])(toSet());
+		const values = await items(NaN, NaN, 0, -0)(toSet());
 
 		expect([...values]).toEqual([NaN, 0]);
 
@@ -48,7 +48,7 @@ describe("toSet()", () => {
 
 	it("should retain structurally equal items as distinct entries", async () => {
 
-		const values = await items([{ value: 1 }, { value: 1 }])(toSet());
+		const values = await items({ value: 1 }, { value: 1 })(toSet());
 
 		expect(values.size).toBe(2);
 
@@ -58,7 +58,7 @@ describe("toSet()", () => {
 
 		const item = immutable({ value: 1 });
 
-		const values = await items([item, item])(toSet());
+		const values = await items(item, item)(toSet());
 
 		expect(values.has(item)).toBeTruthy();
 		expect(values.size).toBe(1);
@@ -67,7 +67,7 @@ describe("toSet()", () => {
 
 	it("should handle empty stream", async () => {
 
-		const values = await items([] as number[])(toSet());
+		const values = await items<number>()(toSet());
 
 		expect(values).toEqual(new Set());
 
@@ -75,7 +75,7 @@ describe("toSet()", () => {
 
 	it("should deeply freeze collected items", async () => {
 
-		const values = await items([{ nested: { value: 1 } }])(toSet());
+		const values = await items({ nested: { value: 1 } })(toSet());
 
 		const [first] = [...values];
 
@@ -86,7 +86,7 @@ describe("toSet()", () => {
 
 	it("should reject mutations", async () => {
 
-		const values = await items([1, 2, 3])(toSet()) as Set<number>; // ;(cast) exercising runtime immutability
+		const values = await items(1, 2, 3)(toSet()) as Set<number>; // ;(cast) exercising runtime immutability
 
 		expect(() => values.add(4)).toThrow(TypeError);
 		expect(() => values.delete(1)).toThrow(TypeError);
@@ -98,7 +98,7 @@ describe("toSet()", () => {
 
 	it("should reject extensions", async () => {
 
-		const values = await items([1, 2, 3])(toSet());
+		const values = await items(1, 2, 3)(toSet());
 
 		expect(Object.isFrozen(values)).toBeTruthy();
 
@@ -106,7 +106,7 @@ describe("toSet()", () => {
 
 	it("should preserve insertion order", async () => {
 
-		const values = await items([3, 1, 2])(toSet());
+		const values = await items(3, 1, 2)(toSet());
 
 		expect([...values]).toEqual([3, 1, 2]);
 

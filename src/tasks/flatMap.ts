@@ -37,7 +37,7 @@ import { flatten } from "../index.core.js";
  *
  * ```typescript
  * await pipe(
- *   (items([1, 2, 3]))
+ *   (items(1, 2, 3))
  *   (flatMap(n => [n, n*2]))
  *   (toArray())
  * );  // [1, 2, 2, 4, 3, 6]

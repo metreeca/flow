@@ -48,8 +48,8 @@ import { isFunction } from "@metreeca/core";
  * - `AsyncIterable<V>` — contributes the items of the async iterable
  * - {@link Pipe}`<V>` — contributes the items of the pipe
  *
- * Feeds accept this shape to open a stream; {@link tasks.flatMap flatMap} accepts it to expand each item of a stream
- * already open into further ones.
+ * The {@link feeds.data data} feed accepts this shape to open a stream, as do the feeds combining several sources into
+ * one; {@link tasks.flatMap flatMap} accepts it to expand each item of a stream already open into further ones.
  *
  * @typeParam V The type of values contributed to the stream
  *
@@ -60,7 +60,7 @@ import { isFunction } from "@metreeca/core";
  * const array: Data<number> = [1, 2, 3];
  * const iterable: Data<number> = new Set([1, 2, 3]);
  * const asynchronous: Data<number> = (async function* () { yield 1; yield 2; })();
- * const nested: Data<number> = items([1, 2, 3]);
+ * const piped: Data<number> = items(1, 2, 3);
  * ```
  */
 export type Data<V> =

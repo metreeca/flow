@@ -47,17 +47,17 @@ import { reduce } from "./reduce.js";
  *
  * ```typescript
  * await pipe(
- *   (items([3, 1, 2]))
+ *   (items(3, 1, 2))
  *   (min())
  * );  // 1
  *
  * await pipe(
- *   (items([{ age: 30 }, { age: 20 }]))
+ *   (items({ age: 30 }, { age: 20 }))
  *   (min(by(x => x.age)))
  * );  // { age: 20 }
  *
  * await pipe(
- *   (items([] as number[]))
+ *   (items<number>())
  *   (min())
  * );  // undefined
  * ```

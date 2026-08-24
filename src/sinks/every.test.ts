@@ -15,7 +15,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { items } from "../feeds/index.js";
+import { data, items } from "../feeds/index.js";
 import { every } from "./every.js";
 
 
@@ -23,7 +23,7 @@ describe("every()", () => {
 
 	it("should return true when all items match", async () => {
 
-		const result = await items([1, 2, 3, 4])(every(x => x > 0));
+		const result = await items(1, 2, 3, 4)(every(x => x > 0));
 
 		expect(result).toBe(true);
 
@@ -31,7 +31,7 @@ describe("every()", () => {
 
 	it("should return false when any item doesn't match", async () => {
 
-		const result = await items([1, 2, 3, 4])(every(x => x < 3));
+		const result = await items(1, 2, 3, 4)(every(x => x < 3));
 
 		expect(result).toBe(false);
 
@@ -39,7 +39,7 @@ describe("every()", () => {
 
 	it("should support async predicates", async () => {
 
-		const result = await items([1, 2, 3])(every(async x => {
+		const result = await items(1, 2, 3)(every(async x => {
 			await Promise.resolve();
 			return x > 0;
 		}));
@@ -53,7 +53,7 @@ describe("every()", () => {
 		let generatorCalls = 0;
 		let iteratorReturned = false;
 
-		const infiniteGenerator = items((async function* () {
+		const infiniteGenerator = data((async function* () {
 			try {
 				let i = 0;
 				while ( true ) {
@@ -75,7 +75,7 @@ describe("every()", () => {
 
 	it("should return true for empty stream", async () => {
 
-		const result = await items([] as number[])(every(x => x > 10));
+		const result = await items<number>()(every(x => x > 10));
 
 		expect(result).toBe(true);
 

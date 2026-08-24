@@ -15,7 +15,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { items, range } from "./feeds/index.js";
+import { data, items, range } from "./feeds/index.js";
 import { pipe } from "./index.js";
 import { toArray } from "./sinks/index.js";
 import { filter } from "./tasks/index.js";
@@ -33,7 +33,7 @@ describe("pipe()", () => {
 
 	it("should retrieve async iterable from pipe", async () => {
 
-		const values = await items(pipe(items(range(1, 4))))(toArray());
+		const values = await data(pipe(data(range(1, 4))))(toArray());
 
 		expect(values).toEqual([1, 2, 3]);
 
@@ -41,7 +41,7 @@ describe("pipe()", () => {
 
 	it("should return async iterable for manual iteration", async () => {
 
-		const iterable = pipe((items([1, 2, 3, 4]))(filter(x => x > 1)));
+		const iterable = pipe((items(1, 2, 3, 4))(filter(x => x > 1)));
 
 		const values: number[] = [];
 

@@ -42,13 +42,13 @@ import { Task } from "../index.js";
  *
  * ```typescript
  * await pipe(
- *   (items([1, 2, 2, 3, 1]))
+ *   (items(1, 2, 2, 3, 1))
  *   (distinct())
  *   (toArray())
  * );  // [1, 2, 3]
  *
  * await pipe(
- *   (items([{ id: 1 }, { id: 2 }, { id: 1 }]))
+ *   (items({ id: 1 }, { id: 2 }, { id: 1 }))
  *   (distinct(x => x.id))
  *   (toArray())
  * );  // [{ id: 1 }, { id: 2 }]

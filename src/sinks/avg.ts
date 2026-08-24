@@ -43,17 +43,17 @@ import { Sink } from "../index.js";
  *
  * ```typescript
  * await pipe(
- *   (items([1, 2, 3, 4]))
+ *   (items(1, 2, 3, 4))
  *   (avg())
  * );  // 2.5
  *
  * await pipe(
- *   (items([1n, 2n, 4n]))
+ *   (items(1n, 2n, 4n))
  *   (avg())
  * );  // 2n
  *
  * await pipe(
- *   (items([] as number[]))
+ *   (items<number>())
  *   (avg())
  * );  // undefined
  * ```

@@ -15,7 +15,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { items } from "../feeds/index.js";
+import { data, items } from "../feeds/index.js";
 import { some } from "./some.js";
 
 
@@ -23,7 +23,7 @@ describe("some()", () => {
 
 	it("should return true when any item matches", async () => {
 
-		const result = await items([1, 2, 3, 4])(some(x => x > 3));
+		const result = await items(1, 2, 3, 4)(some(x => x > 3));
 
 		expect(result).toBe(true);
 
@@ -31,7 +31,7 @@ describe("some()", () => {
 
 	it("should return false when no items match", async () => {
 
-		const result = await items([1, 2, 3])(some(x => x > 10));
+		const result = await items(1, 2, 3)(some(x => x > 10));
 
 		expect(result).toBe(false);
 
@@ -39,7 +39,7 @@ describe("some()", () => {
 
 	it("should support async predicates", async () => {
 
-		const result = await items([1, 2, 3])(some(async x => {
+		const result = await items(1, 2, 3)(some(async x => {
 			await Promise.resolve();
 			return x === 2;
 		}));
@@ -53,7 +53,7 @@ describe("some()", () => {
 		let generatorCalls = 0;
 		let iteratorReturned = false;
 
-		const infiniteGenerator = items((async function* () {
+		const infiniteGenerator = data((async function* () {
 			try {
 				let i = 0;
 				while ( true ) {

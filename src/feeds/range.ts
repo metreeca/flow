@@ -16,7 +16,7 @@
 
 import { assert } from "@metreeca/core";
 import { Pipe } from "../index.js";
-import { items } from "./items.js";
+import { data } from "./data.js";
 
 
 /**
@@ -56,7 +56,7 @@ export function range(start: number, end: number): Pipe<number> {
 	const from = assert(start, Number.isInteger, value => `expected integer bound <${value}>`);
 	const to = assert(end, Number.isInteger, value => `expected integer bound <${value}>`);
 
-	return items((function* () {
+	return data((function* () {
 
 		if ( from < to ) {
 

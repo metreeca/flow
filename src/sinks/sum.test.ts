@@ -24,7 +24,7 @@ describe("sum()", () => {
 
 	it("should sum all items in stream", async () => {
 
-		const result = await items([1, 2, 3, 4, 5])(sum());
+		const result = await items(1, 2, 3, 4, 5)(sum());
 
 		expect(result).toBe(15);
 
@@ -32,7 +32,7 @@ describe("sum()", () => {
 
 	it("should return undefined for empty stream", async () => {
 
-		const result = await items([] as number[])(sum());
+		const result = await items<number>()(sum());
 
 		expect(result).toBeUndefined();
 
@@ -40,7 +40,7 @@ describe("sum()", () => {
 
 	it("should return the only item of a singleton stream", async () => {
 
-		const result = await items([42])(sum());
+		const result = await items(42)(sum());
 
 		expect(result).toBe(42);
 
@@ -48,7 +48,7 @@ describe("sum()", () => {
 
 	it("should sum negative and fractional items", async () => {
 
-		const result = await items([1.5, -2.5, 3])(sum());
+		const result = await items(1.5, -2.5, 3)(sum());
 
 		expect(result).toBe(2);
 
@@ -56,7 +56,7 @@ describe("sum()", () => {
 
 	it("should sum items after filtering", async () => {
 
-		const result = await items([1, 2, 3, 4, 5, 6])(filter(x => x%2 === 0))(sum());
+		const result = await items(1, 2, 3, 4, 5, 6)(filter(x => x%2 === 0))(sum());
 
 		expect(result).toBe(12);
 
@@ -74,7 +74,7 @@ describe("sum()", () => {
 
 		it("should sum all items in stream", async () => {
 
-			const result = await items([1n, 2n, 3n])(sum());
+			const result = await items(1n, 2n, 3n)(sum());
 
 			expect(result).toBe(6n);
 
@@ -82,7 +82,7 @@ describe("sum()", () => {
 
 		it("should sum beyond the safe integer range", async () => {
 
-			const result = await items([2n**64n, 1n])(sum());
+			const result = await items(2n**64n, 1n)(sum());
 
 			expect(result).toBe(2n**64n+1n);
 
@@ -92,7 +92,7 @@ describe("sum()", () => {
 
 	it("should report streams mixing number and bigint items", async () => {
 
-		await expect(items([1, 2n])(sum())).rejects.toThrow(TypeError);
+		await expect(items<number | bigint>(1, 2n)(sum())).rejects.toThrow(TypeError);
 
 	});
 
