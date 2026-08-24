@@ -46,7 +46,7 @@
  * @module
  */
 
-// type preserving
+// operators
 
 export * from "./filter.js";
 export * from "./distinct.js";
@@ -55,13 +55,13 @@ export * from "./skip.js";
 export * from "./take.js";
 export * from "./peek.js";
 
-// type changing
+// transformers
 
 export * from "./map.js";
 export * from "./flatMap.js";
 export * from "./batch.js";
 export * from "./group.js";
 
-// flow control
+// combinators
 
 export * from "./concurrent.js";

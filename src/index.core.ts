@@ -58,3 +58,52 @@ export async function* flatten<R>(data: Data<R>): AsyncGenerator<R, void, unknow
 	}
 
 }
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**
+ * Adds a value to a running total, seeding the total with the value if nothing was accumulated yet.
+ *
+ * @internal
+ */
+export function add<V extends number | bigint>(total: undefined | V, value: V): V {
+
+	// ;(cast) `+` adds numbers to numbers and bigints to bigints alike, but TypeScript doesn't type it over a numeric
+	// type parameter; asserting `number` doesn't mask streams mixing the two, as `+` rejects mixed operands itself
+
+	return (total === undefined ? value : (total as number)+(value as number)) as V;
+
+}
+
+/**
+ * Divides a running total by the number of items accumulated into it.
+ *
+ * `bigint` totals yield a `bigint` quotient, rounded to the nearest integer with halves away from zero, as no
+ * fractional `bigint` can carry the remainder.
+ *
+ * @internal
+ */
+export function mean<V extends number | bigint>(total: V, count: number): V {
+
+	// ;(cast) `/` divides numbers by numbers and bigints by bigints alike, but TypeScript doesn't type it over a
+	// numeric type parameter; either way the quotient keeps the numeric type of the total, that is `V`
+
+	if ( typeof total === "bigint" ) {
+
+		const items = BigInt(count);
+
+		const quotient = total/items;
+		const remainder = total%items;
+
+		return (2n*(remainder < 0n ? -remainder : remainder) < items ? quotient
+			: total < 0n ? quotient-1n
+				: quotient+1n) as V;
+
+	} else {
+
+		return (total as number)/count as V;
+
+	}
+
+}

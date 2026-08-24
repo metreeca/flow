@@ -16,6 +16,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - `toObject` sink collecting stream items into an object keyed by extracted property keys
 
+- `sum` and `avg` sinks aggregating `number` and `bigint` streams, with `bigint` averages rounded to the nearest
+  integer, halves away from zero
+
+- `min` and `max` sinks selecting the least and greatest stream item according to an optional comparator, defaulting
+  to the `ascending` order from `@metreeca/core/order`
+
 ### Changed
 
 - `map` and `flatMap` tasks no longer accept a `parallel` option: concurrency is now controlled by wrapping any task

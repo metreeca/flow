@@ -17,8 +17,9 @@
 /**
  * Factory functions that create new pipes from various input sources.
  *
- * Feeds open a pipeline by adapting an existing data source into a {@link index.Pipe Pipe} ready for task and sink
- * composition. Every feed defers all work until a sink consumes the stream.
+ * Feeds open a pipeline, either adapting a single data source into a {@link index.Pipe Pipe} ready for task and sink
+ * composition, or combining several sources into one stream, drawn either in sequence or concurrently. Every feed
+ * defers all work until a sink consumes the stream.
  *
  * **Custom Feeds** are functions that create new pipes:
  *
@@ -48,8 +49,13 @@
  * @module
  */
 
+// generators
+
 export * from "./items.js";
 export * from "./range.js";
 export * from "./iterate.js";
+
+// combinators
+
 export * from "./chain.js";
 export * from "./merge.js";

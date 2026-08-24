@@ -46,10 +46,15 @@ npm install @metreeca/pipe
 
 ## Creating Feeds
 
-Create [feeds](https://metreeca.github.io/pipe/modules/feeds.html) from various data sources.
+Open pipes with [feeds](https://metreeca.github.io/pipe/modules/feeds.html), either adapting a single data source or
+combining several into one stream.
+
+### Generators
+
+Open a pipe over values, ranges or repeated generator calls.
 
 ```typescript
-import { range, items, chain, merge, iterate } from '@metreeca/pipe/feeds';
+import { items, iterate, range } from '@metreeca/pipe/feeds';
 
 items(42);                    // from single values
 items(1, 2, 3, 4, 5);         // from multiple scalar values
@@ -61,6 +66,14 @@ items(items([1, 2, 3]));      // from other pipes
 range(10, 0);                 // from numeric ranges
 
 iterate(() => Math.random()); // from repeated generator calls
+```
+
+### Combinators
+
+Open a pipe over the items of several data sources, drawn either in sequence or concurrently.
+
+```typescript
+import { chain, merge } from '@metreeca/pipe/feeds';
 
 chain(                        // sequential consumption
 	items([1, 2, 3]),
@@ -75,7 +88,11 @@ merge(                        // concurrent consumption
 
 ## Transforming Data
 
-Chain [tasks](https://metreeca.github.io/pipe/modules/tasks.html) to transform, filter, and process items.
+Chain [tasks](https://metreeca.github.io/pipe/modules/tasks.html) to reshape the stream and map its items.
+
+### Operators
+
+Select, reorder and inspect items, leaving their type unchanged.
 
 > [!TIP]
 >
@@ -83,11 +100,7 @@ Chain [tasks](https://metreeca.github.io/pipe/modules/tasks.html) to transform, 
 > assembling complex sorting criteria.
 
 ```typescript
-import { pipe } from "@metreeca/pipe";
-import { items } from "@metreeca/pipe/feeds";
-import { toArray } from "@metreeca/pipe/sinks";
-import { by } from "@metreeca/core/order";
-import { batch, distinct, filter, flatMap, group, map, peek, skip, sort, take } from "@metreeca/pipe/tasks";
+import { distinct, filter, peek, skip, sort, take } from '@metreeca/pipe/tasks';
 
 await pipe(
 	(items([1, 2, 3, 4, 5]))
@@ -130,6 +143,14 @@ await pipe(
 	(peek(n => console.log(n)))
 	(toArray())
 );  // logs 1, 2, 3; [1, 2, 3]
+```
+
+### Transformers
+
+Map items to values of a different type, either one by one or in groups.
+
+```typescript
+import { batch, flatMap, group, map } from '@metreeca/pipe/tasks';
 
 await pipe(
 	(items([1, 2, 3]))
@@ -159,15 +180,14 @@ await pipe(
 ## Consuming Data
 
 Apply [sinks](https://metreeca.github.io/pipe/modules/sinks.html) as terminal operations that consume pipes and return
-promises with final results. Collection sinks (`toArray()`, `toSet()`, `toMap()`, `toObject()`) return deeply immutable
-results, freezing both the container and the items, keys and values collected into it.
+promises with final results.
+
+### Predicates
+
+Test the stream against a condition, stopping as soon as the outcome is decided.
 
 ```typescript
-import { items } from '@metreeca/pipe/feeds';
-import {
-	count, every, find, forEach, reduce, some, toArray, toMap, toObject, toSet, toString
-} from '@metreeca/pipe/sinks';
-import { pipe } from '@metreeca/pipe';
+import { every, some } from '@metreeca/pipe/sinks';
 
 await pipe(
 	(items([1, 2, 3]))
@@ -178,11 +198,60 @@ await pipe(
 	(items([2, 4, 6]))
 	(every(n => n%2 === 0))
 );  // true
+```
+
+### Aggregators
+
+Reduce the stream to a single value, resolving to `undefined` on an empty stream where no result is defined. `sum()`
+and `avg()` handle `number` and `bigint` streams alike, rounding `bigint` means to the nearest integer, halves away
+from zero. `min()` and `max()` rank items with the same comparators as `sort()`, resolving to the first of equally
+ranking ones.
+
+> [!TIP]
+>
+> The @metreeca/core [order](https://metreeca.github.io/core/modules/order.html) module provides helper functions for
+> assembling complex ranking criteria.
+
+```typescript
+import { avg, count, max, min, sum } from '@metreeca/pipe/sinks';
 
 await pipe(
 	(items([1, 2, 3, 4, 5]))
 	(count())
 );  // 5
+
+await pipe(
+	(items([1, 2, 3, 4, 5]))
+	(sum())
+);  // 15
+
+await pipe(
+	(items([1, 2, 3, 4]))
+	(avg())
+);  // 2.5
+
+await pipe(
+	(items([1n, 2n, 4n]))
+	(avg())
+);  // 2n
+
+await pipe(
+	(items([3, 1, 4, 1, 5]))
+	(min())
+);  // 1
+
+await pipe(
+	(items([{ name: "Alice", age: 30 }, { name: "Bob", age: 25 }]))
+	(max(by(x => x.age)))
+);  // { name: "Alice", age: 30 }
+```
+
+### Extractors
+
+Retrieve a single item from the stream or fold it into a value of an arbitrary type.
+
+```typescript
+import { find, reduce } from '@metreeca/pipe/sinks';
 
 await pipe(
 	(items([1, 2, 3, 4]))
@@ -193,6 +262,15 @@ await pipe(
 	(items([1, 2, 3, 4]))
 	(reduce((total, n) => total+n, 0))
 );  // 10
+```
+
+### Collectors
+
+Collect items into a container. The result is deeply immutable, freezing both the container and the items, keys and
+values collected into it.
+
+```typescript
+import { toArray, toMap, toObject, toSet, toString } from '@metreeca/pipe/sinks';
 
 await pipe(
 	(items([1, 2, 3]))
@@ -218,6 +296,14 @@ await pipe(
 	(items([1, 2, 3]))
 	(toString(" - "))
 );  // "1 - 2 - 3"
+```
+
+### Effects
+
+Consume the stream for its side effects, resolving to the number of items processed.
+
+```typescript
+import { forEach } from '@metreeca/pipe/sinks';
 
 await pipe(
 	(items([1, 2, 3]))
@@ -225,7 +311,12 @@ await pipe(
 );  // logs 1, 2, 3; 3
 ```
 
-Alternatively, call `pipe()` without a sink to get the underlying async iterable for manual iteration.
+# Advanced Usage
+
+## Manual Iteration
+
+Call `pipe()` without a sink to obtain the underlying async iterable and drive the pipeline directly, pulling items as
+the surrounding code is ready for them.
 
 ```typescript
 import { items } from '@metreeca/pipe/feeds';
@@ -241,8 +332,6 @@ for await (const value of iterable) {
 	console.log(value);  // 2, 3
 }
 ```
-
-# Advanced Usage
 
 ## Concurrent Processing
 
@@ -305,7 +394,8 @@ consumed only as far as the pipeline demands: bound it with a task like `take()`
 early, such as `some()`, `every()` or `find()`.
 
 Tasks draining the whole stream before emitting anything, namely `sort()`, `group()` and an unbounded `batch()`, and
-sinks collecting it into a container never complete on an infinite feed: place a bound upstream of them.
+sinks needing every item, whether aggregating it (`count()`, `sum()`, `avg()`, `min()`, `max()`) or collecting it into
+a container, never complete on an infinite feed: place a bound upstream of them.
 
 ```typescript
 import { iterate } from '@metreeca/pipe/feeds';
@@ -381,21 +471,21 @@ import { pipe } from '@metreeca/pipe';
 import { items } from '@metreeca/pipe/feeds';
 import type { Sink } from '@metreeca/pipe';
 
-function sum(): Sink<number, number> {
+function histogram<V>(): Sink<V, Map<V, number>> {
 	return async source => {
 
-		let total = 0;
+		const counts = new Map<V, number>();
 
-		for await (const item of source) { total += item; }
+		for await (const item of source) { counts.set(item, (counts.get(item) ?? 0)+1); }
 
-		return total;
+		return counts;
 	};
 }
 
 await pipe(
-	(items([1, 2, 3]))
-	(sum())
-);  // 6
+	(items(["a", "b", "a"]))
+	(histogram())
+);  // Map(2) { "a" => 2, "b" => 1 }
 ```
 
 # Support
