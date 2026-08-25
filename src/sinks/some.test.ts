@@ -15,7 +15,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { data, items } from "../feeds/index.js";
+import { feed, items } from "../feeds/index.js";
 import { some } from "./some.js";
 
 
@@ -53,7 +53,7 @@ describe("some()", () => {
 		let generatorCalls = 0;
 		let iteratorReturned = false;
 
-		const infiniteGenerator = data((async function* () {
+		const infiniteGenerator = feed((async function* () {
 			try {
 				let i = 0;
 				while ( true ) {

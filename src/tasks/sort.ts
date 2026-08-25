@@ -19,14 +19,14 @@ import { Task } from "../index.js";
 
 
 /**
- * Creates a task reordering the stream.
+ * Creates a task reordering the feed.
  *
- * The whole stream is drained before the first item is emitted, then items are emitted in the order the comparator
+ * The whole feed is drained before the first item is emitted, then items are emitted in the order the comparator
  * establishes; equal items keep their relative source order.
  *
  * > [!WARNING]
  * >
- * > Accumulates the whole stream in memory before sorting. For large or infinite streams, this may exhaust memory or
+ * > Accumulates the whole feed in memory before sorting. For large or infinite feeds, this may exhaust memory or
  * > never complete.
  *
  * > [!TIP]
@@ -34,12 +34,12 @@ import { Task } from "../index.js";
  * > The @metreeca/core [order](https://metreeca.github.io/core/modules/order.html) module provides helper functions for
  * > assembling complex sorting criteria.
  *
- * @typeParam V The type of items in the stream
+ * @typeParam V The type of items in the feed
  *
  * @param comparator The function establishing the relative order of two items, defaulting to {@link ascending},
- *   which ranks values in natural order, placing `null` and `undefined` first
+ *   which ranks values in natural order, placing `null` first
  *
- * @returns A task yielding the items of the stream in comparator order
+ * @returns A task yielding the items of the feed in comparator order
  *
  * @example
  *

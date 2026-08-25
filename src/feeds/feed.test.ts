@@ -18,79 +18,63 @@ import { describe, expect, it } from "vitest";
 import { pipe } from "../index.js";
 import { reduce, toArray } from "../sinks/index.js";
 import { filter, map } from "../tasks/index.js";
-import { data } from "./data.js";
+import { feed } from "./feed.js";
 import { range } from "./range.js";
 
 
-describe("data()", () => {
+describe("feed()", () => {
 
-	it("should create pipe from single value", async () => {
+	it("should create feed from array", async () => {
 
-		const values = await data(42)(toArray());
-
-		expect(values).toEqual([42]);
-
-	});
-
-	it("should create pipe from array", async () => {
-
-		const values = await data([1, 2, 3])(toArray());
+		const values = await feed([1, 2, 3])(toArray());
 
 		expect(values).toEqual([1, 2, 3]);
 
 	});
 
-	it("should create pipe from iterable", async () => {
+	it("should create feed from iterable", async () => {
 
-		const values = await data(new Set([1, 2, 3]))(toArray());
-
-		expect(values).toEqual([1, 2, 3]);
-
-	});
-
-	it("should create pipe from async iterable", async () => {
-
-		const values = await data(range(1, 4))(toArray());
+		const values = await feed(new Set([1, 2, 3]))(toArray());
 
 		expect(values).toEqual([1, 2, 3]);
 
 	});
 
-	it("should create pipe from Promise resolving to value", async () => {
+	it("should create feed from async iterable", async () => {
 
-		const values = await data(Promise.resolve(42))(toArray());
-
-		expect(values).toEqual([42]);
-
-	});
-
-	it("should create pipe from Promise resolving to array", async () => {
-
-		const values = await data(Promise.resolve([1, 2, 3]))(toArray());
+		const values = await feed(range(1, 4))(toArray());
 
 		expect(values).toEqual([1, 2, 3]);
 
 	});
 
-	it("should create pipe from Promise resolving to iterable", async () => {
+	it("should create feed from Promise resolving to array", async () => {
 
-		const values = await data(Promise.resolve(new Set([1, 2, 3])))(toArray());
-
-		expect(values).toEqual([1, 2, 3]);
-
-	});
-
-	it("should create pipe from Promise resolving to async iterable", async () => {
-
-		const values = await data(Promise.resolve(range(1, 4)()))(toArray());
+		const values = await feed(Promise.resolve([1, 2, 3]))(toArray());
 
 		expect(values).toEqual([1, 2, 3]);
 
 	});
 
-	it("should handle Promise resolving to undefined", async () => {
+	it("should create feed from Promise resolving to iterable", async () => {
 
-		const values = await data(Promise.resolve(undefined))(toArray());
+		const values = await feed(Promise.resolve(new Set([1, 2, 3])))(toArray());
+
+		expect(values).toEqual([1, 2, 3]);
+
+	});
+
+	it("should create feed from Promise resolving to async iterable", async () => {
+
+		const values = await feed(Promise.resolve(range(1, 4)()))(toArray());
+
+		expect(values).toEqual([1, 2, 3]);
+
+	});
+
+	it("should handle Promise resolving to empty array", async () => {
+
+		const values = await feed(Promise.resolve([]))(toArray());
 
 		expect(values).toEqual([]);
 
@@ -102,15 +86,15 @@ describe("data()", () => {
 			setTimeout(() => resolve([1, 2, 3]), 10);
 		});
 
-		const values = await data(delayedData)(toArray());
+		const values = await feed(delayedData)(toArray());
 
 		expect(values).toEqual([1, 2, 3]);
 
 	});
 
-	it("should handle Promise with async operations in pipeline", async () => {
+	it("should handle Promise with async operations in pipe", async () => {
 
-		const values = await data(Promise.resolve([1, 2, 3]))
+		const values = await feed(Promise.resolve([1, 2, 3]))
 		(map(async x => {
 			await new Promise(resolve => setTimeout(resolve, 10));
 			return x*2;
@@ -123,29 +107,29 @@ describe("data()", () => {
 
 	it("should filter undefined from Promise-resolved data", async () => {
 
-		const values = await data(Promise.resolve([1, undefined, 2, undefined, 3]))(toArray());
+		const values = await feed(Promise.resolve([1, undefined, 2, undefined, 3]))(toArray());
 
 		expect(values).toEqual([1, 2, 3]);
 
 	});
 
-	describe("should create a compliant pipe object", () => {
+	describe("should create a compliant feed object", () => {
 
 		it("should return async iterable when called without transform", async () => {
-			expect(await pipe(data(data([1, 2, 3])())(toArray()))).toEqual([1, 2, 3]);
+			expect(await pipe(feed(feed([1, 2, 3])())(toArray()))).toEqual([1, 2, 3]);
 		});
 
-		it("should apply task and return new pipe", async () => {
-			expect(await pipe(data([1, 2, 3])(map(x => x*2))(toArray()))).toEqual([2, 4, 6]);
+		it("should apply task and return new feed", async () => {
+			expect(await pipe(feed([1, 2, 3])(map(x => x*2))(toArray()))).toEqual([2, 4, 6]);
 		});
 
 		it("should apply sink and return promise", async () => {
-			expect(await data([1, 2, 3])(reduce((acc, x) => acc+x, 0))).toBe(6);
+			expect(await feed([1, 2, 3])(reduce((acc, x) => acc+x, 0))).toBe(6);
 		});
 
 		it("should chain multiple tasks", async () => {
 			expect(await pipe(
-				data([1, 2, 3, 4, 5])
+				feed([1, 2, 3, 4, 5])
 				(filter(x => x%2 === 0))
 				(map(x => x*2))
 				(toArray())
@@ -158,23 +142,15 @@ describe("data()", () => {
 
 		it("should filter undefined from array feed", async () => {
 
-			const result = await data([1, undefined, 2, undefined, 3])(toArray());
+			const result = await feed([1, undefined, 2, undefined, 3])(toArray());
 
 			expect(result).toEqual([1, 2, 3]);
 
 		});
 
-		it("should filter undefined from single value feed", async () => {
+		it("should filter undefined from feed source", async () => {
 
-			const result = await data(undefined)(toArray());
-
-			expect(result).toEqual([]);
-
-		});
-
-		it("should filter undefined from function feed", async () => {
-
-			const result = await data(() => [10, undefined, 20, undefined])(toArray());
+			const result = await feed(feed([10, undefined, 20, undefined]))(toArray());
 
 			expect(result).toEqual([10, 20]);
 
@@ -192,7 +168,7 @@ describe("data()", () => {
 				}
 			};
 
-			const result = await data(iterable)(toArray());
+			const result = await feed(iterable)(toArray());
 
 			expect(result).toEqual(["a", "b", "c"]);
 
@@ -208,7 +184,7 @@ describe("data()", () => {
 				yield "z";
 			}
 
-			const result = await data(gen())(toArray());
+			const result = await feed(gen())(toArray());
 
 			expect(result).toEqual(["x", "y", "z"]);
 
@@ -216,7 +192,7 @@ describe("data()", () => {
 
 		it("should handle all undefined values", async () => {
 
-			const result = await data([undefined, undefined, undefined])(toArray());
+			const result = await feed([undefined, undefined, undefined])(toArray());
 
 			expect(result).toEqual([]);
 
@@ -224,7 +200,7 @@ describe("data()", () => {
 
 		it("should preserve falsy values that are not undefined", async () => {
 
-			const result = await data([0, false, "", null, undefined])(toArray());
+			const result = await feed([0, false, "", null, undefined])(toArray());
 
 			expect(result).toEqual([0, false, "", null]);
 
@@ -232,7 +208,7 @@ describe("data()", () => {
 
 		it("should filter undefined through chained operations", async () => {
 
-			const result = await data([1, undefined, 2, undefined, 3] as number[])
+			const result = await feed([1, undefined, 2, undefined, 3] as number[])
 			(map(x => x*2))
 			(toArray());
 
@@ -249,7 +225,7 @@ describe("data()", () => {
 				}
 			};
 
-			const result = await data(["1", "abc", "2", "xyz", "3"])(parseNumbers)(toArray());
+			const result = await feed(["1", "abc", "2", "xyz", "3"])(parseNumbers)(toArray());
 
 			expect(result).toEqual([1, 2, 3]);
 
@@ -261,7 +237,7 @@ describe("data()", () => {
 
 		it("should yield string as single item, not character by character", async () => {
 
-			const result = await data("hello")(toArray());
+			const result = await feed("hello")(toArray());
 
 			expect(result).toEqual(["hello"]);
 
@@ -269,7 +245,7 @@ describe("data()", () => {
 
 		it("should yield empty string as single item", async () => {
 
-			const result = await data("")(toArray());
+			const result = await feed("")(toArray());
 
 			expect(result).toEqual([""]);
 
@@ -277,9 +253,53 @@ describe("data()", () => {
 
 		it("should yield strings from array individually", async () => {
 
-			const result = await data(["foo", "bar", "baz"])(toArray());
+			const result = await feed(["foo", "bar", "baz"])(toArray());
 
 			expect(result).toEqual(["foo", "bar", "baz"]);
+
+		});
+
+	});
+
+	describe("should accept batches of items rather than single values", () => {
+
+		it("should reject single values", () => {
+
+			// @ts-expect-error single values are contributed by wrapping them in a batch
+
+			feed(42);
+
+		});
+
+		it("should reject undefined", () => {
+
+			// @ts-expect-error nothing is contributed by an empty batch
+
+			feed(undefined);
+
+		});
+
+		it("should reject promised single values", () => {
+
+			// @ts-expect-error single values are contributed by wrapping them in a batch
+
+			feed(Promise.resolve(42));
+
+		});
+
+		it("should reject arrays shadowing the batch carrying them", () => {
+
+			// @ts-expect-error array items are contributed within a batch of arrays
+
+			feed<number[]>([1, 2]);
+
+		});
+
+		it("should carry array items contributed within a batch", async () => {
+
+			const values = await feed<number[]>([[1, 2], [3, 4]])(toArray());
+
+			expect(values).toEqual([[1, 2], [3, 4]]);
 
 		});
 

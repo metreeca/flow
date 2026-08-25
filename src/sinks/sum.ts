@@ -14,25 +14,25 @@
  * limitations under the License.
  */
 
-import { add } from "../index.core.js";
+import { add } from "@metreeca/core/numbers";
 import { Sink } from "../index.js";
 
 
 /**
- * Creates a sink summing the items of the stream.
+ * Creates a sink summing the items of the feed.
  *
  * Items are added in source order, seeding the total with the first one, so summing stays within constant memory
- * whatever the size of the stream, but never completes on an infinite source. `number` items are added as IEEE 754
- * doubles and `bigint` items as exact integers: a stream is expected to carry one numeric type throughout, and mixing
+ * whatever the size of the feed, but never completes on an infinite source. `number` items are added as IEEE 754
+ * doubles and `bigint` items as exact integers: a feed is expected to carry one numeric type throughout, and mixing
  * the two is reported rather than silently coerced.
  *
- * An empty stream resolves to `undefined`; callers wanting the additive identity supply it with `?? 0` or `?? 0n`.
+ * An empty feed resolves to `undefined`; callers wanting the additive identity supply it with `?? 0` or `?? 0n`.
  *
- * @typeParam V The type of items in the stream
+ * @typeParam V The type of items in the feed
  *
- * @returns A sink resolving to the sum of the items of the stream, or to `undefined` if the stream carried no items
+ * @returns A sink resolving to the sum of the items of the feed, or to `undefined` if the feed carried no items
  *
- * @throws {TypeError} If the stream mixes `number` and `bigint` items
+ * @throws {TypeError} If the feed mixes `number` and `bigint` items
  *
  * @example
  *
@@ -57,10 +57,10 @@ export function sum<V extends number | bigint>(): Sink<V, undefined | V> {
 
 	return async source => {
 
-		let total:	 undefined | V = undefined;
+		let total: undefined | V = undefined;
 
-		for await (const value 	of source) {
-			total = add(total, value);
+		for await (const value of source) {
+			total = total === undefined ? value : add(total, value);
 		}
 
 		return total;

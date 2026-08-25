@@ -23,7 +23,7 @@ import { items } from "./items.js";
 
 describe("items()", () => {
 
-	it("should create pipe from multiple values", async () => {
+	it("should create feed from multiple values", async () => {
 
 		const result = await items(1, 2, 3, 4)(toArray());
 
@@ -31,7 +31,7 @@ describe("items()", () => {
 
 	});
 
-	it("should create pipe from a single value", async () => {
+	it("should create feed from a single value", async () => {
 
 		const result = await items(42)(toArray());
 
@@ -39,7 +39,7 @@ describe("items()", () => {
 
 	});
 
-	it("should create an empty pipe from an empty argument list", async () => {
+	it("should create an empty feed from an empty argument list", async () => {
 
 		const result = await items<number>()(toArray());
 
@@ -47,7 +47,7 @@ describe("items()", () => {
 
 	});
 
-	it("should create pipe from mixed values", async () => {
+	it("should create feed from mixed values", async () => {
 
 		const result = await items<number | string>(1, "a", 2, "b")(toArray());
 

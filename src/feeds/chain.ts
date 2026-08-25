@@ -14,24 +14,23 @@
  * limitations under the License.
  */
 
-import type { Awaitable } from "@metreeca/core/async";
-import { Data, Pipe } from "../index.js";
-import { flatten } from "../index.core.js";
-import { data } from "./data.js";
+import { Feed } from "../index.js";
+import { feed } from "./feed.js";
 
 
 /**
- * Creates a pipe concatenating multiple data sources.
+ * Creates a feed concatenating multiple feeds.
  *
- * Sources are consumed one at a time, each fully drained before the next is opened, so items are emitted in source
- * order and a source that never runs dry starves the ones behind it. A promised source is awaited when its turn
- * comes, deferring retrieval until then.
+ * Feeds are consumed one at a time, each fully drained before the next is opened, so items are emitted in argument
+ * order and a feed that never runs dry starves the ones behind it. Nothing is drawn from a feed until its turn comes,
+ * so a feed deferring retrieval until consumption, as {@link feed} does with a promised data source, is left
+ * untouched until then.
  *
- * @typeParam V The type of items in the streams
+ * @typeParam V The type of values contributed to the feed
  *
- * @param sources The data sources to concatenate, each supplied either directly or as a promise
+ * @param feeds The feeds to concatenate
  *
- * @returns A pipe yielding the items of all sources in source order
+ * @returns A feed yielding the items of all feeds in argument order
  *
  * @example
  *
@@ -41,13 +40,15 @@ import { data } from "./data.js";
  *   (toArray())
  * );  // [1, 2, 3, 4]
  * ```
+ *
+ * @see {@link feed} to open a feed from a data source of any other shape
  */
-export function chain<V>(...sources: readonly Awaitable<Data<V>>[]): Pipe<V> {
+export function chain<V>(...feeds: readonly Feed<V>[]): Feed<V> {
 
-	return data((async function* () {
+	return feed((async function* () {
 
-		for (const source of sources) {
-			yield* flatten(await source);
+		for (const source of feeds) {
+			yield* source();
 		}
 
 	})());

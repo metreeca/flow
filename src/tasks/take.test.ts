@@ -15,7 +15,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { data, items } from "../feeds/index.js";
+import { feed, items } from "../feeds/index.js";
 import { toArray } from "../sinks/index.js";
 import { filter } from "./filter.js";
 import { take } from "./take.js";
@@ -61,7 +61,7 @@ describe("take()", () => {
 		let iteratorReturned = false;
 
 		// Create an infinite generator that tracks cleanup
-		const infiniteGenerator = data((async function* () {
+		const infiniteGenerator = feed((async function* () {
 			try {
 				let i = 0;
 				while ( true ) {
@@ -87,7 +87,7 @@ describe("take()", () => {
 		let iteratorReturned = false;
 
 		// Create an infinite generator that tracks cleanup
-		const infiniteGenerator = data((async function* () {
+		const infiniteGenerator = feed((async function* () {
 			try {
 				let i = 0;
 				while ( true ) {
@@ -99,7 +99,7 @@ describe("take()", () => {
 			}
 		})());
 
-		// Pipeline: infinite generator > filter (evens) > take(3)
+		// Pipe: infinite generator > filter (evens) > take(3)
 		const values = await infiniteGenerator
 		(filter(x => x%2 === 0))
 		(take(3))

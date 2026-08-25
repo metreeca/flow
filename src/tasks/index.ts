@@ -15,14 +15,15 @@
  */
 
 /**
- * Intermediate operations that filter, transform, or process stream items.
+ * Intermediate operations that filter, transform, or process feed items.
  *
- * Tasks apply to a {@link index.Pipe Pipe} and yield a new pipe, so they chain freely into longer pipelines. Items
- * are processed lazily, sequentially and in source order, unless a task reorders them or wraps another to run it
- * concurrently, trading output order for throughput. Tasks buffering the whole stream in memory never complete on
+ * Tasks apply to a {@link index.Feed Feed} and yield a new feed, so they chain freely into longer pipes. Items are
+ * processed lazily, sequentially and in source order, unless a task reorders them or wraps another to run it
+ * concurrently, trading output order for throughput. Tasks buffering the whole feed in memory never complete on
  * infinite sources.
  *
- * **Custom Tasks** are functions that transform async iterables by returning async generator functions:
+ * **Custom Tasks** are functions that transform async iterables by returning async generator functions; items to be
+ * dropped are left unyielded or yielded as `undefined`, as feeds never carry it:
  *
  * ```typescript
  * import { pipe } from '@metreeca/pipe';

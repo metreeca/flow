@@ -15,7 +15,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { data, items } from "../feeds/index.js";
+import { feed, items } from "../feeds/index.js";
 import { every } from "./every.js";
 
 
@@ -53,7 +53,7 @@ describe("every()", () => {
 		let generatorCalls = 0;
 		let iteratorReturned = false;
 
-		const infiniteGenerator = data((async function* () {
+		const infiniteGenerator = feed((async function* () {
 			try {
 				let i = 0;
 				while ( true ) {
@@ -73,7 +73,7 @@ describe("every()", () => {
 
 	});
 
-	it("should return true for empty stream", async () => {
+	it("should return true for empty feed", async () => {
 
 		const result = await items<number>()(every(x => x > 10));
 

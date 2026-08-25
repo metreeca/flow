@@ -19,23 +19,23 @@ import { Sink } from "../index.js";
 
 
 /**
- * Creates a sink collecting the items of the stream into an array.
+ * Creates a sink collecting the items of the feed into an array.
  *
- * Items are collected in source order and the array is made {@link immutable} once the stream is drained, freezing it
+ * Items are collected in source order and the array is made {@link immutable} once the feed is drained, freezing it
  * together with the items collected into it.
  *
  * > [!WARNING]
  * >
- * > Accumulates the whole stream in memory. For large or infinite streams, this may exhaust memory or never complete.
+ * > Accumulates the whole feed in memory. For large or infinite feeds, this may exhaust memory or never complete.
  *
  * > [!WARNING]
  * >
  * > Freezing clones structured items, giving them a fresh identity: entries are not reachable through the original
- * > item reference. Feed structured items as {@link immutable} values to keep their identity stable.
+ * > item reference. Supply structured items as {@link immutable} values to keep their identity stable.
  *
- * @typeParam V The type of items in the stream
+ * @typeParam V The type of items in the feed
  *
- * @returns A sink resolving to the deeply {@link immutable} read-only array of the items of the stream
+ * @returns A sink resolving to the deeply {@link immutable} read-only array of the items of the feed
  *
  * @example
  *

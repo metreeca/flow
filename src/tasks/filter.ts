@@ -23,7 +23,7 @@ import { Task } from "../index.js";
  *
  * Items are tested lazily, one at a time, and emitted in source order.
  *
- * @typeParam V The type of items in the stream
+ * @typeParam V The type of items in the feed
  *
  * @param predicate The function testing each item; an `undefined` result is treated as `false` and the item is
  *   discarded
@@ -43,11 +43,13 @@ import { Task } from "../index.js";
 export function filter<V>(predicate: (item: V) => Awaitable<undefined | boolean>): Task<V> {
 
 	return async function* (source: AsyncIterable<V>) {
+
 		for await (const item of source) {
 			if ( await predicate(item) ) {
 				yield item;
 			}
 		}
+
 	};
 
 }

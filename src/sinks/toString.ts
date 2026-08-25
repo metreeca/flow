@@ -18,17 +18,17 @@ import { Sink } from "../index.js";
 
 
 /**
- * Creates a sink joining the items of the stream into a string.
+ * Creates a sink joining the items of the feed into a string.
  *
  * Items are rendered and joined as `Array.prototype.join()` would, that is through their default string
- * representation, `null` values excepted, which are rendered as empty strings; an empty stream joins to an empty
+ * representation, `null` values excepted, which are rendered as empty strings; an empty feed joins to an empty
  * string.
  *
- * @typeParam V The type of items in the stream
+ * @typeParam V The type of items in the feed
  *
  * @param separator The string inserted between consecutive items, defaulting to `,`
  *
- * @returns A sink resolving to the string joining the items of the stream
+ * @returns A sink resolving to the string joining the items of the feed
  *
  * @example
  *

@@ -14,29 +14,26 @@
  * limitations under the License.
  */
 
-import type { Awaitable } from "@metreeca/core/async";
-import { Data, Pipe } from "../index.js";
-import { flatten } from "../index.core.js";
-import { data } from "./data.js";
+import { Feed } from "../index.js";
+import { feed } from "./feed.js";
 
 
 /**
- * Creates a pipe interleaving multiple data sources.
+ * Creates a feed interleaving multiple feeds.
  *
- * All sources are opened together and consumed concurrently, each kept one item ahead, so items are emitted as they
- * become available rather than in source order and a slow source never holds back the others. Promised sources are
- * all awaited before the stream starts.
+ * All feeds are opened together and consumed concurrently, each kept one item ahead, so items are emitted as they
+ * become available rather than in argument order and a slow feed never holds back the others.
  *
  * > [!WARNING]
  * >
- * > Output order is not preserved: items interleave and overtake each other according to how quickly every source
+ * > Output order is not preserved: items interleave and overtake each other according to how quickly every feed
  * > produces them.
  *
- * @typeParam V The type of items in the streams
+ * @typeParam V The type of values contributed to the feed
  *
- * @param sources The data sources to interleave, each supplied either directly or as a promise
+ * @param feeds The feeds to interleave
  *
- * @returns A pipe yielding the items of all sources as they become available
+ * @returns A feed yielding the items of all feeds as they become available
  *
  * @example
  *
@@ -46,20 +43,23 @@ import { data } from "./data.js";
  *   (toArray())
  * );  // [1, 3, 2, 4], depending on async timing
  * ```
+ *
+ * @see {@link feed} to open a feed from a data source of any other shape
  */
-export function merge<V>(...sources: readonly Awaitable<Data<V>>[]): Pipe<V> {
+export function merge<V>(...feeds: readonly Feed<V>[]): Feed<V> {
 
-	return data((async function* () {
+	return feed((async function* () {
 
-		const iterators = await Promise.all(
-			sources.map(async source => flatten(await source)[Symbol.asyncIterator]())
-		);
+		function advance(iterator: AsyncIterator<V>) {
+			return iterator.next().then(result => ({ iterator, result }));
+		}
 
-		const pending = new Map(
-			iterators.map(iterator => {
-				return [iterator, iterator.next().then(result => ({ iterator, result }))] as const;
-			})
-		);
+		// ;(cast) tuple narrowing consumed by the `Map` constructor, keying pending results by their own iterator
+
+		const pending = new Map(feeds.map(source => {
+			const iterator = source()[Symbol.asyncIterator]();
+			return [iterator, advance(iterator)] as const;
+		}));
 
 		try {
 
@@ -73,10 +73,7 @@ export function merge<V>(...sources: readonly Awaitable<Data<V>>[]): Pipe<V> {
 
 				} else { // schedule next iteration before yielding to prevent race conditions
 
-					pending.set(iterator, iterator.next().then((result: IteratorResult<V>) => ({
-						iterator,
-						result
-					})));
+					pending.set(iterator, advance(iterator));
 
 					yield result.value;
 

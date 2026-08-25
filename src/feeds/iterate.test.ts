@@ -19,7 +19,6 @@ import { pipe } from "../index.js";
 import { reduce, toArray } from "../sinks/index.js";
 import { filter, map } from "../tasks/index.js";
 import { iterate } from "./iterate.js";
-import { range } from "./range.js";
 
 
 describe("iterate()", () => {
@@ -37,112 +36,7 @@ describe("iterate()", () => {
 
 	});
 
-	it("should stop on empty array", async () => {
-
-		function counter() {
-			let count = 0;
-			return () => count >= 2 ? [] : [count++];
-		}
-
-		const values = await iterate(counter())(toArray());
-
-		expect(values).toEqual([0, 1]);
-
-	});
-
-	it("should stop on empty iterator", async () => {
-
-		function counter() {
-			let count = 0;
-			return () => count >= 2 ? new Set() : new Set([count++]);
-		}
-
-		const values = await iterate(counter())(toArray());
-
-		expect(values).toEqual([0, 1]);
-
-	});
-
-	it("should flatten arrays from each call", async () => {
-
-		function pager() {
-			let page = 0;
-			return () => {
-				if ( page >= 3 ) {
-					return undefined;
-				}
-				const start = page*2;
-				page++;
-				return [start, start+1];
-			};
-		}
-
-		const values = await iterate(pager())(toArray());
-
-		expect(values).toEqual([0, 1, 2, 3, 4, 5]);
-
-	});
-
-	it("should handle single values", async () => {
-
-		function counter() {
-			let count = 0;
-			return () => count >= 3 ? undefined : count++;
-		}
-
-		const values = await iterate(counter())(toArray());
-
-		expect(values).toEqual([0, 1, 2]);
-
-	});
-
-	it("should handle iterables", async () => {
-
-		function pager() {
-			let page = 0;
-			return () => {
-				if ( page >= 2 ) {
-					return undefined;
-				}
-				const start = page*2;
-				page++;
-				return new Set([start, start+1]);
-			};
-		}
-
-		const values = await iterate(pager())(toArray());
-
-		expect(values).toEqual([0, 1, 2, 3]);
-
-	});
-
-	it("should handle pipes", async () => {
-
-		function counter() {
-			let count = 0;
-			return () => count >= 2 ? undefined : range(count++, count);
-		}
-
-		const values = await iterate(counter())(toArray());
-
-		expect(values).toEqual([0, 1]);
-
-	});
-
-	it("should treat strings as atomic values", async () => {
-
-		function counter() {
-			let count = 0;
-			return () => count >= 3 ? undefined : `value${count++}`;
-		}
-
-		const values = await iterate(counter())(toArray());
-
-		expect(values).toEqual(["value0", "value1", "value2"]);
-
-	});
-
-	it("should handle empty stream when first call returns undefined", async () => {
+	it("should handle empty feed when first call returns undefined", async () => {
 
 		const values = await iterate(() => undefined)(toArray());
 
@@ -150,27 +44,14 @@ describe("iterate()", () => {
 
 	});
 
-	it("should handle empty stream when first call returns empty array", async () => {
+	it("should preserve falsy values other than undefined", async () => {
 
-		const values = await iterate(() => [])(toArray());
-
-		expect(values).toEqual([]);
-
-	});
-
-	it("should work with generator tracking state", async () => {
-
-		const pages = ["page1", "page2", "page3"];
+		const falsy = [0, false, "", null];
 		let index = 0;
 
-		const values = await iterate(() => {
-			if ( index >= pages.length ) {
-				return undefined;
-			}
-			return pages[index++];
-		})(toArray());
+		const values = await iterate(() => index < falsy.length ? falsy[index++] : undefined)(toArray());
 
-		expect(values).toEqual(["page1", "page2", "page3"]);
+		expect(values).toEqual([0, false, "", null]);
 
 	});
 
@@ -190,104 +71,60 @@ describe("iterate()", () => {
 
 	});
 
-	it("should handle async generators with arrays", async () => {
+	describe("should contribute values as they are", () => {
 
-		function asyncPager() {
-			let page = 0;
-			return async () => {
-				await new Promise(resolve => setTimeout(resolve, 10));
-				if ( page >= 3 ) {
-					return undefined;
-				}
-				const start = page*2;
-				page++;
-				return [start, start+1];
-			};
-		}
+		it("should treat strings as atomic values", async () => {
 
-		const values = await iterate(asyncPager())(toArray());
+			function counter() {
+				let count = 0;
+				return () => count >= 3 ? undefined : `value${count++}`;
+			}
 
-		expect(values).toEqual([0, 1, 2, 3, 4, 5]);
+			const values = await iterate(counter())(toArray());
 
-	});
+			expect(values).toEqual(["value0", "value1", "value2"]);
 
-	it("should handle async generators returning promises of pipes", async () => {
+		});
 
-		function asyncCounter() {
+		it("should contribute arrays without expanding them", async () => {
+
+			const pages = [[1, 2], [3, 4]];
+			let index = 0;
+
+			const values = await iterate(() => index < pages.length ? pages[index++] : undefined)(toArray());
+
+			expect(values).toEqual([[1, 2], [3, 4]]);
+
+		});
+
+		it("should contribute empty arrays rather than end the feed", async () => {
+
 			let count = 0;
-			return async () => {
-				await new Promise(resolve => setTimeout(resolve, 10));
-				return count >= 2 ? undefined : range(count++, count);
-			};
-		}
 
-		const values = await iterate(asyncCounter())(toArray());
+			const values = await iterate(() => count++ < 2 ? [] : undefined)(toArray());
 
-		expect(values).toEqual([0, 1]);
+			expect(values).toEqual([[], []]);
 
-	});
+		});
 
-	it("should handle async generators that terminate with undefined", async () => {
+		it("should contribute iterables without expanding them", async () => {
 
-		let callCount = 0;
-		const values = await iterate(async () => {
-			await new Promise(resolve => setTimeout(resolve, 10));
-			callCount++;
-			return undefined;
-		})(toArray());
-
-		expect(values).toEqual([]);
-		expect(callCount).toBe(1);
-
-	});
-
-	it("should handle async generators that terminate with empty array", async () => {
-
-		let callCount = 0;
-		const values = await iterate(async () => {
-			await new Promise(resolve => setTimeout(resolve, 10));
-			callCount++;
-			return [];
-		})(toArray());
-
-		expect(values).toEqual([]);
-		expect(callCount).toBe(1);
-
-	});
-
-	it("should handle mixed sync and async patterns", async () => {
-
-		function mixedGenerator() {
 			let count = 0;
-			return async () => {
-				if ( count === 0 ) {
-					count++;
-					return 0; // synchronous value
-				} else if ( count === 1 ) {
-					count++;
-					await new Promise(resolve => setTimeout(resolve, 10));
-					return 1; // async value
-				} else if ( count === 2 ) {
-					count++;
-					return [2, 3]; // synchronous array
-				} else {
-					return undefined;
-				}
-			};
-		}
 
-		const values = await iterate(mixedGenerator())(toArray());
+			const values = await iterate(() => count++ < 1 ? new Set([1, 2]) : undefined)(toArray());
 
-		expect(values).toEqual([0, 1, 2, 3]);
+			expect(values).toEqual([new Set([1, 2])]);
+
+		});
 
 	});
 
-	describe("should create a compliant pipe object", () => {
+	describe("should create a compliant feed object", () => {
 
 		it("should return async iterable when called without transform", async () => {
 			function counter() {
 				let count = 0;
-				return () => count >= 3 ? undefined : [count++];
+				return () => count >= 3 ? undefined : count++;
 			}
 
 			const values = await pipe(
@@ -297,7 +134,7 @@ describe("iterate()", () => {
 			expect(values).toEqual([0, 1, 2]);
 		});
 
-		it("should apply task and return new pipe", async () => {
+		it("should apply task and return new feed", async () => {
 			function counter() {
 				let count = 0;
 				return () => count >= 3 ? undefined : count++;

@@ -15,20 +15,20 @@
  */
 
 import { assert } from "@metreeca/core";
-import { Pipe } from "../index.js";
-import { data } from "./data.js";
+import { Feed } from "../index.js";
+import { feed } from "./feed.js";
 
 
 /**
- * Creates a pipe from a range of consecutive integers.
+ * Creates a feed from a range of consecutive integers.
  *
  * Numbers are generated in ascending order if `start` is less than `end`, in descending order if it is greater; equal
- * bounds yield an empty stream.
+ * bounds yield an empty feed.
  *
  * @param start The first value of the range, included
  * @param end The value the range stops at, excluded
  *
- * @returns A pipe yielding the numbers from `start` towards `end`
+ * @returns A feed yielding the numbers from `start` towards `end`
  *
  * @throws {TypeError} If either `start` or `end` is not an integer
  *
@@ -51,12 +51,12 @@ import { data } from "./data.js";
  * );  // []
  * ```
  */
-export function range(start: number, end: number): Pipe<number> {
+export function range(start: number, end: number): Feed<number> {
 
 	const from = assert(start, Number.isInteger, value => `expected integer bound <${value}>`);
 	const to = assert(end, Number.isInteger, value => `expected integer bound <${value}>`);
 
-	return data((function* () {
+	return feed((function* () {
 
 		if ( from < to ) {
 

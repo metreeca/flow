@@ -22,7 +22,7 @@ import { count } from "./count.js";
 
 describe("count()", () => {
 
-	it("should count all items in stream", async () => {
+	it("should count all items in feed", async () => {
 
 		const result = await items(1, 2, 3, 4, 5)(count());
 
@@ -30,7 +30,7 @@ describe("count()", () => {
 
 	});
 
-	it("should return zero for empty stream", async () => {
+	it("should return zero for empty feed", async () => {
 
 		const result = await items<number>()(count());
 

@@ -25,7 +25,7 @@ const readonly = () => { throw new TypeError("unsupported mutation of immutable 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * Creates a sink collecting the items of the stream into a map under extracted keys.
+ * Creates a sink collecting the items of the feed into a map under extracted keys.
  *
  * Keys and values are made {@link immutable} as they are collected, in source order. Keys must be unique: an item
  * whose key was already collected fails the sink rather than silently overwriting the entry standing under it. Keys
@@ -37,7 +37,7 @@ const readonly = () => { throw new TypeError("unsupported mutation of immutable 
  *
  * > [!WARNING]
  * >
- * > Accumulates the whole stream in memory. For large or infinite streams, this may exhaust memory or never complete.
+ * > Accumulates the whole feed in memory. For large or infinite feeds, this may exhaust memory or never complete.
  *
  * > [!WARNING]
  * >
@@ -45,7 +45,7 @@ const readonly = () => { throw new TypeError("unsupported mutation of immutable 
  * > reference, and the same mutable key extracted twice yields two distinct entries rather than a duplicate key
  * > error. Extract structured keys as {@link immutable} values to keep their identity stable.
  *
- * @typeParam V The type of items in the stream
+ * @typeParam V The type of items in the feed
  * @typeParam K The type of map keys
  *
  * @param key The function extracting the key from each item
@@ -74,7 +74,7 @@ export function toMap<V, K>(
  * Collects like {@link toMap} without a `value` argument, pairing each key with an extracted value rather than with
  * the item itself.
  *
- * @typeParam V The type of items in the stream
+ * @typeParam V The type of items in the feed
  * @typeParam K The type of map keys
  * @typeParam T The type of map values
  *

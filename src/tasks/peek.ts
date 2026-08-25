@@ -18,17 +18,17 @@ import { Task } from "../index.js";
 
 
 /**
- * Creates a task observing the stream without altering it.
+ * Creates a task observing the feed without altering it.
  *
- * Every item is handed to the consumer before being emitted unchanged, making the stream observable at any point of a
- * pipeline for tracing, logging or metering purposes.
+ * Every item is handed to the consumer before being emitted unchanged, making the feed observable at any point of a
+ * pipe for tracing, logging or metering purposes.
  *
- * @typeParam V The type of items in the stream
+ * @typeParam V The type of items in the feed
  *
  * @param consumer The function observing each item; a returned promise is awaited before the item moves on, so
- *   asynchronous side effects hold the stream back until they complete
+ *   asynchronous side effects hold the feed back until they complete
  *
- * @returns A task yielding the items of the stream unchanged
+ * @returns A task yielding the items of the feed unchanged
  *
  * @example
  *

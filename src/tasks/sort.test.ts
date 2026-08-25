@@ -16,7 +16,7 @@
 
 import { by, descending } from "@metreeca/core/order";
 import { describe, expect, it } from "vitest";
-import { data, items } from "../feeds/index.js";
+import { feed, items } from "../feeds/index.js";
 import { toArray } from "../sinks/index.js";
 import { sort } from "./sort.js";
 
@@ -103,7 +103,7 @@ describe("sort()", () => {
 
 	});
 
-	it("should handle empty stream", async () => {
+	it("should handle empty feed", async () => {
 
 		const values = await items<number>()(sort())(toArray());
 
@@ -127,7 +127,7 @@ describe("sort()", () => {
 			new Date("2023-02-20")
 		];
 
-		const values = await data(dates)(sort())(toArray());
+		const values = await feed(dates)(sort())(toArray());
 
 		expect(values).toEqual([
 			new Date("2023-01-10"),

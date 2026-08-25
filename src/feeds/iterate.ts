@@ -15,27 +15,27 @@
  */
 
 import type { Awaitable } from "@metreeca/core/async";
-import { Data, Pipe } from "../index.js";
-import { flatten } from "../index.core.js";
-import { data } from "./data.js";
+import { Feed } from "../index.js";
+import { feed } from "./feed.js";
 
 
 /**
- * Creates a pipe from repeated calls to a generator function.
+ * Creates a feed from repeated calls to a generator function.
  *
- * The generator is called on demand, once the data it returned last has been fully consumed, and the stream ends as
- * soon as a call contributes no item, that is when it returns `undefined` or an empty {@link index.Data Data} value.
- * A promised result is awaited before being contributed, so pagination endpoints, database cursors and any other
- * source fetching a batch at a time are driven directly by the stream.
+ * The generator is called on demand, once the value it returned last has been consumed, and the feed ends as soon as
+ * a call returns `undefined`. Every other value is contributed as a single item, whatever its shape and without being
+ * expanded further, so arrays and iterables are carried whole and falsy values are preserved. A promised value is
+ * awaited before being contributed, so cursors, queues and any other source producing one value at a time are driven
+ * directly by the feed.
  *
- * Generators that never run dry produce an infinite stream, to be bounded downstream by a task such as
+ * Generators that never run dry produce an infinite feed, to be bounded downstream by a task such as
  * {@link tasks.take take} or by a sink deciding its outcome early.
  *
- * @typeParam V The type of items in the stream
+ * @typeParam V The type of values contributed to the feed
  *
- * @param generator The function called repeatedly to produce the next batch of data
+ * @param generator The function called repeatedly to produce the next value; an `undefined` result ends the feed
  *
- * @returns A pipe yielding the items contributed by successive generator calls
+ * @returns A feed yielding the values returned by successive generator calls
  *
  * @example
  *
@@ -46,27 +46,17 @@ import { data } from "./data.js";
  *   (toArray())
  * );  // [0.123, 0.456, 0.789]
  * ```
+ *
+ * @see {@link feed} to open a feed from a source expanded according to its shape
  */
-export function iterate<V>(generator: () => Awaitable<undefined | Data<V>>): Pipe<V> {
+export function iterate<V>(generator: () => Awaitable<undefined | V>): Feed<V> {
 
-	return data((async function* () {
+	return feed((async function* () {
 
-		for (let data = await generator(); data !== undefined; data = await generator()) {
+		for (let value = await generator(); value !== undefined; value = await generator()) {
 
-			const iterable = flatten(data);
-			const iterator = iterable[Symbol.asyncIterator]();
-			const first = await iterator.next();
+			yield value;
 
-			if ( first.done ) {
-
-				return;
-
-			} else {
-
-				yield first.value;
-				yield* iterator;
-
-			}
 		}
 
 	})());

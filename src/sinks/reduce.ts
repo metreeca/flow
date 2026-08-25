@@ -19,17 +19,17 @@ import { Sink } from "../index.js";
 
 
 /**
- * Creates a sink folding the stream into a single item.
+ * Creates a sink folding the feed into a single item.
  *
- * The first item seeds the accumulator and every following one is folded into it, in source order, so the stream is
+ * The first item seeds the accumulator and every following one is folded into it, in source order, so the feed is
  * drained without retaining more than the accumulator.
  *
- * @typeParam V The type of items in the stream
+ * @typeParam V The type of items in the feed
  *
  * @param reducer The function folding an item into the accumulator and returning the updated one
  *
- * @returns A sink resolving to the final accumulator, to the only item of a singleton stream, or to `undefined` for
- *   an empty stream
+ * @returns A sink resolving to the final accumulator, to the only item of a singleton feed, or to `undefined` for
+ *   an empty feed
  *
  * @example
  *
@@ -43,12 +43,12 @@ import { Sink } from "../index.js";
 export function reduce<V>(reducer: (accumulator: V, item: V) => Awaitable<V>): Sink<V, undefined | V>;
 
 /**
- * Creates a sink folding the stream into a value of a different type.
+ * Creates a sink folding the feed into a value of a different type.
  *
  * Folds like {@link reduce} without an `initial` argument, seeding the accumulator with the supplied value rather
- * than with the first item, so the result type is free of the item type and an empty stream resolves to the seed.
+ * than with the first item, so the result type is free of the item type and an empty feed resolves to the seed.
  *
- * @typeParam V The type of items in the stream
+ * @typeParam V The type of items in the feed
  * @typeParam R The type of the accumulated result
  *
  * @param reducer The function folding an item into the accumulator and returning the updated one
@@ -68,7 +68,7 @@ export function reduce<V>(reducer: (accumulator: V, item: V) => Awaitable<V>): S
 export function reduce<V, R>(reducer: (accumulator: R, item: V) => Awaitable<R>, initial: R): Sink<V, R>;
 
 /**
- * Creates a sink reducing the stream to a single value, with or without an initial value.
+ * Creates a sink reducing the feed to a single value, with or without an initial value.
  */
 export function reduce<V, R>(reducer: Function, initial?: R): Sink<V, undefined | V | R> {
 

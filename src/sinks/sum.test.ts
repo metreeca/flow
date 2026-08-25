@@ -22,7 +22,7 @@ import { sum } from "./sum.js";
 
 describe("sum()", () => {
 
-	it("should sum all items in stream", async () => {
+	it("should sum all items in feed", async () => {
 
 		const result = await items(1, 2, 3, 4, 5)(sum());
 
@@ -30,7 +30,7 @@ describe("sum()", () => {
 
 	});
 
-	it("should return undefined for empty stream", async () => {
+	it("should return undefined for empty feed", async () => {
 
 		const result = await items<number>()(sum());
 
@@ -38,7 +38,7 @@ describe("sum()", () => {
 
 	});
 
-	it("should return the only item of a singleton stream", async () => {
+	it("should return the only item of a singleton feed", async () => {
 
 		const result = await items(42)(sum());
 
@@ -72,7 +72,7 @@ describe("sum()", () => {
 
 	describe("with bigint items", () => {
 
-		it("should sum all items in stream", async () => {
+		it("should sum all items in feed", async () => {
 
 			const result = await items(1n, 2n, 3n)(sum());
 
@@ -90,7 +90,7 @@ describe("sum()", () => {
 
 	});
 
-	it("should report streams mixing number and bigint items", async () => {
+	it("should report feeds mixing number and bigint items", async () => {
 
 		await expect(items<number | bigint>(1, 2n)(sum())).rejects.toThrow(TypeError);
 

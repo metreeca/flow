@@ -20,10 +20,10 @@ import { Sink } from "../index.js";
 /**
  * Creates a sink handing every item to a consumer.
  *
- * The stream is drained without retaining any item, making this the sink of choice for pipelines run for their side
+ * The feed is drained without retaining any item, making this the sink of choice for pipes run for their side
  * effects rather than for a collected result.
  *
- * @typeParam V The type of items in the stream
+ * @typeParam V The type of items in the feed
  *
  * @param consumer The function processing each item; a returned promise is awaited before the next item is pulled,
  *   so items are processed one at a time

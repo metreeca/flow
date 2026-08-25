@@ -18,14 +18,14 @@ import { Sink } from "../index.js";
 
 
 /**
- * Creates a sink counting the items of the stream.
+ * Creates a sink counting the items of the feed.
  *
- * The stream is drained without retaining any item, so counting stays within constant memory whatever its size, but
+ * The feed is drained without retaining any item, so counting stays within constant memory whatever its size, but
  * never completes on an infinite source.
  *
- * @typeParam V The type of items in the stream
+ * @typeParam V The type of items in the feed
  *
- * @returns A sink resolving to the number of items the stream carried
+ * @returns A sink resolving to the number of items the feed carried
  *
  * @example
  *

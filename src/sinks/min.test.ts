@@ -23,7 +23,7 @@ import { min } from "./min.js";
 
 describe("min()", () => {
 
-	it("should select the least item in stream", async () => {
+	it("should select the least item in feed", async () => {
 
 		const result = await items(3, 1, 4, 1, 5)(min());
 
@@ -31,7 +31,7 @@ describe("min()", () => {
 
 	});
 
-	it("should return undefined for empty stream", async () => {
+	it("should return undefined for empty feed", async () => {
 
 		const result = await items<number>()(min());
 
@@ -39,7 +39,7 @@ describe("min()", () => {
 
 	});
 
-	it("should return the only item of a singleton stream", async () => {
+	it("should return the only item of a singleton feed", async () => {
 
 		const result = await items(42)(min());
 

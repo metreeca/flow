@@ -27,10 +27,10 @@ import { Task } from "../index.js";
  *
  * > [!WARNING]
  * >
- * > Retains every key seen so far in memory. For large or infinite streams carrying many distinct keys, this may
+ * > Retains every key seen so far in memory. For large or infinite feeds carrying many distinct keys, this may
  * > exhaust memory.
  *
- * @typeParam V The type of items in the stream
+ * @typeParam V The type of items in the feed
  * @typeParam K The type of the comparison key
  *
  * @param selector The function extracting the comparison key from each item; items are compared directly when
@@ -68,6 +68,7 @@ export function distinct<V, K>(selector?: (item: V) => Awaitable<K>): Task<V> {
 				seen.add(key);
 				yield item;
 			}
+
 		}
 
 	};

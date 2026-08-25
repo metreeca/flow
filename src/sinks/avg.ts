@@ -14,30 +14,30 @@
  * limitations under the License.
  */
 
-import { add, mean } from "../index.core.js";
+import { add, div } from "@metreeca/core/numbers";
 import { Sink } from "../index.js";
 
 
 /**
- * Creates a sink averaging the items of the stream.
+ * Creates a sink averaging the items of the feed.
  *
  * The mean is computed from the running total and the item count, so averaging stays within constant memory whatever
- * the size of the stream, but never completes on an infinite source. `number` items are averaged as IEEE 754 doubles
- * and `bigint` items as exact integers: a stream is expected to carry one numeric type throughout, and mixing the two
+ * the size of the feed, but never completes on an infinite source. `number` items are averaged as IEEE 754 doubles
+ * and `bigint` items as exact integers: a feed is expected to carry one numeric type throughout, and mixing the two
  * is reported rather than silently coerced.
  *
  * `bigint` means are rounded to the nearest integer, halves away from zero, as no fractional `bigint` can carry the
  * remainder; callers needing another rounding, or a fractional mean, combine {@link sum} with {@link count}
  * themselves.
  *
- * An empty stream resolves to `undefined`, as a mean over no items is not defined; callers wanting a default supply
+ * An empty feed resolves to `undefined`, as a mean over no items is not defined; callers wanting a default supply
  * it with `?? 0` or `?? 0n`.
  *
- * @typeParam V The type of items in the stream
+ * @typeParam V The type of items in the feed
  *
- * @returns A sink resolving to the mean of the items of the stream, or to `undefined` if the stream carried no items
+ * @returns A sink resolving to the mean of the items of the feed, or to `undefined` if the feed carried no items
  *
- * @throws {TypeError} If the stream mixes `number` and `bigint` items
+ * @throws {TypeError} If the feed mixes `number` and `bigint` items
  *
  * @example
  *
@@ -65,12 +65,12 @@ export function avg<V extends number | bigint>(): Sink<V, undefined | V> {
 		let total: undefined | V = undefined;
 		let count = 0;
 
-		for await (const value 	of source) {
-			total = add(total, value);
+		for await (const value of source) {
+			total = total === undefined ? value : add(total, value);
 			count++;
 		}
 
-		return total === undefined ? undefined : mean(total, count);
+		return total === undefined ? undefined : div(total, count);
 
 	};
 

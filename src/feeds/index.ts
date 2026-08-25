@@ -15,27 +15,27 @@
  */
 
 /**
- * Factory functions that create new pipes from various input sources.
+ * Factory functions that open new feeds from various input sources.
  *
- * Feeds open a pipeline, either adapting values and data sources into a {@link index.Pipe Pipe} ready for task and
- * sink composition, or combining several sources into one stream, drawn either in sequence or concurrently. Every
- * feed defers all work until a sink consumes the stream.
+ * Feeds open the {@link index.Feed Feed} a pipe is built on, either adapting values and data sources into one ready
+ * for task and sink composition, or combining several feeds into a single one, drawn either in sequence or
+ * concurrently. Work is deferred until a sink or a manual iteration consumes the feed.
  *
  * > [!CAUTION]
  * >
  * > When creating custom feeds, always wrap async generators, async generator functions or `AsyncIterable<T>` objects
- * > with {@link data} to ensure `undefined` filtering and proper pipe interface integration.
+ * > with {@link feed} to ensure `undefined` filtering and conformance to the {@link index.Feed Feed} contract.
  *
- * **Custom Feeds** are functions that create new pipes:
+ * **Custom Feeds** are functions opening a feed over a source of their own:
  *
  * ```typescript
  * import { pipe } from '@metreeca/pipe';
- * import { data } from '@metreeca/pipe/feeds';
+ * import { feed } from '@metreeca/pipe/feeds';
  * import { toArray } from '@metreeca/pipe/sinks';
- * import type { Pipe } from '@metreeca/pipe';
+ * import type { Feed } from '@metreeca/pipe';
  *
- * function repeat<V>(value: V, count: number): Pipe<V> {
- *   return data(async function* () {
+ * function repeat<V>(value: V, count: number): Feed<V> {
+ *   return feed(async function* () {
  *     for (let i = 0; i < count; i++) { yield value; }
  *   }());
  * }
@@ -51,7 +51,7 @@
 
 // generators
 
-export * from "./data.js";
+export * from "./feed.js";
 export * from "./items.js";
 export * from "./range.js";
 export * from "./iterate.js";

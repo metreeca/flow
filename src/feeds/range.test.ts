@@ -55,13 +55,13 @@ describe("range()", () => {
 
 	});
 
-	describe("should create a compliant pipe object", () => {
+	describe("should create a compliant feed object", () => {
 
 		it("should return async iterable when called without transform", async () => {
 			expect(await pipe(range(1, 4)(toArray()))).toEqual([1, 2, 3]);
 		});
 
-		it("should apply task and return new pipe", async () => {
+		it("should apply task and return new feed", async () => {
 			expect(await pipe(range(1, 4)(map(x => x*2))(toArray()))).toEqual([2, 4, 6]);
 		});
 

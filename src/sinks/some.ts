@@ -21,10 +21,10 @@ import { Sink } from "../index.js";
 /**
  * Creates a sink reporting whether some item matches a predicate.
  *
- * Items are tested in source order and consumption stops at the first match, leaving the rest of the stream
- * unconsumed; an empty stream reports no match.
+ * Items are tested in source order and consumption stops at the first match, leaving the rest of the feed
+ * unconsumed; an empty feed reports no match.
  *
- * @typeParam V The type of items in the stream
+ * @typeParam V The type of items in the feed
  *
  * @param predicate The function testing each item
  *

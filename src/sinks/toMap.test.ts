@@ -161,7 +161,7 @@ describe("toMap()", () => {
 
 	});
 
-	it("should handle empty stream", async () => {
+	it("should handle empty feed", async () => {
 
 		const values = await items<{ id: number; name: string }>()(toMap(item => item.id));
 

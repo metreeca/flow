@@ -19,7 +19,7 @@ import { Task } from "../index.js";
 
 
 /**
- * Creates a task interleaving several runs of another task over the same stream.
+ * Creates a task interleaving several runs of another task over the same feed.
  *
  * Runs draw from the same source, each item going to exactly one of them, processed through that run's own invocation
  * of `task` and emitted as soon as it is ready. Runs are interleaved on the event loop rather than executed in
@@ -27,7 +27,7 @@ import { Task } from "../index.js";
  *
  * `concurrency` caps the number of items being processed at the same time, which is also how far ahead of the
  * downstream consumer items are pulled from the source: raising it trades memory for throughput. All runs start
- * together when the stream is opened, so `task` is invoked exactly `concurrency` times whether or not the source is
+ * together when the feed is opened, so `task` is invoked exactly `concurrency` times whether or not the source is
  * fast enough to keep every run busy.
  *
  * > [!WARNING]
@@ -45,18 +45,18 @@ import { Task } from "../index.js";
  * > [!CAUTION]
  * >
  * > Run stateless tasks only. `task` is invoked once per run, so state it keeps per invocation becomes per-run
- * > rather than stream-wide: {@link distinct} deduplicates within a run, {@link take} yields its quota to each one.
+ * > rather than feed-wide: {@link distinct} deduplicates within a run, {@link take} yields its quota to each one.
  * > State captured in its closure is shared instead, and hit concurrently.
  *
  * > [!NOTE]
  * >
  * > When an error occurs, all pending operations are awaited (but not failed) before the error is thrown, to prevent
- * > resource leaks. Runs failing while the consumer is idle report their error when the stream is next advanced,
+ * > resource leaks. Runs failing while the consumer is idle report their error when the feed is next advanced,
  * > rather than escaping as unhandled rejections.
  *
  * > [!NOTE]
  * >
- * > Closing the stream early waits for the in-flight pulls and the running tasks to settle before the source is
+ * > Closing the feed early waits for the in-flight pulls and the running tasks to settle before the source is
  * > closed, so a source idling between items delays it; failures reported while closing are suppressed if an error
  * > is already propagating.
  *
@@ -65,7 +65,7 @@ import { Task } from "../index.js";
  *
  * @param concurrency The number of concurrent runs; values less than 1 are treated as 1, that is, as sequential
  *   processing
- * @param task The task each run applies to the items it pulls from the source stream
+ * @param task The task each run applies to the items it pulls from the source feed
  *
  * @returns A task processing items concurrently through `task`
  *
@@ -75,7 +75,7 @@ import { Task } from "../index.js";
  *
  * ```typescript
  * await pipe(
- *   (data(ids))
+ *   (feed(ids))
  *   (concurrent(8, retrieve()))
  *   (toArray())
  * );  // 8 runs, at most 8 items in flight
@@ -83,13 +83,14 @@ import { Task } from "../index.js";
  */
 export function concurrent<V, R>(concurrency: number, task: Task<V, R>): Task<V, R> {
 
-	const limit = Math.max(1, assert(concurrency, Number.isInteger,
-		value => `expected integer concurrency <${value}>`));
+	const limit = Math.max(1, assert(concurrency, Number.isInteger, value =>
+		`expected integer concurrency <${value}>`
+	));
 
 	return async function* (source: AsyncIterable<V>) {
 
-		type Run = AsyncIterator<undefined | R>; // one invocation of the task, iterated by the merging loop
-		type Step = { run: Run, result: IteratorResult<undefined | R> }; // one result, tagged with its run
+		type Run = AsyncIterator<undefined | R, void, undefined>; // one invocation of the task, iterated by the loop
+		type Step = { run: Run, result: IteratorResult<undefined | R, void> }; // one result, tagged with its run
 
 
 		// the single reader of the source: wrapping it in an async generator serialises the pulls issued by the runs
@@ -99,15 +100,17 @@ export function concurrent<V, R>(concurrency: number, task: Task<V, R>): Task<V,
 		// every run draws from the same cursor, which is also its own iterable; omitting return() keeps a run
 		// closing early from closing the source
 
-		const shared: AsyncIterableIterator<V> = { next: () => reader.next(), [Symbol.asyncIterator]: () => shared };
+		const shared: AsyncIterableIterator<V> = {
+			next: () => reader.next(), [Symbol.asyncIterator]: () => shared
+		};
 
 
 		// live runs, each mapped to the promise of its next step; all created before any is started, so a
 		// task failing to create one leaves nothing to clean up; as none is added later, the map only shrinks
 
-		const pending = new Map<Run, Promise<Step>>(Array
-			.from({ length: limit }, () => task(shared)[Symbol.asyncIterator]())
-			.map(run => [run, step(run)])
+		const pending = new Map(Array
+			.from({ length: limit }, (): Run => task(shared)[Symbol.asyncIterator]())
+			.map<[Run, Promise<Step>]>(run => [run, step(run)])
 		);
 
 

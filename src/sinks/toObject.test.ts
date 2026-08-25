@@ -15,7 +15,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { data, items } from "../feeds/index.js";
+import { feed, items } from "../feeds/index.js";
 import { toObject } from "./toObject.js";
 
 
@@ -116,12 +116,12 @@ describe("toObject()", () => {
 
 	it("should report duplicate keys after property key coercion", async () => {
 
-		await expect(data<number | string>([1, "1"])(toObject(x => x)))
+		await expect(feed<number | string>([1, "1"])(toObject(x => x)))
 			.rejects.toThrow("duplicate key <1>");
 
 	});
 
-	it("should handle empty stream", async () => {
+	it("should handle empty feed", async () => {
 
 		const values = await items<{ id: number; name: string }>()(toObject(item => item.id));
 

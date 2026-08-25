@@ -15,10 +15,10 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { Pipe, pipe } from "../index.js";
+import { Feed, pipe } from "../index.js";
 import { reduce, toArray } from "../sinks/index.js";
 import { filter, map } from "../tasks/index.js";
-import { data } from "./data.js";
+import { feed } from "./feed.js";
 import { items } from "./items.js";
 import { merge } from "./merge.js";
 import { range } from "./range.js";
@@ -26,7 +26,7 @@ import { range } from "./range.js";
 
 describe("merge()", () => {
 
-	it("should merge multiple pipes", async () => {
+	it("should merge multiple feeds", async () => {
 
 		const values = await merge(range(1, 3), range(10, 12))(toArray());
 
@@ -34,7 +34,7 @@ describe("merge()", () => {
 
 	});
 
-	it("should handle empty pipes", async () => {
+	it("should handle empty feeds", async () => {
 
 		const values = await merge(range(1, 1), range(2, 2))(toArray());
 
@@ -42,12 +42,43 @@ describe("merge()", () => {
 
 	});
 
+	it("should handle a single feed", async () => {
+
+		const values = await merge(range(1, 4))(toArray());
+
+		expect(values).toEqual([1, 2, 3]);
+
+	});
+
+	it("should handle no feeds", async () => {
+
+		const values = await merge<number>()(toArray());
+
+		expect(values).toEqual([]);
+
+	});
+
+	it("should emit items as they become available", async () => {
+
+		function delayed(ms: number, value: number): Feed<number> {
+			return feed((async function* () {
+				await new Promise(resolve => setTimeout(resolve, ms));
+				yield value;
+			})());
+		}
+
+		const values = await merge(delayed(30, 1), delayed(10, 2), delayed(20, 3))(toArray());
+
+		expect(values).toEqual([2, 3, 1]);
+
+	});
+
 	it("should clean up iterators on early termination", async () => {
 
 		const cleanup: string[] = [];
 
-		function tracked(name: string): Pipe<number> {
-			return data((async function* () {
+		function tracked(name: string): Feed<number> {
+			return feed((async function* () {
 				try {
 					yield 1;
 					yield 2;
@@ -67,140 +98,22 @@ describe("merge()", () => {
 
 	});
 
-	it("should accept arrays as data sources", async () => {
+	it("should propagate source failures", async () => {
 
-		const values = await merge([1, 2], [10, 11])(toArray());
+		const failing = feed(Promise.reject<number[]>(new Error("test error")));
 
-		expect([...values].sort((a, b) => a-b)).toEqual([1, 2, 10, 11]);
-
-	});
-
-	it("should accept single values as data sources", async () => {
-
-		const values = await merge(1, 2, 3)(toArray());
-
-		expect([...values].sort((a, b) => a-b)).toEqual([1, 2, 3]);
+		await expect(merge(items(1, 2), failing)(toArray())).rejects.toThrow("test error");
 
 	});
 
-	it("should accept mixed Data<V> types", async () => {
-
-		const values = await merge([1, 2], items(3, 4), 5)(toArray());
-
-		expect([...values].sort((a, b) => a-b)).toEqual([1, 2, 3, 4, 5]);
-
-	});
-
-	it("should accept async iterables", async () => {
-
-		async function* gen1() {
-			yield 1;
-			yield 2;
-		}
-
-		async function* gen2() {
-			yield 10;
-			yield 11;
-		}
-
-		const values = await merge(gen1(), gen2())(toArray());
-
-		expect([...values].sort((a, b) => a-b)).toEqual([1, 2, 10, 11]);
-
-	});
-
-	it("should accept sync iterables", async () => {
-
-		const set1 = new Set([1, 2]);
-		const set2 = new Set([10, 11]);
-
-		const values = await merge(set1, set2)(toArray());
-
-		expect([...values].sort((a, b) => a-b)).toEqual([1, 2, 10, 11]);
-
-	});
-
-	it("should accept Promise<Data<V>>", async () => {
-
-		const promise1 = Promise.resolve([1, 2]);
-		const promise2 = Promise.resolve([10, 11]);
-
-		const values = await merge(promise1, promise2)(toArray());
-
-		expect([...values].sort((a, b) => a-b)).toEqual([1, 2, 10, 11]);
-
-	});
-
-	it("should accept mixed sync and async data sources", async () => {
-
-		const promise1 = Promise.resolve([1, 2]);
-		const array = [3, 4];
-		const promise2 = Promise.resolve(5);
-
-		const values = await merge(promise1, array, promise2)(toArray());
-
-		expect([...values].sort((a, b) => a-b)).toEqual([1, 2, 3, 4, 5]);
-
-	});
-
-	it("should handle empty promise results", async () => {
-
-		const values = await merge(
-			Promise.resolve([]),
-			Promise.resolve([1, 2])
-		)(toArray());
-
-		expect([...values].sort((a, b) => a-b)).toEqual([1, 2]);
-
-	});
-
-	it("should filter undefined values from promise results", async () => {
-
-		const values = await merge(
-			Promise.resolve([1, undefined, 2] as number[]),
-			Promise.resolve([undefined, 3] as number[])
-		)(toArray());
-
-		expect([...values].sort((a, b) => a-b)).toEqual([1, 2, 3]);
-
-	});
-
-	it("should handle promise rejections", async () => {
-
-		const rejected = Promise.reject(new Error("test error"));
-		const valid = Promise.resolve([1, 2]);
-
-		await expect(merge(rejected, valid)(toArray())).rejects.toThrow("test error");
-
-	});
-
-	it("should handle complex mixed sources", async () => {
-
-		async function* asyncGen() {
-			yield 1;
-			yield 2;
-		}
-
-		const values = await merge(
-			Promise.resolve([3, 4]),
-			asyncGen(),
-			new Set([5, 6]),
-			Promise.resolve(items(7, 8)),
-			9
-		)(toArray());
-
-		expect([...values].sort((a, b) => a-b)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9]);
-
-	});
-
-	describe("should create a compliant pipe object", () => {
+	describe("should create a compliant feed object", () => {
 
 		it("should return async iterable when called without transform", async () => {
 			const values = await pipe(merge(range(1, 3), range(10, 12))(toArray()));
 			expect([...values].sort((a, b) => a-b)).toEqual([1, 2, 10, 11]);
 		});
 
-		it("should apply task and return new pipe", async () => {
+		it("should apply task and return new feed", async () => {
 			const values = await pipe(merge(range(1, 3), range(10, 12))(map(x => x*2))(toArray()));
 			expect([...values].sort((a, b) => a-b)).toEqual([2, 4, 20, 22]);
 		});

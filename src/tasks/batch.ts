@@ -22,19 +22,19 @@ import { Task } from "../index.js";
  * Creates a task collecting consecutive items into fixed-size batches.
  *
  * Batches are emitted as soon as they fill up, in source order and with items in source order, so only one batch is
- * held in memory at a time; the last batch is emitted short if the stream ends before it fills up, and no batch is
- * emitted at all for an empty stream.
+ * held in memory at a time; the last batch is emitted short if the feed ends before it fills up, and no batch is
+ * emitted at all for an empty feed.
  *
  * > [!WARNING]
  * >
- * > An unbounded `size` accumulates the whole stream in memory before emitting the single batch holding it. For large
- * > or infinite streams, this may exhaust memory or never complete: batch by a positive size to keep consumption
+ * > An unbounded `size` accumulates the whole feed in memory before emitting the single batch holding it. For large
+ * > or infinite feeds, this may exhaust memory or never complete: batch by a positive size to keep consumption
  * > bounded.
  *
- * @typeParam V The type of items in the stream
+ * @typeParam V The type of items in the feed
  *
  * @param size The maximum number of items per batch, defaulting to `0`; values less than 1 are treated as unbounded,
- *   collecting the whole stream into a single batch
+ *   collecting the whole feed into a single batch
  *
  * @returns A task yielding the read-only lists of the items collected into each batch
  *
@@ -71,6 +71,7 @@ export function batch<V>(size: number = 0): Task<V, readonly V[]> {
 			if ( limit > 0 && batch.length >= limit ) {
 				yield batch.splice(0);
 			}
+
 		}
 
 		if ( batch.length > 0 ) {

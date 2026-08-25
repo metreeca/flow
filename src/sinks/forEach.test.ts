@@ -48,7 +48,7 @@ describe("forEach()", () => {
 
 	});
 
-	it("should handle empty stream", async () => {
+	it("should handle empty feed", async () => {
 
 		const sideEffects: number[] = [];
 

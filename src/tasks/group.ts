@@ -22,16 +22,16 @@ import type { Task } from "../index.js";
 /**
  * Creates a task collecting items sharing the same key.
  *
- * The whole stream is drained before the first group is emitted, then groups are emitted in first-appearance order of
+ * The whole feed is drained before the first group is emitted, then groups are emitted in first-appearance order of
  * their key, with items inside each group in source order. Keys are limited to {@link Primitive} values and compared
  * with `SameValueZero` semantics, so `NaN` matches itself and `-0` matches `0`.
  *
  * > [!WARNING]
  * >
- * > Accumulates the whole stream in memory before grouping. For large or infinite streams, this may exhaust memory or
+ * > Accumulates the whole feed in memory before grouping. For large or infinite feeds, this may exhaust memory or
  * > never complete.
  *
- * @typeParam V The type of items in the stream
+ * @typeParam V The type of items in the feed
  * @typeParam K The type of the grouping key
  *
  * @param key The function extracting the grouping key from each item

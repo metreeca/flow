@@ -24,7 +24,7 @@ const readonly = () => { throw new TypeError("unsupported mutation of immutable 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * Creates a sink collecting the distinct items of the stream into a set.
+ * Creates a sink collecting the distinct items of the feed into a set.
  *
  * Items are made {@link immutable} as they are collected, in first-appearance order, and compared with `SameValueZero`
  * semantics, so `NaN` matches itself and `-0` matches `0`.
@@ -35,17 +35,17 @@ const readonly = () => { throw new TypeError("unsupported mutation of immutable 
  *
  * > [!WARNING]
  * >
- * > Accumulates the whole stream in memory. For large or infinite streams, this may exhaust memory or never complete.
+ * > Accumulates the whole feed in memory. For large or infinite feeds, this may exhaust memory or never complete.
  *
  * > [!WARNING]
  * >
  * > Freezing clones structured items, giving them a fresh identity: entries are not reachable through the original
  * > item reference, and the same mutable item collected twice yields two distinct entries rather than being
- * > deduplicated. Feed structured items as {@link immutable} values to keep their identity stable.
+ * > deduplicated. Supply structured items as {@link immutable} values to keep their identity stable.
  *
- * @typeParam V The type of items in the stream
+ * @typeParam V The type of items in the feed
  *
- * @returns A sink resolving to the deeply {@link immutable} read-only set of the distinct items of the stream
+ * @returns A sink resolving to the deeply {@link immutable} read-only set of the distinct items of the feed
  *
  * @example
  *

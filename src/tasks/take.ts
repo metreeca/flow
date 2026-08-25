@@ -19,14 +19,14 @@ import { Task } from "../index.js";
 
 
 /**
- * Creates a task truncating the stream to a prefix.
+ * Creates a task truncating the feed to a prefix.
  *
- * Items are emitted lazily, in source order, and the stream ends as soon as the quota is met rather than draining the
- * source: this is the standard way to bound an otherwise infinite stream.
+ * Items are emitted lazily, in source order, and the feed ends as soon as the quota is met rather than draining the
+ * source: this is the standard way to bound an otherwise infinite feed.
  *
- * @typeParam V The type of items in the stream
+ * @typeParam V The type of items in the feed
  *
- * @param n The maximum number of leading items to emit; values less than 1 empty the stream
+ * @param n The maximum number of leading items to emit; values less than 1 empty the feed
  *
  * @returns A task yielding at most the first `n` items
  *

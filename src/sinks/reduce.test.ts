@@ -37,7 +37,7 @@ describe("reduce()", () => {
 
 	});
 
-	it("should return undefined for empty stream without initial", async () => {
+	it("should return undefined for empty feed without initial", async () => {
 
 		const result = await items<number>()(reduce((acc, x) => acc+x));
 
@@ -45,7 +45,7 @@ describe("reduce()", () => {
 
 	});
 
-	it("should return initial for empty stream with initial", async () => {
+	it("should return initial for empty feed with initial", async () => {
 
 		const result = await items<number>()(reduce((acc, x) => acc+x, 100));
 

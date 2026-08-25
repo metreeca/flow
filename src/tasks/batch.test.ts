@@ -39,7 +39,7 @@ describe("batch()", () => {
 
 	});
 
-	it("should handle empty stream", async () => {
+	it("should handle empty feed", async () => {
 
 		const values = await items<number>()(batch(2))(toArray());
 
@@ -63,7 +63,7 @@ describe("batch()", () => {
 
 	});
 
-	it("should process batches through pipeline", async () => {
+	it("should process batches through pipe", async () => {
 
 		const result = await items(1, 2, 3, 4, 5, 6, 7)
 		(batch(3))

@@ -15,7 +15,7 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { data, items } from "../feeds/index.js";
+import { feed, items } from "../feeds/index.js";
 import { pipe } from "../index.js";
 import { toArray } from "../sinks/index.js";
 import { flatMap } from "./flatMap.js";
@@ -43,18 +43,26 @@ describe("flatMap()", () => {
 
 	});
 
-	it("should yield single values as atomic items", async () => {
+	it("should reject single values", () => {
 
-		const values = await items(1, 2, 3)(flatMap(x => x*2))(toArray());
+		// @ts-expect-error single values are contributed by wrapping them in a batch
 
-		expect(values).toEqual([2, 4, 6]);
+		flatMap((x: number) => x*2);
 
 	});
 
-	it("should flatten nested pipes", async () => {
+	it("should reject undefined", () => {
+
+		// @ts-expect-error nothing is contributed by an empty batch
+
+		flatMap(() => undefined);
+
+	});
+
+	it("should flatten nested feeds", async () => {
 
 		const values = await items(1, 2)(flatMap(x => pipe(
-			data(x)
+			feed([x])
 			(map(v => v*2))
 		)))(toArray());
 
@@ -101,11 +109,11 @@ describe("flatMap()", () => {
 
 	it("should propagate errors thrown while flattening", async () => {
 
-		await expect(items(1, 2, 3)(flatMap(x => function* () {
+		await expect(items(1, 2, 3)(flatMap(x => (function* () {
 			yield x;
 			if ( x === 2 ) { throw new Error("flatten failed"); }
 			yield x*2;
-		}))(toArray())).rejects.toThrow("flatten failed");
+		})()))(toArray())).rejects.toThrow("flatten failed");
 
 	});
 

@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-import { Pipe } from "../index.js";
-import { data } from "./data.js";
+import { Feed } from "../index.js";
+import { feed } from "./feed.js";
 
 
 /**
- * Creates a pipe from a list of values.
+ * Creates a feed from a list of values.
  *
- * Each argument is contributed to the stream as a single item, in argument order, whatever its shape and without
+ * Each argument is contributed to the feed as a single item, in argument order, whatever its shape and without
  * being expanded further; `undefined` arguments are dropped as they enter it and an empty argument list opens an
- * empty stream.
+ * empty feed.
  *
- * @typeParam V The type of items in the stream
+ * @typeParam V The type of values contributed to the feed
  *
- * @param values The values to open the stream from
+ * @param values The values to open the feed from
  *
- * @returns A pipe carrying `values` in argument order
+ * @returns A feed carrying `values` in argument order
  *
  * @example
  *
@@ -45,10 +45,10 @@ import { data } from "./data.js";
  * );  // [[1, 2], [3, 4]], as each argument is contributed whole rather than expanded
  * ```
  *
- * @see {@link data} to open a stream from a source expanded according to its shape
+ * @see {@link feed} to open a feed from a source expanded according to its shape
  */
-export function items<V>(...values: V[]): Pipe<V> {
+export function items<V>(...values: (undefined | V)[]): Feed<V> {
 
-	return data(values);
+	return feed(values);
 
 }

@@ -62,7 +62,7 @@ describe("toString()", () => {
 
 	});
 
-	it("should handle empty stream", async () => {
+	it("should handle empty feed", async () => {
 
 		const result = await items<number>()(toString());
 

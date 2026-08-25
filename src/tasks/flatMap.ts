@@ -16,20 +16,24 @@
 
 import type { Awaitable } from "@metreeca/core/async";
 import { Data, Task } from "../index.js";
-import { flatten } from "../index.core.js";
+import { feed } from "../feeds/feed.js";
 
 
 /**
  * Creates a task expanding each item into a data source.
  *
- * Each item is converted into a {@link index.Data Data} value and replaced in the stream by the items that value
+ * Each item is converted into a {@link index.Data Data} value and replaced in the feed by the items that value
  * contributes, according to its shape; conversion is lazy, one item at a time, and expansions are emitted in source
- * order. An item expanding to nothing simply drops out of the stream.
+ * order. An item expanding to nothing simply drops out of the feed.
+ *
+ * The mapper returns a batch of items rather than a single value, so an item replaced by exactly one value expands to
+ * an array wrapping it.
  *
  * @typeParam V The type of input items
  * @typeParam R The type of output items
  *
- * @param mapper The function converting each item into the data source replacing it
+ * @param mapper The function converting each item into the data source replacing it; an empty result, as well as an
+ *   `undefined` value within the expansion, contributes nothing, so expansion doubles as filtering
  *
  * @returns A task yielding the items contributed by the expansion of each source item
  *
@@ -42,12 +46,14 @@ import { flatten } from "../index.core.js";
  *   (toArray())
  * );  // [1, 2, 2, 4, 3, 6]
  * ```
+ *
+ * @see {@link map} to replace each item with a single value
  */
-export function flatMap<V, R>(mapper: (item: V) => Awaitable<undefined | Data<R>>): Task<V, R> {
+export function flatMap<V, R>(mapper: (item: V) => Awaitable<Data<R>>): Task<V, R> {
 
 	return async function* (source: AsyncIterable<V>) {
 		for await (const item of source) {
-			yield* flatten(await mapper(item));
+			yield* feed(await mapper(item))(); // expansions enter a feed of their own, dropping optional entries
 		}
 	};
 

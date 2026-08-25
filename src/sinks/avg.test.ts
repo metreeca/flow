@@ -22,7 +22,7 @@ import { avg } from "./avg.js";
 
 describe("avg()", () => {
 
-	it("should average all items in stream", async () => {
+	it("should average all items in feed", async () => {
 
 		const result = await items(1, 2, 3, 4)(avg());
 
@@ -30,7 +30,7 @@ describe("avg()", () => {
 
 	});
 
-	it("should return undefined for empty stream", async () => {
+	it("should return undefined for empty feed", async () => {
 
 		const result = await items<number>()(avg());
 
@@ -38,7 +38,7 @@ describe("avg()", () => {
 
 	});
 
-	it("should return the only item of a singleton stream", async () => {
+	it("should return the only item of a singleton feed", async () => {
 
 		const result = await items(42)(avg());
 
@@ -114,7 +114,7 @@ describe("avg()", () => {
 
 	});
 
-	it("should report streams mixing number and bigint items", async () => {
+	it("should report feeds mixing number and bigint items", async () => {
 
 		await expect(items<number | bigint>(1, 2n)(avg())).rejects.toThrow(TypeError);
 

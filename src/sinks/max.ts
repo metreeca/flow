@@ -20,27 +20,27 @@ import { reduce } from "./reduce.js";
 
 
 /**
- * Creates a sink selecting the greatest item of the stream.
+ * Creates a sink selecting the greatest item of the feed.
  *
  * Items are ranked in source order, seeding the result with the first one and retaining only the greatest ranking item
- * seen so far, so selection stays within constant memory whatever the size of the stream, but never completes on an
+ * seen so far, so selection stays within constant memory whatever the size of the feed, but never completes on an
  * infinite source; equally ranking items resolve to the first one in source order.
  *
- * An empty stream resolves to `undefined`; callers wanting a default supply it with `??`. As {@link ascending} ranks
- * `null` and `undefined` before any other value and equal to each other, a stream resolves to a nullish item only if
- * it carries nothing else, unless the comparator states otherwise.
+ * An empty feed resolves to `undefined`; callers wanting a default supply it with `??`. As {@link ascending} ranks
+ * `null` before any other value, a feed resolves to `null` only if it carries nothing else, unless the comparator
+ * states otherwise.
  *
  * > [!TIP]
  * >
  * > The @metreeca/core [order](https://metreeca.github.io/core/modules/order.html) module provides helper functions for
  * > assembling complex ranking criteria.
  *
- * @typeParam V The type of items in the stream
+ * @typeParam V The type of items in the feed
  *
  * @param comparator The function establishing the relative order of two items, defaulting to {@link ascending},
- *   which ranks values in natural order, placing `null` and `undefined` first
+ *   which ranks values in natural order, placing `null` first
  *
- * @returns A sink resolving to the greatest ranking item of the stream, or to `undefined` if the stream carried no
+ * @returns A sink resolving to the greatest ranking item of the feed, or to `undefined` if the feed carried no
  *   items
  *
  * @example

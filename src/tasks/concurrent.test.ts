@@ -17,7 +17,7 @@
 import { sleep } from "@metreeca/core/async";
 import { ascending } from "@metreeca/core/order";
 import { describe, expect, it } from "vitest";
-import { data, items } from "../feeds/index.js";
+import { feed, items } from "../feeds/index.js";
 import { Task } from "../index.js";
 import { toArray } from "../sinks/index.js";
 import { flatMap } from "./flatMap.js";
@@ -197,7 +197,7 @@ describe("overlapping concurrent()", () => {
 			return task(source);
 		};
 
-		const values = await data(slow([1, 2, 3, 4], 20))(concurrent(10, counted))(toArray());
+		const values = await feed(slow([1, 2, 3, 4], 20))(concurrent(10, counted))(toArray());
 
 		expect([...values].sort(ascending)).toEqual([2, 4, 6, 8]);
 		expect(runs).toBe(10); // every run started, even though the source never keeps them all busy
@@ -299,7 +299,7 @@ describe("concurrent() task independence", () => {
 
 		const values = await items(1, 2, 3, 4)(concurrent(2, task))(toArray());
 
-		expect([...values].sort(ascending)).toEqual([1, 1, 2, 2]); // per-run counters, not a stream-wide one
+		expect([...values].sort(ascending)).toEqual([1, 1, 2, 2]); // per-run counters, not a feed-wide one
 
 	});
 
@@ -365,7 +365,7 @@ describe("concurrent() error handling", () => {
 
 		const { task } = busy(() => 1);
 
-		await expect(data(failing())(concurrent(2, task))(toArray())).rejects.toThrow("source failed");
+		await expect(feed(failing())(concurrent(2, task))(toArray())).rejects.toThrow("source failed");
 
 	});
 
@@ -417,17 +417,17 @@ describe("concurrent() error handling", () => {
 
 		const { task } = busy(() => 1);
 
-		const failing: Task<number, number> = stream => {
+		const failing: Task<number, number> = values => {
 
 			created++;
 
 			if ( created === 2 ) { throw new Error("run failed"); }
 
-			return task(stream);
+			return task(values);
 
 		};
 
-		await expect(data(source())(concurrent(3, failing))(toArray())).rejects.toThrow("run failed");
+		await expect(feed(source())(concurrent(3, failing))(toArray())).rejects.toThrow("run failed");
 
 		await sleep(20); // leave any started run time to pull
 
@@ -445,7 +445,7 @@ describe("concurrent() error handling", () => {
 			}
 		};
 
-		await expect(data(brittle([1, 2, 3, 4]))(concurrent(2, task))(toArray())).rejects.toThrow("task failed");
+		await expect(feed(brittle([1, 2, 3, 4]))(concurrent(2, task))(toArray())).rejects.toThrow("task failed");
 
 	});
 
@@ -453,7 +453,7 @@ describe("concurrent() error handling", () => {
 
 		const { task } = busy(() => 10);
 
-		const iterator = data(brittle([1, 2, 3, 4]))(concurrent(2, task))()[Symbol.asyncIterator]();
+		const iterator = feed(brittle([1, 2, 3, 4]))(concurrent(2, task))()[Symbol.asyncIterator]();
 
 		await iterator.next();
 
@@ -503,7 +503,7 @@ describe("concurrent() early termination", () => {
 
 		const { task } = busy(() => 10);
 
-		const iterator = data(source())(concurrent(2, task))()[Symbol.asyncIterator]();
+		const iterator = feed(source())(concurrent(2, task))()[Symbol.asyncIterator]();
 
 		await iterator.next();
 		await iterator.return?.();
@@ -549,7 +549,7 @@ describe("concurrent() early termination", () => {
 
 		const { task } = busy(() => 10);
 
-		const iterator = data(source())(concurrent(2, task))()[Symbol.asyncIterator]();
+		const iterator = feed(source())(concurrent(2, task))()[Symbol.asyncIterator]();
 
 		await iterator.next();
 		await iterator.return?.();

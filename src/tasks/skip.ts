@@ -19,14 +19,14 @@ import { Task } from "../index.js";
 
 
 /**
- * Creates a task discarding a prefix of the stream.
+ * Creates a task discarding a prefix of the feed.
  *
- * The leading items are pulled from the source and dropped, then the rest of the stream is emitted lazily, in source
- * order; a shorter stream is consumed entirely and nothing is emitted.
+ * The leading items are pulled from the source and dropped, then the rest of the feed is emitted lazily, in source
+ * order; a shorter feed is consumed entirely and nothing is emitted.
  *
- * @typeParam V The type of items in the stream
+ * @typeParam V The type of items in the feed
  *
- * @param n The number of leading items to discard; values less than 1 leave the stream untouched
+ * @param n The number of leading items to discard; values less than 1 leave the feed untouched
  *
  * @returns A task yielding the items following the first `n`
  *

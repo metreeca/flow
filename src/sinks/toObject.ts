@@ -20,7 +20,7 @@ import { Sink } from "../index.js";
 
 
 /**
- * Creates a sink collecting the items of the stream into an object under extracted keys.
+ * Creates a sink collecting the items of the feed into an object under extracted keys.
  *
  * Keys must be unique: an item whose key was already collected fails the sink rather than silently overwriting the
  * entry standing under it. Keys are limited to `PropertyKey` values and compared after property key coercion, so the
@@ -29,18 +29,18 @@ import { Sink } from "../index.js";
  * Entries are collected as own properties, so a `__proto__` key is stored as data rather than altering the prototype
  * chain of the returned object; they are enumerated in standard property order, that is integer-like keys in
  * ascending numeric order, followed by other string keys and symbol keys in collection order. The object is made
- * {@link immutable} once the stream is drained, freezing it together with the values collected into it.
+ * {@link immutable} once the feed is drained, freezing it together with the values collected into it.
  *
  * > [!WARNING]
  * >
- * > Accumulates the whole stream in memory. For large or infinite streams, this may exhaust memory or never complete.
+ * > Accumulates the whole feed in memory. For large or infinite feeds, this may exhaust memory or never complete.
  *
  * > [!WARNING]
  * >
  * > Freezing clones structured items, giving them a fresh identity: entries are not reachable through the original
- * > item reference. Feed structured items as {@link immutable} values to keep their identity stable.
+ * > item reference. Supply structured items as {@link immutable} values to keep their identity stable.
  *
- * @typeParam V The type of items in the stream
+ * @typeParam V The type of items in the feed
  * @typeParam K The type of object keys
  *
  * @param key The function extracting the key from each item
@@ -69,7 +69,7 @@ export function toObject<V, K extends PropertyKey>(
  * Collects like {@link toObject} without a `value` argument, pairing each key with an extracted value rather than
  * with the item itself.
  *
- * @typeParam V The type of items in the stream
+ * @typeParam V The type of items in the feed
  * @typeParam K The type of object keys
  * @typeParam T The type of object values
  *

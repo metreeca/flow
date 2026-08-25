@@ -4,15 +4,15 @@
 
 A lightweight TypeScript library for composable async iterable processing.
 
-**@metreeca/pipe** provides an idiomatic, easy-to-use functional API for working with async iterables through pipes,
-tasks, and sinks. The composable design enables building complex data processing pipelines with full type safety and
+**@metreeca/pipe** provides an idiomatic, easy-to-use functional API for working with async iterables through feeds,
+tasks, and sinks. The composable design enables building complex data processing pipes with full type safety and
 minimal boilerplate. Key features include:
 
 - **Focused API**: small set of operators covering common async iterable use cases
-- **Natural Syntax**: readable pipeline composition through nested calls wrapped in `pipe()`
-- **Type Safety**: seamless type inference across pipeline stages and automatic `undefined` filtering
-- **Task/Sink Pattern**: clear separation between transformations and terminal operations
-- **Concurrency Control**: any task run concurrently over the stream, under an explicit bound on the items in flight
+- **Natural Syntax**: readable pipe composition through nested calls wrapped in `pipe()`
+- **Type Safety**: seamless type inference across pipe stages and automatic `undefined` filtering
+- **Feed/Task/Sink Pattern**: symmetric contracts for opening, transforming and consuming feeds
+- **Concurrency Control**: any task run concurrently over the feed, under an explicit bound on the items in flight
 - **Extensible Design**: easy creation of custom feeds, tasks, and sinks
 
 # Installation
@@ -33,44 +33,44 @@ npm install @metreeca/pipe
 > This section introduces essential concepts and common patterns: see the
 > [API reference](https://metreeca.github.io/pipe/) for complete coverage.
 
-**@metreeca/pipe** provides four main abstractions:
+**@metreeca/pipe** builds on three symmetric [abstractions](https://metreeca.github.io/pipe/modules/index.html):
 
-- **[Pipes](https://metreeca.github.io/pipe/modules/index.html)**: functional interface for composing async stream
-  operations
-- **[Feeds](https://metreeca.github.io/pipe/modules/feeds.html)**: factory functions that open new pipes from various
-  input sources
+- **[Feeds](https://metreeca.github.io/pipe/modules/feeds.html)**: factory functions that open a feed from values,
+  data sources or other feeds
 - **[Tasks](https://metreeca.github.io/pipe/modules/tasks.html)**: intermediate operations that transform, filter, or
-  process stream items
-- **[Sinks](https://metreeca.github.io/pipe/modules/sinks.html)**: terminal operations that consume streams and produce
+  process feed items
+- **[Sinks](https://metreeca.github.io/pipe/modules/sinks.html)**: terminal operations that consume feeds and produce
   final results
+
+A **pipe** composes a feed, any number of tasks and an optional sink, wrapped in `pipe()`. Closed by a sink, it resolves
+to the final result; left open, it yields the async iterable underlying its final feed for manual iteration.
 
 ## Creating Feeds
 
-Open pipes with [feeds](https://metreeca.github.io/pipe/modules/feeds.html), either adapting values and data sources
-or combining several sources into one stream.
+Start a pipe with a [feed](https://metreeca.github.io/pipe/modules/feeds.html), either adapting values and data sources
+or combining several feeds into one.
 
 ### Generators
 
-Open a pipe over values, ranges or repeated generator calls.
+Open a feed over values, ranges or repeated generator calls.
 
 ```typescript
-import { data, items, iterate, range } from '@metreeca/pipe/feeds';
+import { feed, items, iterate, range } from '@metreeca/pipe/feeds';
 
-items(1, 2, 3, 4, 5);         // from values contributed as they are
-data(42);                     // from single values
-data([1, 2, 3, 4, 5]);        // from arrays
-data(new Set([1, 2, 3]));     // from iterables
-data(asyncGenerator());       // from async iterables
-data(fetchReport());          // from promises, awaited on consumption
-data(items(1, 2, 3));         // from other pipes
-range(10, 0);                 // from numeric ranges
+items(1, 2, 3, 4, 5);           // from values contributed as they are
+feed([1, 2, 3, 4, 5]);          // from arrays
+feed(new Set([1, 2, 3]));       // from iterables
+feed(asyncGenerator());         // from async iterables
+feed(fetchReport());            // from promises, awaited on consumption
+feed(items(1, 2, 3));           // from other feeds
+range(10, 0);                   // from numeric ranges
 
-iterate(() => Math.random()); // from repeated generator calls
+iterate(() => Math.random());   // from repeated generator calls
 ```
 
 ### Combinators
 
-Open a pipe over the items of several data sources, drawn either in sequence or concurrently.
+Open a feed over the items of several feeds, drawn either in sequence or concurrently.
 
 ```typescript
 import { chain, merge } from '@metreeca/pipe/feeds';
@@ -88,7 +88,7 @@ merge(                        // concurrent consumption
 
 ## Transforming Data
 
-Chain [tasks](https://metreeca.github.io/pipe/modules/tasks.html) to reshape the stream and map its items.
+Chain [tasks](https://metreeca.github.io/pipe/modules/tasks.html) to reshape the feed and map its items.
 
 ### Operators
 
@@ -179,12 +179,12 @@ await pipe(
 
 ## Consuming Data
 
-Apply [sinks](https://metreeca.github.io/pipe/modules/sinks.html) as terminal operations that consume pipes and return
-promises with final results.
+Apply [sinks](https://metreeca.github.io/pipe/modules/sinks.html) as terminal operations that consume feeds and
+return promises with final results.
 
 ### Predicates
 
-Test the stream against a condition, stopping as soon as the outcome is decided.
+Test the feed against a condition, stopping as soon as the outcome is decided.
 
 ```typescript
 import { every, some } from '@metreeca/pipe/sinks';
@@ -202,8 +202,8 @@ await pipe(
 
 ### Aggregators
 
-Reduce the stream to a single value, resolving to `undefined` on an empty stream where no result is defined. `sum()`
-and `avg()` handle `number` and `bigint` streams alike, rounding `bigint` means to the nearest integer, halves away
+Reduce the feed to a single value, resolving to `undefined` on an empty feed where no result is defined. `sum()`
+and `avg()` handle `number` and `bigint` feeds alike, rounding `bigint` means to the nearest integer, halves away
 from zero. `min()` and `max()` rank items with the same comparators as `sort()`, resolving to the first of equally
 ranking ones.
 
@@ -248,7 +248,7 @@ await pipe(
 
 ### Extractors
 
-Retrieve a single item from the stream or fold it into a value of an arbitrary type.
+Retrieve a single item from the feed or fold it into a value of an arbitrary type.
 
 ```typescript
 import { find, reduce } from '@metreeca/pipe/sinks';
@@ -300,7 +300,7 @@ await pipe(
 
 ### Effects
 
-Consume the stream for its side effects, resolving to the number of items processed.
+Consume the feed for its side effects, resolving to the number of items processed.
 
 ```typescript
 import { forEach } from '@metreeca/pipe/sinks';
@@ -315,8 +315,8 @@ await pipe(
 
 ## Manual Iteration
 
-Call `pipe()` without a sink to obtain the underlying async iterable and drive the pipeline directly, pulling items as
-the surrounding code is ready for them.
+Call `pipe()` without a sink to get the underlying async iterable and drive the pipe directly, pulling items as the
+surrounding code is ready for them.
 
 ```typescript
 import { items } from '@metreeca/pipe/feeds';
@@ -335,18 +335,18 @@ for await (const value of iterable) {
 
 ## Concurrent Processing
 
-Wrap any task with `concurrent()` to interleave several runs of it over the same stream: the runs draw from the same
+Wrap any task with `concurrent()` to interleave several runs of it over the same feed: the runs draw from the same
 source, each item going to exactly one of them, and results are emitted as soon as they are ready rather than in
 source order.
 
 ```typescript
-import { data } from '@metreeca/pipe/feeds';
+import { feed } from '@metreeca/pipe/feeds';
 import { concurrent } from '@metreeca/pipe/tasks';
 import { toArray } from '@metreeca/pipe/sinks';
 import { pipe } from '@metreeca/pipe';
 
 await pipe( // at most 4 items in flight
-	(data(ids))
+	(feed(ids))
 	(concurrent(4, retrieve()))
 	(toArray())
 );
@@ -357,14 +357,14 @@ operations overlapping at any time, not the computation carried out simultaneous
 event loop concurrently buys nothing.
 
 The concurrency bounds how far the task reads ahead of the downstream consumer, so it controls memory usage and
-backpressure, not the rate at which work is submitted. All runs start together when the stream is opened, so the task
+backpressure, not the rate at which work is submitted. All runs start together when the feed is opened, so the task
 is invoked exactly as many times as the concurrency, whether or not the source is fast enough to keep every run busy.
 
 The concurrency must be an integer, otherwise a `TypeError` is thrown; values less than 1 are treated as 1, that is,
 as sequential processing.
 
 The concurrent task is a single function invoked once per run: state it initialises on invocation, as `distinct()`,
-`sort()`, `take()`, `skip()`, `batch()` and `group()` do, is tracked per run rather than across the stream as a whole,
+`sort()`, `take()`, `skip()`, `batch()` and `group()` do, is tracked per run rather than across the feed as a whole,
 while state captured in its enclosing closure is shared by every run and accessed concurrently. Run only tasks that
 keep no state across items.
 
@@ -374,14 +374,14 @@ Control the rate at which work is submitted with utilities from the @metreeca/co
 ```typescript
 import { createThrottle } from "@metreeca/core/async";
 import { pipe } from "@metreeca/pipe";
-import { data } from "@metreeca/pipe/feeds";
+import { feed } from "@metreeca/pipe/feeds";
 import { forEach } from "@metreeca/pipe/sinks";
 import { concurrent } from "@metreeca/pipe/tasks";
 
 const throttle = createThrottle({ minimum: 1000 });  // limit to max 1 request per second
 
 await pipe(
-	(data(ids))
+	(feed(ids))
 	(concurrent(4, retrieve(throttle)))  // inject delays to enforce the rate limit
 	(forEach(x => console.log(x)))
 );
@@ -390,10 +390,10 @@ await pipe(
 ## Working with Infinite Feeds
 
 Use `iterate()` to open infinite feeds from generator functions. Items are pulled lazily, so an infinite feed is
-consumed only as far as the pipeline demands: bound it with a task like `take()`, or with a sink deciding its outcome
+consumed only as far as the pipe demands: bound it with a task like `take()`, or with a sink deciding its outcome
 early, such as `some()`, `every()` or `find()`.
 
-Tasks draining the whole stream before emitting anything, namely `sort()`, `group()` and an unbounded `batch()`, and
+Tasks draining the whole feed before emitting anything, namely `sort()`, `group()` and an unbounded `batch()`, and
 sinks needing every item, whether aggregating it (`count()`, `sum()`, `avg()`, `min()`, `max()`) or collecting it into
 a container, never complete on an infinite feed: place a bound upstream of them.
 
@@ -413,16 +413,16 @@ await pipe(
 
 ## Creating Custom Feeds
 
-Feeds are functions that create new pipes.
+Feeds are functions that open a feed over a source of their own.
 
 ```typescript
 import { pipe } from '@metreeca/pipe';
-import { data } from '@metreeca/pipe/feeds';
+import { feed } from '@metreeca/pipe/feeds';
 import { toArray } from '@metreeca/pipe/sinks';
-import type { Pipe } from '@metreeca/pipe';
+import type { Feed } from '@metreeca/pipe';
 
-function repeat<V>(value: V, count: number): Pipe<V> {
-	return data(async function* () {
+function repeat<V>(value: V, count: number): Feed<V> {
+	return feed(async function* () {
 		for (let i = 0; i < count; i++) { yield value; }
 	}());
 }
@@ -436,12 +436,13 @@ await pipe(
 > [!CAUTION]
 >
 > When creating custom feeds, always wrap async generators, async generator functions, or `AsyncIterable<T>` objects
-> with [`data()`](https://metreeca.github.io/pipe/functions/data.html) to ensure `undefined` filtering and proper
-> pipe interface integration.
+> with [`feed()`](https://metreeca.github.io/pipe/functions/feed.html) to ensure `undefined` filtering and conformance
+> to the `Feed` contract.
 
 ## Creating Custom Tasks
 
-Tasks are functions that transform async iterables. Create custom tasks by returning an async generator function.
+Tasks are functions that transform async iterables. Create custom tasks by returning an async generator function; items
+to be dropped are left unyielded or yielded as `undefined`, as feeds never carry it.
 
 ```typescript
 import { pipe } from '@metreeca/pipe';

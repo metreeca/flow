@@ -15,14 +15,14 @@
  */
 
 /**
- * Terminal operations that consume streams and produce final results.
+ * Terminal operations that consume feeds and produce final results.
  *
- * Sinks close a pipeline: applying one to a {@link index.Pipe Pipe} triggers execution and returns a promise
- * resolving to the final result. Those that can decide their outcome early stop consuming rather than draining the
- * source, while those collecting items into a container return it deeply immutable, freezing the container together
- * with the items, keys and values collected into it. Those reducing the stream to a single value, whether computed
- * over its items or selected among them, resolve to `undefined` when the stream carries none and no result is
- * defined, leaving the choice of a fallback to the caller.
+ * Sinks close a pipe: applying one to a {@link index.Feed Feed} triggers execution and returns a promise resolving to
+ * the final result. Those that can decide their outcome early stop consuming rather than draining the source, while
+ * those collecting items into a container return it deeply immutable, freezing the container together with the items,
+ * keys and values collected into it. Those reducing the feed to a single value, whether computed over its items or
+ * selected among them, resolve to `undefined` when the feed carries none and no result is defined, leaving the
+ * choice of a fallback to the caller.
  *
  * **Custom Sinks** are functions that consume async iterables by returning a promise for the final result:
  *
