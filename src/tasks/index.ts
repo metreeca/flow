@@ -26,10 +26,10 @@
  * dropped are left unyielded or yielded as `undefined`, as feeds never carry it:
  *
  * ```typescript
- * import { pipe } from '@metreeca/pipe';
- * import { items } from '@metreeca/pipe/feeds';
- * import { toArray } from '@metreeca/pipe/sinks';
- * import type { Task } from '@metreeca/pipe';
+ * import { pipe } from '@metreeca/flow';
+ * import { items } from '@metreeca/flow/feeds';
+ * import { toArray } from '@metreeca/flow/sinks';
+ * import type { Task } from '@metreeca/flow';
  *
  * function double<V extends number>(): Task<V, V> {
  *   return async function* (source) {

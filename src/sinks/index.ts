@@ -27,9 +27,9 @@
  * **Custom Sinks** are functions that consume async iterables by returning a promise for the final result:
  *
  * ```typescript
- * import { pipe } from '@metreeca/pipe';
- * import { items } from '@metreeca/pipe/feeds';
- * import type { Sink } from '@metreeca/pipe';
+ * import { pipe } from '@metreeca/flow';
+ * import { items } from '@metreeca/flow/feeds';
+ * import type { Sink } from '@metreeca/flow';
  *
  * function histogram<V>(): Sink<V, Map<V, number>> {
  *   return async source => {

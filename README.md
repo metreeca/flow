@@ -1,10 +1,10 @@
-# @metreeca/pipe
+# @metreeca/flow
 
-[![npm](https://img.shields.io/npm/v/@metreeca/pipe)](https://www.npmjs.com/package/@metreeca/pipe)
+[![npm](https://img.shields.io/npm/v/@metreeca/flow)](https://www.npmjs.com/package/@metreeca/flow)
 
 Composable pipes over async iterables.
 
-**@metreeca/pipe** provides an idiomatic, easy-to-use functional API for working with async iterables through feeds,
+**@metreeca/flow** provides an idiomatic, easy-to-use functional API for working with async iterables through feeds,
 tasks, and sinks. The composable design enables building complex data processing pipes with full type safety and
 minimal boilerplate. Key features include:
 
@@ -18,7 +18,7 @@ minimal boilerplate. Key features include:
 # Installation
 
 ```shell
-npm install @metreeca/pipe
+npm install @metreeca/flow
 ```
 
 > [!WARNING]
@@ -31,15 +31,15 @@ npm install @metreeca/pipe
 > [!NOTE]
 >
 > This section introduces essential concepts and common patterns: see the
-> [API reference](https://metreeca.github.io/pipe/) for complete coverage.
+> [API reference](https://metreeca.github.io/flow/) for complete coverage.
 
-**@metreeca/pipe** builds on three symmetric [abstractions](https://metreeca.github.io/pipe/modules/index.html):
+**@metreeca/flow** builds on three symmetric [abstractions](https://metreeca.github.io/flow/modules/index.html):
 
-- **[Feeds](https://metreeca.github.io/pipe/modules/feeds.html)**: factory functions that open a feed from values,
+- **[Feeds](https://metreeca.github.io/flow/modules/feeds.html)**: factory functions that open a feed from values,
   data sources or other feeds
-- **[Tasks](https://metreeca.github.io/pipe/modules/tasks.html)**: intermediate operations that transform, filter, or
+- **[Tasks](https://metreeca.github.io/flow/modules/tasks.html)**: intermediate operations that transform, filter, or
   process feed items
-- **[Sinks](https://metreeca.github.io/pipe/modules/sinks.html)**: terminal operations that consume feeds and produce
+- **[Sinks](https://metreeca.github.io/flow/modules/sinks.html)**: terminal operations that consume feeds and produce
   final results
 
 A **pipe** composes a feed, any number of tasks and an optional sink, wrapped in `pipe()`. Closed by a sink, it resolves
@@ -47,7 +47,7 @@ to the final result; left open, it yields the async iterable underlying its fina
 
 ## Creating Feeds
 
-Start a pipe with a [feed](https://metreeca.github.io/pipe/modules/feeds.html), either adapting values and data sources
+Start a pipe with a [feed](https://metreeca.github.io/flow/modules/feeds.html), either adapting values and data sources
 or combining several feeds into one.
 
 ### Generators
@@ -55,7 +55,7 @@ or combining several feeds into one.
 Open a feed over values, ranges or repeated generator calls.
 
 ```typescript
-import { feed, items, iterate, range } from '@metreeca/pipe/feeds';
+import { feed, items, iterate, range } from '@metreeca/flow/feeds';
 
 items(1, 2, 3, 4, 5);           // from values contributed as they are
 feed([1, 2, 3, 4, 5]);          // from arrays
@@ -73,7 +73,7 @@ iterate(() => Math.random());   // from repeated generator calls
 Open a feed over the items of several feeds, drawn either in sequence or concurrently.
 
 ```typescript
-import { chain, merge } from '@metreeca/pipe/feeds';
+import { chain, merge } from '@metreeca/flow/feeds';
 
 chain(                        // sequential consumption
 	items(1, 2, 3),
@@ -88,7 +88,7 @@ merge(                        // concurrent consumption
 
 ## Transforming Data
 
-Chain [tasks](https://metreeca.github.io/pipe/modules/tasks.html) to reshape the feed and map its items.
+Chain [tasks](https://metreeca.github.io/flow/modules/tasks.html) to reshape the feed and map its items.
 
 ### Operators
 
@@ -100,7 +100,7 @@ Select, reorder and inspect items, leaving their type unchanged.
 > assembling complex sorting criteria.
 
 ```typescript
-import { distinct, filter, peek, skip, sort, take } from '@metreeca/pipe/tasks';
+import { distinct, filter, peek, skip, sort, take } from '@metreeca/flow/tasks';
 
 await pipe(
 	(items(1, 2, 3, 4, 5))
@@ -150,7 +150,7 @@ await pipe(
 Map items to values of a different type, either one by one or in groups.
 
 ```typescript
-import { batch, flatMap, group, map } from '@metreeca/pipe/tasks';
+import { batch, flatMap, group, map } from '@metreeca/flow/tasks';
 
 await pipe(
 	(items(1, 2, 3))
@@ -179,7 +179,7 @@ await pipe(
 
 ## Consuming Data
 
-Apply [sinks](https://metreeca.github.io/pipe/modules/sinks.html) as terminal operations that consume feeds and
+Apply [sinks](https://metreeca.github.io/flow/modules/sinks.html) as terminal operations that consume feeds and
 return promises with final results.
 
 ### Predicates
@@ -187,7 +187,7 @@ return promises with final results.
 Test the feed against a condition, stopping as soon as the outcome is decided.
 
 ```typescript
-import { every, some } from '@metreeca/pipe/sinks';
+import { every, some } from '@metreeca/flow/sinks';
 
 await pipe(
 	(items(1, 2, 3))
@@ -213,7 +213,7 @@ ranking ones.
 > assembling complex ranking criteria.
 
 ```typescript
-import { avg, count, max, min, sum } from '@metreeca/pipe/sinks';
+import { avg, count, max, min, sum } from '@metreeca/flow/sinks';
 
 await pipe(
 	(items(1, 2, 3, 4, 5))
@@ -251,7 +251,7 @@ await pipe(
 Retrieve a single item from the feed or fold it into a value of an arbitrary type.
 
 ```typescript
-import { find, reduce } from '@metreeca/pipe/sinks';
+import { find, reduce } from '@metreeca/flow/sinks';
 
 await pipe(
 	(items(1, 2, 3, 4))
@@ -270,7 +270,7 @@ Collect items into a container. The result is deeply immutable, freezing both th
 values collected into it.
 
 ```typescript
-import { toArray, toMap, toObject, toSet, toString } from '@metreeca/pipe/sinks';
+import { toArray, toMap, toObject, toSet, toString } from '@metreeca/flow/sinks';
 
 await pipe(
 	(items(1, 2, 3))
@@ -303,7 +303,7 @@ await pipe(
 Consume the feed for its side effects, resolving to the number of items processed.
 
 ```typescript
-import { forEach } from '@metreeca/pipe/sinks';
+import { forEach } from '@metreeca/flow/sinks';
 
 await pipe(
 	(items(1, 2, 3))
@@ -319,9 +319,9 @@ Call `pipe()` without a sink to get the underlying async iterable and drive the 
 surrounding code is ready for them.
 
 ```typescript
-import { items } from '@metreeca/pipe/feeds';
-import { filter } from '@metreeca/pipe/tasks';
-import { pipe } from '@metreeca/pipe';
+import { items } from '@metreeca/flow/feeds';
+import { filter } from '@metreeca/flow/tasks';
+import { pipe } from '@metreeca/flow';
 
 const iterable = pipe(
 	(items(1, 2, 3))
@@ -340,10 +340,10 @@ source, each item going to exactly one of them, and results are emitted as soon 
 source order.
 
 ```typescript
-import { feed } from '@metreeca/pipe/feeds';
-import { concurrent } from '@metreeca/pipe/tasks';
-import { toArray } from '@metreeca/pipe/sinks';
-import { pipe } from '@metreeca/pipe';
+import { feed } from '@metreeca/flow/feeds';
+import { concurrent } from '@metreeca/flow/tasks';
+import { toArray } from '@metreeca/flow/sinks';
+import { pipe } from '@metreeca/flow';
 
 await pipe( // at most 4 items in flight
 	(feed(ids))
@@ -373,10 +373,10 @@ Control the rate at which work is submitted with utilities from the @metreeca/co
 
 ```typescript
 import { createThrottle } from "@metreeca/core/async";
-import { pipe } from "@metreeca/pipe";
-import { feed } from "@metreeca/pipe/feeds";
-import { forEach } from "@metreeca/pipe/sinks";
-import { concurrent } from "@metreeca/pipe/tasks";
+import { pipe } from "@metreeca/flow";
+import { feed } from "@metreeca/flow/feeds";
+import { forEach } from "@metreeca/flow/sinks";
+import { concurrent } from "@metreeca/flow/tasks";
 
 const throttle = createThrottle({ minimum: 1000 });  // limit to max 1 request per second
 
@@ -398,10 +398,10 @@ sinks needing every item, whether aggregating it (`count()`, `sum()`, `avg()`, `
 a container, never complete on an infinite feed: place a bound upstream of them.
 
 ```typescript
-import { iterate } from '@metreeca/pipe/feeds';
-import { filter, take } from '@metreeca/pipe/tasks';
-import { forEach } from '@metreeca/pipe/sinks';
-import { pipe } from '@metreeca/pipe';
+import { iterate } from '@metreeca/flow/feeds';
+import { filter, take } from '@metreeca/flow/tasks';
+import { forEach } from '@metreeca/flow/sinks';
+import { pipe } from '@metreeca/flow';
 
 await pipe(
 	(iterate(() => Math.random()))
@@ -416,10 +416,10 @@ await pipe(
 Feeds are functions that open a feed over a source of their own.
 
 ```typescript
-import { pipe } from '@metreeca/pipe';
-import { feed } from '@metreeca/pipe/feeds';
-import { toArray } from '@metreeca/pipe/sinks';
-import type { Feed } from '@metreeca/pipe';
+import { pipe } from '@metreeca/flow';
+import { feed } from '@metreeca/flow/feeds';
+import { toArray } from '@metreeca/flow/sinks';
+import type { Feed } from '@metreeca/flow';
 
 function repeat<V>(value: V, count: number): Feed<V> {
 	return feed(async function* () {
@@ -436,7 +436,7 @@ await pipe(
 > [!CAUTION]
 >
 > When creating custom feeds, always wrap async generators, async generator functions, or `AsyncIterable<T>` objects
-> with [`feed()`](https://metreeca.github.io/pipe/functions/feed.html) to ensure `undefined` filtering and conformance
+> with [`feed()`](https://metreeca.github.io/flow/functions/feed.html) to ensure `undefined` filtering and conformance
 > to the `Feed` contract.
 
 ## Creating Custom Tasks
@@ -445,10 +445,10 @@ Tasks are functions that transform async iterables. Create custom tasks by retur
 to be dropped are left unyielded or yielded as `undefined`, as feeds never carry it.
 
 ```typescript
-import { pipe } from '@metreeca/pipe';
-import { items } from '@metreeca/pipe/feeds';
-import { toArray } from '@metreeca/pipe/sinks';
-import type { Task } from '@metreeca/pipe';
+import { pipe } from '@metreeca/flow';
+import { items } from '@metreeca/flow/feeds';
+import { toArray } from '@metreeca/flow/sinks';
+import type { Task } from '@metreeca/flow';
 
 function double<V extends number>(): Task<V, V> {
 	return async function* (source) {
@@ -468,9 +468,9 @@ await pipe(
 Sinks are functions that consume async iterables and return a promise for the final result.
 
 ```typescript
-import { pipe } from '@metreeca/pipe';
-import { items } from '@metreeca/pipe/feeds';
-import type { Sink } from '@metreeca/pipe';
+import { pipe } from '@metreeca/flow';
+import { items } from '@metreeca/flow/feeds';
+import type { Sink } from '@metreeca/flow';
 
 function histogram<V>(): Sink<V, Map<V, number>> {
 	return async source => {
@@ -491,10 +491,10 @@ await pipe(
 
 # Support
 
-- open an [issue](https://github.com/metreeca/pipe/issues) to report a problem or to suggest a new feature
-- start a [discussion](https://github.com/metreeca/pipe/discussions) to ask a how-to question or to share an idea
+- open an [issue](https://github.com/metreeca/flow/issues) to report a problem or to suggest a new feature
+- start a [discussion](https://github.com/metreeca/flow/discussions) to ask a how-to question or to share an idea
 
 # License
 
 This project is licensed under the Apache 2.0 License –
-see [LICENSE](https://github.com/metreeca/pipe?tab=Apache-2.0-1-ov-file) file for details.
+see [LICENSE](https://github.com/metreeca/flow?tab=Apache-2.0-1-ov-file) file for details.

@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unpublished](https://github.com/metreeca/pipe/commits/HEAD)
+## [Unpublished](https://github.com/metreeca/flow/commits/HEAD)
 
 ### Added
 
@@ -25,6 +25,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `feed` opening a new feed over a data source, normalised according to its shape
 
 ### Changed
+
+- Package renamed from `@metreeca/pipe` to `@metreeca/flow`, restarting version numbering at `0.1.0`: imports and the
+  dependency entry must be updated, while the `/feeds`, `/tasks` and `/sinks` subpath exports are unchanged
 
 - `Pipe` contract renamed to `Feed`: a feed carries the items open for composition, while a pipe is the composition
   of a feed, its tasks and an optional sink, as assembled by `pipe()`

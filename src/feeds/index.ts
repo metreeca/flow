@@ -29,10 +29,10 @@
  * **Custom Feeds** are functions opening a feed over a source of their own:
  *
  * ```typescript
- * import { pipe } from '@metreeca/pipe';
- * import { feed } from '@metreeca/pipe/feeds';
- * import { toArray } from '@metreeca/pipe/sinks';
- * import type { Feed } from '@metreeca/pipe';
+ * import { pipe } from '@metreeca/flow';
+ * import { feed } from '@metreeca/flow/feeds';
+ * import { toArray } from '@metreeca/flow/sinks';
+ * import type { Feed } from '@metreeca/flow';
  *
  * function repeat<V>(value: V, count: number): Feed<V> {
  *   return feed(async function* () {
