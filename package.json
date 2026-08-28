@@ -1,7 +1,7 @@
 {
   "name": "@metreeca/pipe",
   "version": "0.9.20",
-  "description": "A lightweight TypeScript library for composable async iterable processing.",
+  "description": "Composable pipes over async iterables.",
   "keywords": [
     "typescript",
     "utilities"

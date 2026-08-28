@@ -2,7 +2,7 @@
 
 [![npm](https://img.shields.io/npm/v/@metreeca/pipe)](https://www.npmjs.com/package/@metreeca/pipe)
 
-A lightweight TypeScript library for composable async iterable processing.
+Composable pipes over async iterables.
 
 **@metreeca/pipe** provides an idiomatic, easy-to-use functional API for working with async iterables through feeds,
 tasks, and sinks. The composable design enables building complex data processing pipes with full type safety and
