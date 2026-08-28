@@ -7,6 +7,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unpublished](https://github.com/metreeca/flow/commits/HEAD)
 
+## [0.1.0](https://github.com/metreeca/flow/releases/tag/v0.1.0) - 2026-08-28
+
 ### Added
 
 - `concurrent` task interleaving several runs of another task over the same feed, under an explicit bound on the
