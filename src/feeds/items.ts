@@ -14,41 +14,103 @@
  * limitations under the License.
  */
 
-import { Feed } from "../index.js";
-import { feed } from "./feed.js";
+import { isAsyncIterable, isIterable, isString } from "@metreeca/core";
+import type { Awaitable, Awaitables } from "@metreeca/core/async";
+import { Feed, Sink, Task } from "../index.js";
 
 
 /**
- * Creates a feed from a list of values.
+ * Creates a feed from a data source.
  *
- * Each argument is contributed to the feed as a single item, in argument order, whatever its shape and without
- * being expanded further; `undefined` arguments are dropped as they enter it and an empty argument list opens an
- * empty feed.
+ * The source contributes its items to the feed according to its shape, whatever the declared item type: an iterable or
+ * an async iterable contributes the items it yields, an existing feed among them, while any other value is contributed
+ * whole as a single item, strings and functions included. A promise is awaited when the feed is consumed, deferring
+ * retrieval from APIs, databases or any other asynchronous source until then, and contributes the value it resolves to
+ * as a single item, whatever its shape. A feed of iterable items is opened either from a batch listing them or from a
+ * promise resolving to one of them.
  *
- * @typeParam V The type of values contributed to the feed
+ * The source is drawn exactly as handed over: a feed opened from a repeatable source, an array or a set among them,
+ * is consumed afresh at each pass, while one opened from a source drained by iteration, a generator object among
+ * them, runs dry after the first.
  *
- * @param values The values to open the feed from
+ * This is the adapter a custom feed or task reaches for to obtain a feed from a generator object of its own,
+ * honouring the {@link index.Feed Feed} contract without assembling one by hand; a source that is itself a feed
+ * honours it already and is composed as it is.
  *
- * @returns A feed carrying `values` in argument order
+ * > [!NOTE]
+ * >
+ * > **Bounded**: the feed runs dry as `source` does, so a source that never runs dry, an endless generator among
+ * > them, opens an infinite feed, to be bounded downstream by a task such as {@link tasks.take take} or by a sink
+ * > deciding its outcome early.
+ *
+ * @typeParam V The type of items contributed to the feed
+ *
+ * @param source The data source to open the feed from, supplied either as it is or as a promise
+ *
+ * @returns A feed carrying the items contributed by `source`
  *
  * @example
  *
  * ```typescript
  * await pipe(
- *   (items("a", "b", "c"))
+ *   (items(new Set([1, 2, 3])))
  *   (toArray())
- * );  // ["a", "b", "c"]
+ * );  // [1, 2, 3], as a batch contributes the items it yields
  *
  * await pipe(
- *   (items([1, 2], [3, 4]))
+ *   (items("report"))
  *   (toArray())
- * );  // [[1, 2], [3, 4]], as each argument is contributed whole rather than expanded
+ * );  // ["report"], as any other value is contributed whole
+ *
+ * await pipe(
+ *   (items(Promise.resolve([1, 2, 3])))
+ *   (toArray())
+ * );  // [[1, 2, 3]], as the awaited array is contributed whole in turn
+ *
+ * await pipe(
+ *   (items((async function* () { yield* await fetchReport(); })()))
+ *   (toArray())
+ * );  // the items of the report, drawn once and then run dry
  * ```
  *
- * @see {@link feed} to open a feed from a source expanded according to its shape
+ * @see {@link tasks.flat flat} to combine several feeds, carried in a feed of their own, into a single one
+ * @see {@link tasks.join join} to combine them as their items become available
  */
-export function items<V>(...values: (undefined | V)[]): Feed<V> {
+export function items<V>(source: Awaitable<V> | Awaitables<V>): Feed<V> {
 
-	return feed(values);
+	function feed<R>(task: Task<V, R>): Feed<R>;
+	function feed<R>(sink: Sink<V, R>): Promise<R>;
+
+	function feed<R>(step: Task<V, R> | Sink<V, R>): unknown {
+
+		return step(items(generator()));
+
+	}
+
+
+	return Object.freeze(Object.assign(feed, { [Symbol.asyncIterator]: generator }));
+
+
+	async function* generator(): AsyncGenerator<V, void, unknown> {
+
+		if ( isString(source) ) {
+
+			yield await source as V;
+
+		} else if ( isAsyncIterable<V>(source) ) {
+
+			yield* source;
+
+		} else if ( isIterable<V>(source) ) {
+
+			yield* source;
+
+		} else {
+
+			yield await source;
+
+		}
+
+	}
 
 }

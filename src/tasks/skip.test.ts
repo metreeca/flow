@@ -22,43 +22,50 @@ import { skip } from "./skip.js";
 
 describe("skip()", () => {
 
-	it("should skip first n items", async () => {
+	it("should emit the items following the discarded prefix, in source order", async () => {
 
-		const values = await items(1, 2, 3, 4, 5)(skip(2))(toArray());
+		const values = await items([1, 2, 3, 4, 5])(skip(2))(toArray());
 
 		expect(values).toEqual([3, 4, 5]);
 
 	});
 
-	it("should skip all items when n >= length", async () => {
+	it("should emit nothing where the feed is shorter than the prefix", async () => {
 
-		const values = await items(1, 2, 3)(skip(5))(toArray());
+		const values = await items([1, 2, 3])(skip(5))(toArray());
 
 		expect(values).toEqual([]);
 
 	});
 
-	it("should skip zero items", async () => {
+	it.each([
+		[0],
+		[-5]
+	])("should leave the feed untouched where the count is <%s>", async count => {
 
-		const values = await items(1, 2, 3)(skip(0))(toArray());
-
-		expect(values).toEqual([1, 2, 3]);
-
-	});
-
-	it("should treat negative n as zero", async () => {
-
-		const values = await items(1, 2, 3)(skip(-5))(toArray());
+		const values = await items([1, 2, 3])(skip(count))(toArray());
 
 		expect(values).toEqual([1, 2, 3]);
 
 	});
 
-	it("should reject non-integer n", () => {
+	it("should discard a prefix of each run rather than of the feed as a whole", async () => {
 
-		expect(() => skip(1.5)).toThrow(TypeError);
-		expect(() => skip(NaN)).toThrow(TypeError);
-		expect(() => skip(Infinity)).toThrow(TypeError);
+		const source = items([1, 2, 3]);
+		const task = skip<number>(1); // the same task, invoked once per run
+
+		expect(await source(task)(toArray())).toEqual([2, 3]);
+		expect(await source(task)(toArray())).toEqual([2, 3]);
+
+	});
+
+	it.each([
+		[1.5],
+		[NaN],
+		[Infinity]
+	])("should reject the non-integer count <%s>", async count => {
+
+		expect(() => skip(count)).toThrow(TypeError);
 
 	});
 

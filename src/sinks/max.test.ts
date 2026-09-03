@@ -16,98 +16,61 @@
 
 import { by, descending } from "@metreeca/core/order";
 import { describe, expect, it } from "vitest";
-import { items, range } from "../feeds/index.js";
-import { filter, map } from "../tasks/index.js";
+import { items } from "../feeds/index.js";
 import { max } from "./max.js";
 
 
 describe("max()", () => {
 
-	it("should select the greatest item in feed", async () => {
+	describe("with the default comparator", () => {
 
-		const result = await items(3, 1, 4, 1, 5)(max());
+		it("should resolve to the greatest item in natural order", async () => {
 
-		expect(result).toBe(5);
+			const result = await items([3, 1, 4, 1, 5])(max());
 
-	});
+			expect(result).toBe(5);
 
-	it("should return undefined for empty feed", async () => {
+		});
 
-		const result = await items<number>()(max());
+		it("should rank strings lexicographically", async () => {
 
-		expect(result).toBeUndefined();
+			const result = await items(["cherry", "apple", "banana"])(max());
 
-	});
+			expect(result).toBe("cherry");
 
-	it("should return the only item of a singleton feed", async () => {
+		});
 
-		const result = await items(42)(max());
+		it("should resolve to null only where the feed carries nothing else", async () => {
 
-		expect(result).toBe(42);
+			expect(await items([2, null, 1])(max())).toBe(2);
+			expect(await items([null])(max())).toBeNull();
 
-	});
-
-	it("should select the greatest of negative and fractional items", async () => {
-
-		const result = await items(-1.5, -2.5, -3)(max());
-
-		expect(result).toBe(-1.5);
+		});
 
 	});
 
-	it("should select the greatest item lexicographically", async () => {
-
-		const result = await items("cherry", "apple", "banana")(max());
-
-		expect(result).toBe("cherry");
-
-	});
-
-	it("should select the greatest item after filtering", async () => {
-
-		const result = await items(1, 2, 3, 4, 5, 6)(filter(x => x%2 === 0))(max());
-
-		expect(result).toBe(6);
-
-	});
-
-	it("should select the greatest item after mapping", async () => {
-
-		const result = await range(1, 5)(map(x => x*2))(max());
-
-		expect(result).toBe(8);
-
-	});
 
 	describe("with a custom comparator", () => {
 
-		it("should use selector to extract ranking key", async () => {
+		it("should rank items by an extracted key", async () => {
 
-			const result = await items(
-				{ id: 3, name: "c" },
-				{ id: 1, name: "a" },
-				{ id: 2, name: "b" }
-			)(max(by(item => item.id)));
+			const result = await items([{ id: 3 }, { id: 1 }, { id: 2 }])(max(by(item => item.id)));
 
-			expect(result).toEqual({ id: 3, name: "c" });
+			expect(result).toEqual({ id: 3 });
 
 		});
 
-		it("should support custom comparators", async () => {
+		it("should rank items by an arbitrary criterion", async () => {
 
-			const result = await items(
-				{ id: 3, name: "c" },
-				{ id: 1, name: "a" },
-				{ id: 2, name: "b" }
-			)(max((a, b) => a.id-b.id));
+			const result = await items([{ id: 3 }, { id: 1 }, { id: 2 }])(max((a, b) => a.id-b.id));
 
-			expect(result).toEqual({ id: 3, name: "c" });
+			expect(result).toEqual({ id: 3 });
 
 		});
 
-		it("should invert ranking with a descending comparator", async () => {
+		it("should invert the natural order with a descending comparator", async () => {
 
-			const result = await items(3, 1, 4, 1, 5)(max(descending));
+			const result = await items([3, 1, 4, 1, 5])(max(descending));
 
 			expect(result).toBe(1);
 
@@ -115,14 +78,31 @@ describe("max()", () => {
 
 	});
 
-	it("should select the first of equally ranking items", async () => {
+
+	it("should resolve to the first of equally ranking items", async () => {
 
 		const first = { key: 1, value: "a" };
 		const other = { key: 1, value: "b" };
 
-		const result = await items(first, other)(max(by(item => item.key)));
+		const result = await items([first, other])(max(by(item => item.key)));
 
 		expect(result).toBe(first);
+
+	});
+
+	it("should resolve to the only item of a singleton feed", async () => {
+
+		const result = await items([42])(max());
+
+		expect(result).toBe(42);
+
+	});
+
+	it("should resolve to undefined for an empty feed", async () => {
+
+		const result = await items<number>([])(max());
+
+		expect(result).toBeUndefined();
 
 	});
 

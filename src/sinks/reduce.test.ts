@@ -21,46 +21,87 @@ import { reduce } from "./reduce.js";
 
 describe("reduce()", () => {
 
-	it("should reduce with initial value", async () => {
+	describe("without an initial value", () => {
 
-		const sum = await items(1, 2, 3, 4)(reduce((acc, x) => acc+x, 0));
+		it("should seed the accumulator with the first item", async () => {
 
-		expect(sum).toBe(10);
+			const total = await items([1, 2, 3, 4])(reduce((acc, x) => acc+x));
+
+			expect(total).toBe(10);
+
+		});
+
+		it("should resolve to the only item of a singleton feed, without folding it", async () => {
+
+			const folds = { count: 0 };
+
+			const total = await items([42])(reduce((acc, x) => {
+				folds.count++;
+				return acc+x;
+			}));
+
+			expect(total).toBe(42);
+			expect(folds.count).toBe(0);
+
+		});
+
+		it("should resolve to undefined for an empty feed", async () => {
+
+			const total = await items<number>([])(reduce((acc, x) => acc+x));
+
+			expect(total).toBeUndefined();
+
+		});
 
 	});
 
-	it("should reduce without initial value", async () => {
 
-		const sum = await items(1, 2, 3, 4)(reduce((acc, x) => acc+x));
+	describe("with an initial value", () => {
 
-		expect(sum).toBe(10);
+		it("should seed the accumulator with the initial value", async () => {
+
+			const total = await items([1, 2, 3, 4])(reduce((acc, x) => acc+x, 10));
+
+			expect(total).toBe(20);
+
+		});
+
+		it("should fold the items into a value of a different type", async () => {
+
+			const report = await items([1, 2, 3])(reduce<number, string>((acc, x) => `${acc}${x}`, "#"));
+
+			expect(report).toBe("#123");
+
+		});
+
+		it("should resolve to the initial value for an empty feed", async () => {
+
+			const total = await items<number>([])(reduce((acc, x) => acc+x, 100));
+
+			expect(total).toBe(100);
+
+		});
 
 	});
 
-	it("should return undefined for empty feed without initial", async () => {
 
-		const result = await items<number>()(reduce((acc, x) => acc+x));
+	it("should await asynchronous reducers", async () => {
 
-		expect(result).toBeUndefined();
-
-	});
-
-	it("should return initial for empty feed with initial", async () => {
-
-		const result = await items<number>()(reduce((acc, x) => acc+x, 100));
-
-		expect(result).toBe(100);
-
-	});
-
-	it("should support async reducers", async () => {
-
-		const sum = await items(1, 2, 3)(reduce(async (acc, x) => {
+		const total = await items([1, 2, 3])(reduce(async (acc, x) => {
 			await Promise.resolve();
 			return acc+x;
 		}, 0));
 
-		expect(sum).toBe(6);
+		expect(total).toBe(6);
+
+	});
+
+	it("should propagate reducer failures", async () => {
+
+		await expect(items([1, 2, 3])(reduce((acc, x) => {
+			if ( x === 2 ) { throw new Error("reducer failed"); }
+			return acc+x;
+		}, 0))).rejects.toThrow("reducer failed");
 
 	});
 

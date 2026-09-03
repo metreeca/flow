@@ -16,13 +16,22 @@
 
 import { assert } from "@metreeca/core";
 import { Task } from "../index.js";
+import { items } from "../feeds/items.js";
 
 
 /**
  * Creates a task truncating the feed to a prefix.
  *
- * Items are emitted lazily, in source order, and the feed ends as soon as the quota is met rather than draining the
- * source: this is the standard way to bound an otherwise infinite feed.
+ * Items are emitted in source order and the feed ends as soon as the quota is met, leaving the rest of the source
+ * unconsumed.
+ *
+ * > [!NOTE]
+ * >
+ * > - **Incremental**: items are emitted as they are drawn and the reported feed ends at `n` items, whatever the feed
+ * >   drawn from, which is the standard way to bound an infinite feed.
+ * > - **Streaming**: items are emitted one at a time, none retained.
+ * > - **Stateful**: the quota is counted over the items drawn, so a task invoked per nested feed or per run grants
+ * >   its quota to each rather than to the feed as a whole.
  *
  * @typeParam V The type of items in the feed
  *
@@ -36,7 +45,7 @@ import { Task } from "../index.js";
  *
  * ```typescript
  * await pipe(
- *   (items(1, 2, 3, 4, 5))
+ *   (items([1, 2, 3, 4, 5]))
  *   (take(3))
  *   (toArray())
  * );  // [1, 2, 3]
@@ -46,7 +55,7 @@ export function take<V>(n: number): Task<V> {
 
 	const limit = assert(n, Number.isInteger, value => `expected integer count <${value}>`);
 
-	return async function* (source: AsyncIterable<V>) {
+	return source => items((async function* () {
 
 		let count = 0;
 
@@ -58,6 +67,6 @@ export function take<V>(n: number): Task<V> {
 				return;
 			}
 		}
-	};
+	})());
 
 }

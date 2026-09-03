@@ -22,18 +22,24 @@ import { reduce } from "./reduce.js";
 /**
  * Creates a sink selecting the greatest item of the feed.
  *
- * Items are ranked in source order, seeding the result with the first one and retaining only the greatest ranking item
- * seen so far, so selection stays within constant memory whatever the size of the feed, but never completes on an
- * infinite source; equally ranking items resolve to the first one in source order.
+ * Items are ranked in source order, seeding the result with the first one; equally ranking items resolve to the first
+ * one in source order.
  *
  * An empty feed resolves to `undefined`; callers wanting a default supply it with `??`. As {@link ascending} ranks
  * `null` before any other value, a feed resolves to `null` only if it carries nothing else, unless the comparator
  * states otherwise.
  *
+ * > [!WARNING]
+ * >
+ * > - **Exhaustive**: every item is drawn before the sink resolves, so an infinite feed never completes.
+ * > - **Streaming**: no more than the greatest ranking item seen so far is held in memory, whatever the size of the
+ * >   feed.
+ * > - **Stateful**: the outcome covers the items drawn, so a sink closing a nested or truncated feed sees those alone.
+ *
  * > [!TIP]
  * >
- * > The @metreeca/core [order](https://metreeca.github.io/core/modules/order.html) module provides helper functions for
- * > assembling complex ranking criteria.
+ * > The {@link https://metreeca.github.io/core/modules/order.html order} module of `@metreeca/core` provides helper
+ * > functions for assembling complex ranking criteria.
  *
  * @typeParam V The type of items in the feed
  *
@@ -47,17 +53,17 @@ import { reduce } from "./reduce.js";
  *
  * ```typescript
  * await pipe(
- *   (items(3, 1, 2))
+ *   (items([3, 1, 2]))
  *   (max())
  * );  // 3
  *
  * await pipe(
- *   (items({ age: 30 }, { age: 20 }))
+ *   (items([{ age: 30 }, { age: 20 }]))
  *   (max(by(x => x.age)))
  * );  // { age: 30 }
  *
  * await pipe(
- *   (items<number>())
+ *   (items<number>([]))
  *   (max())
  * );  // undefined
  * ```

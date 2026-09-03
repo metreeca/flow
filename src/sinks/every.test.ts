@@ -15,69 +15,85 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { feed, items } from "../feeds/index.js";
+import { inlet, items } from "../feeds/index.js";
+import { Feed } from "../index.js";
 import { every } from "./every.js";
 
 
+/**
+ * Creates an endless feed of consecutive integers from 0, reporting how many items it was drawn for.
+ */
+function endless(): { readonly feed: Feed<number>, readonly drawn: () => number } {
+
+	const draws = { count: 0 };
+
+	return {
+
+		feed: inlet(() => draws.count++),
+
+		drawn: () => draws.count
+
+	};
+
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 describe("every()", () => {
 
-	it("should return true when all items match", async () => {
+	it("should resolve to true where every item matches", async () => {
 
-		const result = await items(1, 2, 3, 4)(every(x => x > 0));
+		const result = await items([1, 2, 3, 4])(every(x => x > 0));
 
-		expect(result).toBe(true);
-
-	});
-
-	it("should return false when any item doesn't match", async () => {
-
-		const result = await items(1, 2, 3, 4)(every(x => x < 3));
-
-		expect(result).toBe(false);
+		expect(result).toBeTruthy();
 
 	});
 
-	it("should support async predicates", async () => {
+	it("should resolve to false where some item doesn't match", async () => {
 
-		const result = await items(1, 2, 3)(every(async x => {
+		const result = await items([1, 2, 3, 4])(every(x => x < 3));
+
+		expect(result).toBeFalsy();
+
+	});
+
+	it("should resolve to true for an empty feed", async () => {
+
+		const result = await items<number>([])(every(x => x > 10));
+
+		expect(result).toBeTruthy();
+
+	});
+
+	it("should await asynchronous predicates", async () => {
+
+		const result = await items([1, 2, 3])(every(async x => {
 			await Promise.resolve();
 			return x > 0;
 		}));
 
-		expect(result).toBe(true);
+		expect(result).toBeTruthy();
 
 	});
 
-	it("should terminate infinite generator when predicate fails", async () => {
+	it("should stop drawing at the first mismatch, completing an infinite feed", async () => {
 
-		let generatorCalls = 0;
-		let iteratorReturned = false;
+		const source = endless();
 
-		const infiniteGenerator = feed((async function* () {
-			try {
-				let i = 0;
-				while ( true ) {
-					generatorCalls++;
-					yield i++;
-				}
-			} finally {
-				iteratorReturned = true;
-			}
-		})());
+		const result = await source.feed(every(x => x < 5));
 
-		const result = await infiniteGenerator(every(x => x < 5));
-
-		expect(result).toBe(false);
-		expect(generatorCalls).toBe(6); // Checked items 0-5 (5 is first that fails x < 5)
-		expect(iteratorReturned).toBe(true); // Generator was properly cleaned up
+		expect(result).toBeFalsy();
+		expect(source.drawn()).toBe(6); // the matching items, plus the one contradicting the predicate
 
 	});
 
-	it("should return true for empty feed", async () => {
+	it("should propagate predicate failures", async () => {
 
-		const result = await items<number>()(every(x => x > 10));
-
-		expect(result).toBe(true);
+		await expect(items([1, 2, 3])(every(x => {
+			if ( x === 2 ) { throw new Error("predicate failed"); }
+			return true;
+		}))).rejects.toThrow("predicate failed");
 
 	});
 

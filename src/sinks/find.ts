@@ -16,17 +16,27 @@
 
 import type { Awaitable } from "@metreeca/core/async";
 import { Sink } from "../index.js";
+import type { Optional } from "@metreeca/core";
 
 
 /**
- * Creates a sink retrieving the first item matching a predicate.
+ * Creates a sink retrieving the first matching item of the feed.
  *
  * Items are tested in source order and consumption stops at the first match, leaving the rest of the feed
  * unconsumed.
  *
+ * A feed carrying no matching item resolves to `undefined`; callers wanting a default supply it with `??`.
+ *
+ * > [!NOTE]
+ * >
+ * > - **Incremental**: items are drawn only until one matches, so an infinite feed completes unless none does.
+ * > - **Streaming**: items are tested one at a time, none retained.
+ * > - **Stateless**: every item is tested on its own.
+ *
  * @typeParam V The type of items in the feed
  *
- * @param predicate The function testing each item
+ * @param predicate The function testing each item, defaulting to a test matching every item, which retrieves the
+ *   first item of the feed
  *
  * @returns A sink resolving to the first item matching `predicate`, or to `undefined` if no item does
  *
@@ -34,12 +44,17 @@ import { Sink } from "../index.js";
  *
  * ```typescript
  * await pipe(
- *   (items(1, 2, 3, 4, 5))
+ *   (items([1, 2, 3, 4, 5]))
  *   (find(n => n > 3))
  * );  // 4
+ *
+ * await pipe(
+ *   (items([1, 2, 3, 4, 5]))
+ *   (find())
+ * );  // 1
  * ```
  */
-export function find<V>(predicate: (item: V) => Awaitable<boolean>): Sink<V, undefined | V> {
+export function find<V>(predicate: (item: V) => Awaitable<boolean> = () => true): Sink<V, Optional<V>> {
 
 	return async source => {
 

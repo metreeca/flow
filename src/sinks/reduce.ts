@@ -21,8 +21,14 @@ import { Sink } from "../index.js";
 /**
  * Creates a sink folding the feed into a single item.
  *
- * The first item seeds the accumulator and every following one is folded into it, in source order, so the feed is
- * drained without retaining more than the accumulator.
+ * The first item seeds the accumulator and every following one is folded into it, in source order.
+ *
+ * > [!WARNING]
+ * >
+ * > - **Exhaustive**: every item is folded before the sink resolves, so an infinite feed never completes.
+ * > - **Streaming**: no more than the accumulator is held in memory, whatever the size of the feed.
+ * > - **Stateful**: the accumulator covers the items drawn, so a sink closing a nested or truncated feed sees those
+ * >   alone.
  *
  * @typeParam V The type of items in the feed
  *
@@ -35,7 +41,7 @@ import { Sink } from "../index.js";
  *
  * ```typescript
  * await pipe(
- *   (items(1, 2, 3, 4, 5))
+ *   (items([1, 2, 3, 4, 5]))
  *   (reduce((total, n) => total+n))
  * );  // 15
  * ```
@@ -47,6 +53,13 @@ export function reduce<V>(reducer: (accumulator: V, item: V) => Awaitable<V>): S
  *
  * Folds like {@link reduce} without an `initial` argument, seeding the accumulator with the supplied value rather
  * than with the first item, so the result type is free of the item type and an empty feed resolves to the seed.
+ *
+ * > [!WARNING]
+ * >
+ * > - **Exhaustive**: every item is folded before the sink resolves, so an infinite feed never completes.
+ * > - **Streaming**: no more than the accumulator is held in memory, whatever the size of the feed.
+ * > - **Stateful**: the accumulator covers the items drawn, so a sink closing a nested or truncated feed sees those
+ * >   alone, seeded afresh with `initial` at each.
  *
  * @typeParam V The type of items in the feed
  * @typeParam R The type of the accumulated result
@@ -60,7 +73,7 @@ export function reduce<V>(reducer: (accumulator: V, item: V) => Awaitable<V>): S
  *
  * ```typescript
  * await pipe(
- *   (items(1, 2, 3, 4, 5))
+ *   (items([1, 2, 3, 4, 5]))
  *   (reduce((total, n) => total+n, 10))
  * );  // 25
  * ```

@@ -15,156 +15,137 @@
  */
 
 /**
- * Composable asynchronous iterable processing.
+ * Composable building blocks for pipes over async iterable sources.
  *
- * Defines the contracts a pipe is assembled from: the {@link Feed} carrying the items, the {@link Task tasks} and
- * {@link Sink sinks} applied to it, and the {@link Data} shapes a feed can be opened from. A pipe composes a feed
- * with any number of tasks and an optional sink, wrapped in the {@link pipe} factory. The companion feed, task and
- * sink modules build on these contracts, and custom operations honouring them compose with the built-in ones
- * interchangeably.
+ * A pipe is written as nested applications, one stage per step, over the three symmetric contracts declared here: a
+ * {@link Feed} opens the data and accepts the steps advancing it, a {@link Task} moves it on by transforming,
+ * filtering or reshaping the items, and a {@link Sink} closes it with the final result.
  *
- * > [!IMPORTANT]
- * >
- * > Feeds never carry `undefined`: values are dropped as they enter one, whether contributed by a data source or
- * > yielded by a task, custom ones included, so no task or sink ever observes one. Other falsy values, `null`, `0`,
- * > `false` and `""` among them, are preserved.
+ * A feed is opened from a value or a data source, supplied as it is or as a promise, then composed with any number of
+ * tasks and an optional sink, bracketed by {@link pipe}. Closed by a sink, the pipe resolves to the final result;
+ * left open, it ends with a feed, iterated with `for await` to draw the items it carries.
+ *
+ * Every operation the companion modules provide states where it stands on four axes, so that a pipe can be assembled
+ * knowing what it completes on and what it costs: **bounded** or **infinite**, for how far a feed goes; **incremental**
+ * or **exhaustive**, for how much of a feed a task or sink draws before emitting or resolving; **streaming** or
+ * **materialising**, for what is held in memory; **stateless** or **stateful**, for whether the outcome depends on the
+ * items drawn before it.
+ *
+ * Pipes compose all the way down, with no privileged core: the companion feed, task and sink modules are written
+ * against the very contracts declared here, and so is anything you add. A custom feed opens a pipe over a source of
+ * your own, a custom task extends one and a custom sink closes it, each chaining with the built-in steps in any order.
+ * Every step is handed a feed in turn, so a custom one either draws the items itself or delegates the whole job, or
+ * part of it, to steps already available.
  *
  * @module index
  */
 
-import { isFunction } from "@metreeca/core";
-
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * Data accepted wherever a feed is opened or extended.
+ * Async sequence of items.
  *
- * Callers supply data in whichever shape is most convenient, each contributing items to the feed as follows:
+ * A feed is called to advance the pipe: with a {@link Task} to obtain a new feed carrying the transformed items, or
+ * with a {@link Sink} to consume it and obtain the final result. A caller preferring to drive the pipe itself iterates
+ * the feed with `for await`. Composition is lazy, as nothing is drawn from the source until a sink or an iteration
+ * consumes the feed.
  *
- * - `readonly V[]` — contributes the items of the array
- * - `Iterable<V>` — contributes the items of the iterable, strings excepted, as they are treated as atomic values and
- *   contributed whole rather than character by character
- * - `AsyncIterable<V>` — contributes the items of the async iterable
- * - {@link Feed}`<V>` — contributes the items of the feed
+ * A feed ends when the source it draws from stops yielding items: an array, a generator object or another feed ends it
+ * on its own under the
+ * {@link https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols iteration protocols}.
+ * A source producing one value per call, a polling function for instance, is bounded by the feed it is opened with,
+ * either reporting an end marker as {@link feeds.inlet inlet} accepts or wrapped in a generator of its own, while a
+ * source genuinely without end is bounded downstream, with a task such as {@link tasks.take take} or with a sink
+ * deciding its outcome early.
  *
- * Every shape is a batch of items rather than a single value: a lone value is contributed by wrapping it in an array
- * and an empty batch contributes nothing. Feeds of arrays stay expressible, as `readonly V[]` always denotes the
- * batch rather than one of the values carried by it.
+ * A feed is replayable only as far as its source is: one opened over a repeatable source, an array or a set among
+ * them, carries the same items at each pass, while one opened over a source drained by iteration is empty after the
+ * first. A feed handed to a {@link Task} or a {@link Sink}, and one a task reports, is drained by a single pass
+ * whatever it draws from, so a pipe is replayed by composing it afresh from the feed it opens with.
  *
- * Optional values need not be filtered out beforehand: every shape accepts `undefined` entries and drops them as data
- * enters a feed, so a source of `undefined | V` values opens a feed carrying `V` items.
+ * @typeParam V The type of items carried by the feed
  *
- * The {@link feeds.feed feed} function opens a new feed from this shape; {@link tasks.flatMap flatMap} accepts it to
- * expand each item already carried into further ones.
- *
- * @typeParam V The type of values contributed to the feed
- *
- * @example
- *
- * ```typescript
- * const array: Data<number> = [1, 2, 3];
- * const iterable: Data<number> = new Set([1, 2, 3]);
- * const asynchronous: Data<number> = (async function* () { yield 1; yield 2; })();
- * const feed: Data<number> = items(1, 2, 3);
- * ```
- *
- * @see {@link feeds.items items} to contribute values as they are, without shape inspection
+ * @see {@link https://tc39.es/ecma262/#sec-asynciterator-interface ECMAScript AsyncIterator interface}
  */
-export type Data<V> =
-	| readonly (undefined | V)[]
-	| Iterable<undefined | V>
-	| AsyncIterable<undefined | V>
-	| Feed<V>;
-
-
-/**
- * Feed under composition.
- *
- * A feed is called to advance the pipe: with a {@link Task} to obtain a new feed carrying the transformed values,
- * with a {@link Sink} to consume it and obtain the final result, or without arguments to take over iteration
- * manually. Composition is lazy, as nothing is pulled from the source until a sink or a manual iteration consumes the
- * feed.
- *
- * @typeParam V The type of values in the feed, never `undefined`, as optional values are dropped as data enters it
- */
-export interface Feed<V> {
+export interface Feed<V> extends AsyncIterable<V> {
 
 	/**
 	 * Applies a transformation task to the feed.
 	 *
-	 * @typeParam R The type of transformed values, never `undefined`, as optional values are dropped as they re-enter
-	 *   the feed
+	 * @typeParam R The type of items `task` reports
 	 *
 	 * @param task The task to apply
 	 *
-	 * @returns A new feed carrying the values `task` yields
+	 * @returns A new feed carrying the items `task` reports
 	 */<R>(task: Task<V, R>): Feed<R>;
 
 	/**
-	 * Applies a terminal sink operation to consume the feed.
+	 * Applies a terminal sink to the feed.
 	 *
-	 * @typeParam R The type of result
+	 * @typeParam R The type of result `sink` computes
 	 *
 	 * @param sink The sink to apply
 	 *
-	 * @returns A promise resolving to the sink's result
+	 * @returns A promise resolving to the result `sink` computes over the items
 	 */<R>(sink: Sink<V, R>): Promise<R>;
-
-	/**
-	 * Retrieves the underlying async iterable.
-	 *
-	 * @returns The async iterable for manual iteration
-	 */
-	(): AsyncIterable<V>;
 
 }
 
 /**
  * Intermediate operation applied to a feed.
  *
- * A task consumes the items of a {@link Feed} and produces new ones, transforming, filtering, reordering or
- * regrouping items along the way; the resulting feed accepts further tasks, so tasks chain into longer pipes.
+ * A task consumes the items of a {@link Feed} and reports a new feed carrying new ones, transforming, filtering,
+ * reordering or regrouping items along the way; the reported feed accepts further tasks, so tasks chain into longer
+ * pipes.
  *
- * > [!NOTE]
+ * The task draws from a feed, so it may either iterate it with `for await` or compose it with further tasks and sinks,
+ * delegating the whole transformation or part of it to operations already available.
+ *
+ * > [!CAUTION]
  * >
- * > Optional values need not be filtered out: `undefined` entries are dropped as they re-enter the feed.
+ * > The feed handed over and the feed reported must both be assumed to be drained by a single pass.
  *
- * @typeParam V The type of input values, never `undefined`, as feeds never carry it
- * @typeParam R The type of output values, defaulting to `V` for tasks preserving the item type
+ * @typeParam V The type of items drawn from the feed
+ * @typeParam R The type of items reported, defaulting to `V` for tasks preserving the item type
  */
 export interface Task<V, R = V> {
 
 	/**
-	 * Transforms the feed.
+	 * Transforms the items.
 	 *
-	 * @param values The source values to process
+	 * @param feed The feed carrying the items to process
 	 *
-	 * @returns The transformed values; `undefined` entries are dropped as they re-enter the feed
+	 * @returns A feed carrying the transformed items
 	 */
-	(values: AsyncIterable<V>): AsyncIterable<undefined | R>;
+	(feed: Feed<V>): Feed<R>;
 
 }
 
 /**
  * Terminal operation applied to a feed.
  *
- * A sink consumes the items of a {@link Feed}, driving the pipe that feeds it and resolving to the final result;
- * one able to decide its outcome early may stop consuming before the source runs dry.
+ * A sink consumes the items of a {@link Feed}, driving the pipe that feeds it and computing the final result; one able
+ * to decide its outcome early may stop consuming before the source runs dry.
  *
- * @typeParam V The type of input values, never `undefined`, as feeds never carry it
- * @typeParam R The type of result, defaulting to `V` for sinks resolving to a feed item
+ * The sink draws from a feed, so it may either iterate it with `for await` or compose it with further tasks and sinks,
+ * delegating the whole computation or part of it to operations already available.
+ *
+ * > [!CAUTION]
+ * >
+ * > The feed handed over must be assumed to be drained by a single pass.
+ *
+ * @typeParam V The type of items drawn from the feed
+ * @typeParam R The type of result computed over the items, defaulting to `V` for sinks resolving to a feed item
  */
 export interface Sink<V, R = V> {
 
 	/**
-	 * Consumes the feed.
+	 * Consumes the items.
 	 *
-	 * @param values The source values to consume
+	 * @param feed The feed carrying the items to consume
 	 *
 	 * @returns A promise resolving to the final result
 	 */
-	(values: AsyncIterable<V>): Promise<R>;
+	(feed: Feed<V>): Promise<R>;
 
 }
 
@@ -172,38 +153,38 @@ export interface Sink<V, R = V> {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 /**
- * Creates a pipe closed by a sink.
- *
- * Wraps a feed, the tasks chained to it and the {@link Sink} closing them into a single expression driving the feed
- * to completion.
- *
- * @typeParam V The type of result the closing sink resolves to
- *
- * @param source The promise returned by the closing sink
- *
- * @returns A promise resolving to the result the closing sink computes over the feed
- */
-export function pipe<V>(source: Promise<V>): Promise<V>;
-
-/**
- * Creates a pipe left open.
- *
- * Wraps a feed and the tasks chained to it into a single expression, with no sink to close them, exposing the async
- * iterable underlying the {@link Feed} the composition ends with so that the feed can be consumed manually.
- *
- * @typeParam V The type of values carried by the feed
- *
- * @param source The feed the composition ends with
- *
- * @returns The async iterable underlying `source`
- */
-export function pipe<V>(source: Feed<V>): AsyncIterable<V>;
-
-/**
  * Creates a pipe.
+ *
+ * Brackets a feed, the tasks chained to it and the {@link Sink} optionally closing them, declaring the composition a
+ * pipe so that it reads as one unit rather than as a run of juxtaposed calls.
+ *
+ * @typeParam V The type of the composition, either the {@link Feed} a pipe left open ends with or the promise the
+ *   closing sink reports
+ *
+ * @param source The composition to bracket
+ *
+ * @returns `source`, as handed in: a feed ready for manual iteration, or a promise resolving to the result the
+ *   closing sink computes over the items
+ *
+ * @example
+ *
+ * ```typescript
+ * await pipe(
+ *   (items([1, 2, 3]))
+ *   (map(n => n*2))
+ *   (toArray())
+ * );  // [2, 4, 6], as the closing sink resolves the pipe
+ *
+ * for await (const item of pipe(
+ *   (range(1, 4))
+ *   (map(n => n*2))
+ * )) {
+ *   console.log(item);  // 2, 4, 6, drawn from the feed a pipe left open ends with
+ * }
+ * ```
  */
-export function pipe(source: unknown): unknown {
+export function pipe<V extends Feed<unknown> | Promise<unknown>>(source: V): V {
 
-	return isFunction(source) ? source() : source;
+	return source;
 
 }

@@ -15,50 +15,42 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { items, range } from "../feeds/index.js";
-import { filter, map } from "../tasks/index.js";
+import { items } from "../feeds/index.js";
+import { take } from "../tasks/index.js";
 import { count } from "./count.js";
 
 
 describe("count()", () => {
 
-	it("should count all items in feed", async () => {
+	it("should count the items of the feed", async () => {
 
-		const result = await items(1, 2, 3, 4, 5)(count());
+		const result = await items([1, 2, 3, 4, 5])(count());
 
 		expect(result).toBe(5);
 
 	});
 
-	it("should return zero for empty feed", async () => {
+	it("should count falsy items", async () => {
 
-		const result = await items<number>()(count());
+		const result = await items([0, false, "", null, undefined])(count());
+
+		expect(result).toBe(5);
+
+	});
+
+	it("should resolve to zero for an empty feed", async () => {
+
+		const result = await items<number>([])(count());
 
 		expect(result).toBe(0);
 
 	});
 
-	it("should count items after filtering", async () => {
+	it("should count the items drawn from a truncated feed", async () => {
 
-		const result = await items(1, 2, 3, 4, 5, 6)(filter(x => x%2 === 0))(count());
+		const result = await items([1, 2, 3, 4, 5])(take(2))(count());
 
-		expect(result).toBe(3);
-
-	});
-
-	it("should count items in range", async () => {
-
-		const result = await range(1, 101)(count());
-
-		expect(result).toBe(100);
-
-	});
-
-	it("should count items after mapping", async () => {
-
-		const result = await items(1, 2, 3)(map(x => x*2))(count());
-
-		expect(result).toBe(3);
+		expect(result).toBe(2);
 
 	});
 

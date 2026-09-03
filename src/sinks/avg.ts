@@ -21,10 +21,9 @@ import { Sink } from "../index.js";
 /**
  * Creates a sink averaging the items of the feed.
  *
- * The mean is computed from the running total and the item count, so averaging stays within constant memory whatever
- * the size of the feed, but never completes on an infinite source. `number` items are averaged as IEEE 754 doubles
- * and `bigint` items as exact integers: a feed is expected to carry one numeric type throughout, and mixing the two
- * is reported rather than silently coerced.
+ * The mean is computed from the running total and the item count. `number` items are averaged as IEEE 754 doubles and
+ * `bigint` items as exact integers: a feed is expected to carry one numeric type throughout, and mixing the two is
+ * reported rather than silently coerced.
  *
  * `bigint` means are rounded to the nearest integer, halves away from zero, as no fractional `bigint` can carry the
  * remainder; callers needing another rounding, or a fractional mean, combine {@link sum} with {@link count}
@@ -32,6 +31,12 @@ import { Sink } from "../index.js";
  *
  * An empty feed resolves to `undefined`, as a mean over no items is not defined; callers wanting a default supply
  * it with `?? 0` or `?? 0n`.
+ *
+ * > [!WARNING]
+ * >
+ * > - **Exhaustive**: every item is drawn before the sink resolves, so an infinite feed never completes.
+ * > - **Streaming**: no more than the running total and count are held in memory, whatever the size of the feed.
+ * > - **Stateful**: the mean covers the items drawn, so a sink closing a nested or truncated feed sees those alone.
  *
  * @typeParam V The type of items in the feed
  *
@@ -43,17 +48,17 @@ import { Sink } from "../index.js";
  *
  * ```typescript
  * await pipe(
- *   (items(1, 2, 3, 4))
+ *   (items([1, 2, 3, 4]))
  *   (avg())
  * );  // 2.5
  *
  * await pipe(
- *   (items(1n, 2n, 4n))
+ *   (items([1n, 2n, 4n]))
  *   (avg())
  * );  // 2n
  *
  * await pipe(
- *   (items<number>())
+ *   (items<number>([]))
  *   (avg())
  * );  // undefined
  * ```

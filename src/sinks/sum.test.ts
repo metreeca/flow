@@ -15,74 +15,46 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { items, range } from "../feeds/index.js";
-import { filter, map } from "../tasks/index.js";
+import { items } from "../feeds/index.js";
 import { sum } from "./sum.js";
 
 
 describe("sum()", () => {
 
-	it("should sum all items in feed", async () => {
+	describe("with number items", () => {
 
-		const result = await items(1, 2, 3, 4, 5)(sum());
+		it("should resolve to the total of the items", async () => {
 
-		expect(result).toBe(15);
+			const result = await items([1, 2, 3, 4, 5])(sum());
 
-	});
+			expect(result).toBe(15);
 
-	it("should return undefined for empty feed", async () => {
+		});
 
-		const result = await items<number>()(sum());
+		it("should add negative and fractional items", async () => {
 
-		expect(result).toBeUndefined();
+			const result = await items([1.5, -2.5, 3])(sum());
 
-	});
+			expect(result).toBe(2);
 
-	it("should return the only item of a singleton feed", async () => {
-
-		const result = await items(42)(sum());
-
-		expect(result).toBe(42);
+		});
 
 	});
 
-	it("should sum negative and fractional items", async () => {
-
-		const result = await items(1.5, -2.5, 3)(sum());
-
-		expect(result).toBe(2);
-
-	});
-
-	it("should sum items after filtering", async () => {
-
-		const result = await items(1, 2, 3, 4, 5, 6)(filter(x => x%2 === 0))(sum());
-
-		expect(result).toBe(12);
-
-	});
-
-	it("should sum items after mapping", async () => {
-
-		const result = await range(1, 5)(map(x => x*2))(sum());
-
-		expect(result).toBe(20);
-
-	});
 
 	describe("with bigint items", () => {
 
-		it("should sum all items in feed", async () => {
+		it("should resolve to the total of the items", async () => {
 
-			const result = await items(1n, 2n, 3n)(sum());
+			const result = await items([1n, 2n, 3n])(sum());
 
 			expect(result).toBe(6n);
 
 		});
 
-		it("should sum beyond the safe integer range", async () => {
+		it("should add beyond the safe integer range", async () => {
 
-			const result = await items(2n**64n, 1n)(sum());
+			const result = await items([2n**64n, 1n])(sum());
 
 			expect(result).toBe(2n**64n+1n);
 
@@ -90,9 +62,26 @@ describe("sum()", () => {
 
 	});
 
+
+	it("should resolve to the only item of a singleton feed", async () => {
+
+		const result = await items([42])(sum());
+
+		expect(result).toBe(42);
+
+	});
+
+	it("should resolve to undefined for an empty feed", async () => {
+
+		const result = await items<number>([])(sum());
+
+		expect(result).toBeUndefined();
+
+	});
+
 	it("should report feeds mixing number and bigint items", async () => {
 
-		await expect(items<number | bigint>(1, 2n)(sum())).rejects.toThrow(TypeError);
+		await expect(items<number | bigint>([1, 2n])(sum())).rejects.toThrow(TypeError);
 
 	});
 

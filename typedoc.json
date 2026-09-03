@@ -9,6 +9,7 @@
   "categorizeByGroup": true,
   "groupOrder": [
     "Variables",
+    "Interfaces",
     "Type Aliases",
     "*"
   ],

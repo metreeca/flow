@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { immutable } from "@metreeca/core/structures";
 import { describe, expect, it } from "vitest";
 import { items } from "../feeds/index.js";
 import { toArray } from "./toArray.js";
@@ -21,17 +22,25 @@ import { toArray } from "./toArray.js";
 
 describe("toArray()", () => {
 
-	it("should collect all items into array", async () => {
+	it("should collect the items in source order", async () => {
 
-		const values = await items(1, 2, 3)(toArray());
+		const values = await items([3, 1, 2])(toArray());
 
-		expect(values).toEqual([1, 2, 3]);
+		expect(values).toEqual([3, 1, 2]);
 
 	});
 
-	it("should handle empty feed", async () => {
+	it("should collect falsy items", async () => {
 
-		const values = await items<number>()(toArray());
+		const values = await items([0, false, "", null, undefined])(toArray());
+
+		expect(values).toEqual([0, false, "", null, undefined]);
+
+	});
+
+	it("should resolve to an empty array for an empty feed", async () => {
+
+		const values = await items<number>([])(toArray());
 
 		expect(values).toEqual([]);
 
@@ -39,7 +48,7 @@ describe("toArray()", () => {
 
 	it("should deeply freeze the collected array", async () => {
 
-		const values = await items({ nested: { value: 1 } })(toArray());
+		const values = await items([{ nested: { value: 1 } }])(toArray());
 
 		expect(Object.isFrozen(values)).toBeTruthy();
 		expect(Object.isFrozen(values[0])).toBeTruthy();
@@ -47,22 +56,32 @@ describe("toArray()", () => {
 
 	});
 
-	it("should clone plain structures", async () => {
+	it("should clone structured items, giving them a fresh identity", async () => {
 
 		const item = { nested: { value: 1 } };
 
-		const values = await items(item)(toArray());
+		const values = await items([item])(toArray());
 
 		expect(values[0]).not.toBe(item);
 		expect(values[0]).toEqual(item);
 
 	});
 
-	it("should collect non-plain values as-is", async () => {
+	it("should collect immutable items under their own identity", async () => {
+
+		const item = immutable({ nested: { value: 1 } });
+
+		const values = await items([item])(toArray());
+
+		expect(values[0]).toBe(item);
+
+	});
+
+	it("should collect non-plain values as they are", async () => {
 
 		const item = new Date();
 
-		const values = await items(item)(toArray());
+		const values = await items([item])(toArray());
 
 		expect(values[0]).toBe(item);
 

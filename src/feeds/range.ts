@@ -16,7 +16,7 @@
 
 import { assert } from "@metreeca/core";
 import { Feed } from "../index.js";
-import { feed } from "./feed.js";
+import { items } from "./items.js";
 
 
 /**
@@ -24,6 +24,10 @@ import { feed } from "./feed.js";
  *
  * Numbers are generated in ascending order if `start` is less than `end`, in descending order if it is greater; equal
  * bounds yield an empty feed.
+ *
+ * > [!NOTE]
+ * >
+ * > **Bounded**: the feed runs dry at `end`, whatever draws from it.
  *
  * @param start The first value of the range, included
  * @param end The value the range stops at, excluded
@@ -56,7 +60,7 @@ export function range(start: number, end: number): Feed<number> {
 	const from = assert(start, Number.isInteger, value => `expected integer bound <${value}>`);
 	const to = assert(end, Number.isInteger, value => `expected integer bound <${value}>`);
 
-	return feed((function* () {
+	return items((function* () {
 
 		if ( from < to ) {
 

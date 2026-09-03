@@ -1,7 +1,7 @@
 {
   "name": "@metreeca/flow",
   "version": "0.9.21",
-  "description": "Composable pipes over async iterables.",
+  "description": "Composable primitives for asynchronous data flows.",
   "keywords": [
     "typescript",
     "utilities"

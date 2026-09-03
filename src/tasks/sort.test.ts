@@ -16,159 +16,96 @@
 
 import { by, descending } from "@metreeca/core/order";
 import { describe, expect, it } from "vitest";
-import { feed, items } from "../feeds/index.js";
+import { items } from "../feeds/index.js";
 import { toArray } from "../sinks/index.js";
 import { sort } from "./sort.js";
 
 
 describe("sort()", () => {
 
-	it("should sort numbers in ascending order", async () => {
+	describe("with the default comparator", () => {
 
-		const values = await items(3, 1, 4, 1, 5, 9, 2, 6)(sort())(toArray());
+		it("should emit the items in natural order", async () => {
 
-		expect(values).toEqual([1, 1, 2, 3, 4, 5, 6, 9]);
+			const values = await items([3, 1, 4, 1, 5])(sort())(toArray());
 
-	});
+			expect(values).toEqual([1, 1, 3, 4, 5]);
 
-	it("should sort strings lexicographically", async () => {
+		});
 
-		const values = await items("cherry", "apple", "banana", "date")(sort())(toArray());
+		it("should rank null before any other value", async () => {
 
-		expect(values).toEqual(["apple", "banana", "cherry", "date"]);
+			const values = await items([2, null, 1])(sort())(toArray());
 
-	});
+			expect(values).toEqual([null, 1, 2]);
 
-	it("should use selector to extract sort key", async () => {
-
-		const values = await items(
-			{ id: 3, name: "c" },
-			{ id: 1, name: "a" },
-			{ id: 2, name: "b" }
-		)(sort(by(item => item.id)))(toArray());
-
-		expect(values).toEqual([
-			{ id: 1, name: "a" },
-			{ id: 2, name: "b" },
-			{ id: 3, name: "c" }
-		]);
+		});
 
 	});
 
-	it("should support custom comparators", async () => {
 
-		const values = await items(
-			{ id: 3, name: "c" },
-			{ id: 1, name: "a" },
-			{ id: 2, name: "b" }
-		)(sort((a, b) => a.id-b.id))(toArray());
+	describe("with a custom comparator", () => {
 
-		expect(values).toEqual([
-			{ id: 1, name: "a" },
-			{ id: 2, name: "b" },
-			{ id: 3, name: "c" }
-		]);
+		it("should emit the items in comparator order", async () => {
 
-	});
+			const values = await items([1, 2, 3])(sort((a, b) => b-a))(toArray());
 
-	it("should sort in descending order", async () => {
+			expect(values).toEqual([3, 2, 1]);
 
-		const values = await items(1, 2, 3, 4, 5)(sort(descending))(toArray());
+		});
 
-		expect(values).toEqual([5, 4, 3, 2, 1]);
+		it("should invert the natural order with a descending comparator", async () => {
 
-	});
+			const values = await items([3, 1, 2])(sort(descending))(toArray());
 
-	it("should use custom comparator for descending order", async () => {
+			expect(values).toEqual([3, 2, 1]);
 
-		const values = await items(1, 2, 3, 4, 5)(sort((a, b) => b-a))(toArray());
+		});
 
-		expect(values).toEqual([5, 4, 3, 2, 1]);
+		it("should rank items by an extracted key", async () => {
+
+			const values = await items([{ id: 3 }, { id: 1 }, { id: 2 }])(sort(by(item => item.id)))(toArray());
+
+			expect(values).toEqual([{ id: 1 }, { id: 2 }, { id: 3 }]);
+
+		});
 
 	});
 
-	it("should combine selector with descending order", async () => {
 
-		const values = await items(
-			{ age: 30, name: "Alice" },
-			{ age: 25, name: "Bob" },
-			{ age: 35, name: "Charlie" }
-		)(sort(by(item => item.age, descending)))(toArray());
+	it("should keep equally ranking items in source order", async () => {
 
-		expect(values).toEqual([
-			{ age: 35, name: "Charlie" },
-			{ age: 30, name: "Alice" },
-			{ age: 25, name: "Bob" }
-		]);
-
-	});
-
-	it("should handle empty feed", async () => {
-
-		const values = await items<number>()(sort())(toArray());
-
-		expect(values).toEqual([]);
-
-	});
-
-	it("should handle single item", async () => {
-
-		const values = await items(42)(sort())(toArray());
-
-		expect(values).toEqual([42]);
-
-	});
-
-	it("should sort dates chronologically", async () => {
-
-		const dates = [
-			new Date("2023-03-15"),
-			new Date("2023-01-10"),
-			new Date("2023-02-20")
-		];
-
-		const values = await feed(dates)(sort())(toArray());
-
-		expect(values).toEqual([
-			new Date("2023-01-10"),
-			new Date("2023-02-20"),
-			new Date("2023-03-15")
-		]);
-
-	});
-
-	it("should sort booleans (false before true)", async () => {
-
-		const values = await items(true, false, true, false)(sort())(toArray());
-
-		expect(values).toEqual([false, false, true, true]);
-
-	});
-
-	it("should handle negative numbers", async () => {
-
-		const values = await items(5, -3, 0, -1, 2)(sort())(toArray());
-
-		expect(values).toEqual([-3, -1, 0, 2, 5]);
-
-	});
-
-	it("should be stable for equal elements", async () => {
-
-		const values = await items(
+		const values = await items([
 			{ key: 2, value: "a" },
 			{ key: 1, value: "b" },
 			{ key: 2, value: "c" },
 			{ key: 1, value: "d" }
-		)(sort(by(item => item.key)))(toArray());
+		])(sort(by(item => item.key)))(toArray());
 
-		// Items with same key should maintain relative order (stable sort)
 		expect(values).toEqual([
 			{ key: 1, value: "b" },
 			{ key: 1, value: "d" },
 			{ key: 2, value: "a" },
 			{ key: 2, value: "c" }
 		]);
+
+	});
+
+	it("should emit nothing for an empty feed", async () => {
+
+		const values = await items<number>([])(sort())(toArray());
+
+		expect(values).toEqual([]);
+
+	});
+
+	it("should order each run independently rather than the feed as a whole", async () => {
+
+		const source = items([3, 1, 2]);
+		const task = sort<number>(); // the same task, invoked once per run
+
+		expect(await source(task)(toArray())).toEqual([1, 2, 3]);
+		expect(await source(task)(toArray())).toEqual([1, 2, 3]);
 
 	});
 

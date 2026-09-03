@@ -22,21 +22,39 @@ import { distinct } from "./distinct.js";
 
 describe("distinct()", () => {
 
-	it("should filter out duplicate primitives", async () => {
+	it("should keep the first occurrence of each item, in source order", async () => {
 
-		const values = await items(1, 2, 2, 3, 1, 4)(distinct())(toArray());
+		const values = await items([1, 2, 2, 3, 1, 4])(distinct())(toArray());
 
 		expect(values).toEqual([1, 2, 3, 4]);
 
 	});
 
-	it("should use selector for comparison", async () => {
+	it("should collapse items sharing SameValueZero identity", async () => {
 
-		const values = await items(
+		const values = await items([NaN, NaN, 0, -0])(distinct())(toArray());
+
+		expect(values).toEqual([NaN, 0]);
+
+	});
+
+	it("should match structured items by identity", async () => {
+
+		const shared = { id: 1 };
+
+		const values = await items([shared, { id: 1 }, shared])(distinct())(toArray());
+
+		expect(values).toEqual([shared, { id: 1 }]); // the structural twin is a distinct key
+
+	});
+
+	it("should keep the first item bearing each selected key", async () => {
+
+		const values = await items([
 			{ id: 1, name: "a" },
 			{ id: 2, name: "b" },
 			{ id: 1, name: "c" }
-		)(distinct(item => item.id))(toArray());
+		])(distinct(item => item.id))(toArray());
 
 		expect(values).toEqual([
 			{ id: 1, name: "a" },
@@ -45,11 +63,31 @@ describe("distinct()", () => {
 
 	});
 
-	it("should handle empty feed", async () => {
+	it("should await asynchronous selectors", async () => {
 
-		const values = await items<number>()(distinct())(toArray());
+		const values = await items([1, 2, 3, 4])(distinct(async item => {
+			await Promise.resolve();
+			return item%2;
+		}))(toArray());
+
+		expect(values).toEqual([1, 2]);
+
+	});
+
+	it("should emit nothing for an empty feed", async () => {
+
+		const values = await items<number>([])(distinct())(toArray());
 
 		expect(values).toEqual([]);
+
+	});
+
+	it("should propagate selector failures", async () => {
+
+		await expect(items([1, 2, 3])(distinct(item => {
+			if ( item === 2 ) { throw new Error("selector failed"); }
+			return item;
+		}))(toArray())).rejects.toThrow("selector failed");
 
 	});
 

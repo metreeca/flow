@@ -21,8 +21,14 @@ import { Sink } from "../index.js";
  * Creates a sink joining the items of the feed into a string.
  *
  * Items are rendered and joined as `Array.prototype.join()` would, that is through their default string
- * representation, `null` values excepted, which are rendered as empty strings; an empty feed joins to an empty
- * string.
+ * representation, `null` and `undefined` values excepted, which are rendered as empty strings; an empty feed joins
+ * to an empty string.
+ *
+ * > [!WARNING]
+ * >
+ * > - **Exhaustive**: every item is drawn before the sink resolves, so an infinite feed never completes.
+ * > - **Materialising**: the whole feed is held in memory as a single string, so a large feed may exhaust it.
+ * > - **Stateful**: the string covers the items drawn, so a sink closing a nested or truncated feed sees those alone.
  *
  * @typeParam V The type of items in the feed
  *
@@ -34,12 +40,12 @@ import { Sink } from "../index.js";
  *
  * ```typescript
  * await pipe(
- *   (items(1, 2, 3))
+ *   (items([1, 2, 3]))
  *   (toString())
  * );  // "1,2,3"
  *
  * await pipe(
- *   (items(1, 2, 3))
+ *   (items([1, 2, 3]))
  *   (toString(" - "))
  * );  // "1 - 2 - 3"
  * ```

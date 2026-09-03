@@ -35,7 +35,9 @@ const readonly = () => { throw new TypeError("unsupported mutation of immutable 
  *
  * > [!WARNING]
  * >
- * > Accumulates the whole feed in memory. For large or infinite feeds, this may exhaust memory or never complete.
+ * > - **Exhaustive**: every item is collected before the sink resolves, so an infinite feed never completes.
+ * > - **Materialising**: the whole feed is held in memory, so a large feed may exhaust it.
+ * > - **Stateful**: the set covers the items drawn, so a sink closing a nested or truncated feed sees those alone.
  *
  * > [!WARNING]
  * >
@@ -51,7 +53,7 @@ const readonly = () => { throw new TypeError("unsupported mutation of immutable 
  *
  * ```typescript
  * await pipe(
- *   (items(1, 2, 2, 3, 3, 3))
+ *   (items([1, 2, 2, 3, 3, 3]))
  *   (toSet())
  * );  // Set(3) { 1, 2, 3 }
  * ```

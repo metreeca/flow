@@ -22,60 +22,33 @@ import { toSet } from "./toSet.js";
 
 describe("toSet()", () => {
 
-	it("should collect all items into set", async () => {
+	it("should collect the distinct items in first-appearance order", async () => {
 
-		const values = await items(1, 2, 3)(toSet());
+		const values = await items([3, 1, 2, 1])(toSet());
 
-		expect(values).toEqual(new Set([1, 2, 3]));
-
-	});
-
-	it("should remove duplicates", async () => {
-
-		const values = await items(1, 2, 2, 3, 1, 4)(toSet());
-
-		expect(values).toEqual(new Set([1, 2, 3, 4]));
+		expect([...values]).toEqual([3, 1, 2]);
 
 	});
 
-	it("should remove duplicates with SameValueZero semantics", async () => {
+	it("should collapse items sharing SameValueZero identity", async () => {
 
-		const values = await items(NaN, NaN, 0, -0)(toSet());
+		const values = await items([NaN, NaN, 0, -0])(toSet());
 
 		expect([...values]).toEqual([NaN, 0]);
 
 	});
 
-	it("should retain structurally equal items as distinct entries", async () => {
+	it("should resolve to an empty set for an empty feed", async () => {
 
-		const values = await items({ value: 1 }, { value: 1 })(toSet());
-
-		expect(values.size).toBe(2);
-
-	});
-
-	it("should retain immutable items under their own identity", async () => {
-
-		const item = immutable({ value: 1 });
-
-		const values = await items(item, item)(toSet());
-
-		expect(values.has(item)).toBeTruthy();
-		expect(values.size).toBe(1);
-
-	});
-
-	it("should handle empty feed", async () => {
-
-		const values = await items<number>()(toSet());
+		const values = await items<number>([])(toSet());
 
 		expect(values).toEqual(new Set());
 
 	});
 
-	it("should deeply freeze collected items", async () => {
+	it("should deeply freeze the collected items", async () => {
 
-		const values = await items({ nested: { value: 1 } })(toSet());
+		const values = await items([{ nested: { value: 1 } }])(toSet());
 
 		const [first] = [...values];
 
@@ -84,9 +57,31 @@ describe("toSet()", () => {
 
 	});
 
+	it("should collect structurally equal items as distinct entries", async () => {
+
+		const item = { value: 1 };
+
+		const values = await items([item, item])(toSet()); // cloned on freezing, so identity no longer matches
+
+		expect(values.has(item)).toBeFalsy();
+		expect(values.size).toBe(2);
+
+	});
+
+	it("should collect immutable items under their own identity", async () => {
+
+		const item = immutable({ value: 1 });
+
+		const values = await items([item, item])(toSet());
+
+		expect(values.has(item)).toBeTruthy();
+		expect(values.size).toBe(1);
+
+	});
+
 	it("should reject mutations", async () => {
 
-		const values = await items(1, 2, 3)(toSet()) as Set<number>; // ;(cast) exercising runtime immutability
+		const values = await items([1, 2, 3])(toSet()) as Set<number>; // ;(cast) exercising runtime immutability
 
 		expect(() => values.add(4)).toThrow(TypeError);
 		expect(() => values.delete(1)).toThrow(TypeError);
@@ -98,17 +93,9 @@ describe("toSet()", () => {
 
 	it("should reject extensions", async () => {
 
-		const values = await items(1, 2, 3)(toSet());
+		const values = await items([1, 2, 3])(toSet());
 
 		expect(Object.isFrozen(values)).toBeTruthy();
-
-	});
-
-	it("should preserve insertion order", async () => {
-
-		const values = await items(3, 1, 2)(toSet());
-
-		expect([...values]).toEqual([3, 1, 2]);
 
 	});
 

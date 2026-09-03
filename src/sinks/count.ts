@@ -20,8 +20,11 @@ import { Sink } from "../index.js";
 /**
  * Creates a sink counting the items of the feed.
  *
- * The feed is drained without retaining any item, so counting stays within constant memory whatever its size, but
- * never completes on an infinite source.
+ * > [!WARNING]
+ * >
+ * > - **Exhaustive**: every item is drawn before the sink resolves, so an infinite feed never completes.
+ * > - **Streaming**: no more than the running count is held in memory, whatever the size of the feed.
+ * > - **Stateful**: the count covers the items drawn, so a sink closing a nested or truncated feed sees those alone.
  *
  * @typeParam V The type of items in the feed
  *
@@ -31,12 +34,12 @@ import { Sink } from "../index.js";
  *
  * ```typescript
  * await pipe(
- *   (items(1, 2, 3, 4, 5))
+ *   (items([1, 2, 3, 4, 5]))
  *   (count())
  * );  // 5
  *
  * await pipe(
- *   (items<number>())
+ *   (items<number>([]))
  *   (count())
  * );  // 0
  * ```

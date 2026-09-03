@@ -16,23 +16,26 @@
 
 import { ascending } from "@metreeca/core/order";
 import { Task } from "../index.js";
+import { items } from "../feeds/items.js";
 
 
 /**
  * Creates a task reordering the feed.
  *
- * The whole feed is drained before the first item is emitted, then items are emitted in the order the comparator
- * establishes; equal items keep their relative source order.
+ * Items are emitted in the order the comparator establishes; equal items keep their relative source order.
  *
  * > [!WARNING]
  * >
- * > Accumulates the whole feed in memory before sorting. For large or infinite feeds, this may exhaust memory or
- * > never complete.
+ * > - **Exhaustive**: the whole feed is drained before the first item is emitted, so an infinite feed never
+ * >   completes.
+ * > - **Materialising**: the whole feed is held in memory before sorting, so a large feed may exhaust it.
+ * > - **Stateful**: the ordering covers the items drawn, so a task invoked per nested feed or per run orders each
+ * >   independently rather than the feed as a whole.
  *
  * > [!TIP]
  * >
- * > The @metreeca/core [order](https://metreeca.github.io/core/modules/order.html) module provides helper functions for
- * > assembling complex sorting criteria.
+ * > The {@link https://metreeca.github.io/core/modules/order.html order} module of `@metreeca/core` provides helper
+ * > functions for assembling complex sorting criteria.
  *
  * @typeParam V The type of items in the feed
  *
@@ -45,25 +48,25 @@ import { Task } from "../index.js";
  *
  * ```typescript
  * await pipe(
- *   (items(3, 1, 2))
+ *   (items([3, 1, 2]))
  *   (sort())
  *   (toArray())
  * );  // [1, 2, 3]
  *
  * await pipe(
- *   (items(3, 1, 2))
+ *   (items([3, 1, 2]))
  *   (sort(descending))
  *   (toArray())
  * );  // [3, 2, 1]
  *
  * await pipe(
- *   (items({ age: 30 }, { age: 20 }))
+ *   (items([{ age: 30 }, { age: 20 }]))
  *   (sort(by(x => x.age)))
  *   (toArray())
  * );  // [{ age: 20 }, { age: 30 }]
  *
  * await pipe(
- *   (items("Émile", "Alice"))
+ *   (items(["Émile", "Alice"]))
  *   (sort((a, b) => a.localeCompare(b)))
  *   (toArray())
  * );  // ["Alice", "Émile"]
@@ -71,7 +74,7 @@ import { Task } from "../index.js";
  */
 export function sort<V>(comparator: (a: V, b: V) => number = ascending): Task<V> {
 
-	return async function* (source: AsyncIterable<V>) {
+	return source => items((async function* () {
 
 		const items: V[] = [];
 
@@ -81,6 +84,6 @@ export function sort<V>(comparator: (a: V, b: V) => number = ascending): Task<V>
 
 		yield* items.sort(comparator);
 
-	};
+	})());
 
 }

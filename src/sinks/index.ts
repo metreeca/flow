@@ -15,7 +15,7 @@
  */
 
 /**
- * Terminal operations that consume feeds and produce final results.
+ * Terminal operations that consume the items of a feed and compute the final result.
  *
  * Sinks close a pipe: applying one to a {@link index.Feed Feed} triggers execution and returns a promise resolving to
  * the final result. Those that can decide their outcome early stop consuming rather than draining the source, while
@@ -24,7 +24,22 @@
  * selected among them, resolve to `undefined` when the feed carries none and no result is defined, leaving the
  * choice of a fallback to the caller.
  *
- * **Custom Sinks** are functions that consume async iterables by returning a promise for the final result:
+ * Every sink is classified along three axes:
+ *
+ * - **incremental** or **exhaustive**, for how much of the feed it draws before resolving
+ * - **streaming** or **materialising**, for what it holds in memory
+ * - **stateless** or **stateful**, for whether its result depends on every item drawn
+ *
+ * > [!WARNING]
+ * >
+ * > An exhaustive sink never resolves on an infinite feed, and a materialising one may exhaust memory on a large
+ * > feed, bounded or not. Every sink but {@link find}, {@link some} and {@link every} is exhaustive, and the ones
+ * > collecting items, into a container or into a single string, materialise the whole feed as well. Bound the feed
+ * > upstream with {@link tasks.take take}.
+ *
+ * **Custom Sinks** close a pipe, consuming the items and returning a promise for the final result; a computation
+ * delegating to operations already available applies them to the feed it draws from, which is drained by a single
+ * pass, however repeatable the source behind it:
  *
  * ```typescript
  * import { pipe } from '@metreeca/flow';
@@ -40,7 +55,7 @@
  * }
  *
  * await pipe(
- *   (items("a", "b", "a"))
+ *   (items(["a", "b", "a"]))
  *   (histogram())
  * );  // Map(2) { "a" => 2, "b" => 1 }
  * ```
@@ -61,7 +76,7 @@ export * from "./avg.js";
 export * from "./min.js";
 export * from "./max.js";
 
-// extractors
+// scanners
 
 export * from "./find.js";
 export * from "./reduce.js";
@@ -76,4 +91,4 @@ export * from "./toString.js";
 
 // effects
 
-export * from "./forEach.js";
+export * from "./each.js";

@@ -24,6 +24,12 @@ import { Sink } from "../index.js";
  * Items are tested in source order and consumption stops at the first match, leaving the rest of the feed
  * unconsumed; an empty feed reports no match.
  *
+ * > [!NOTE]
+ * >
+ * > - **Incremental**: items are drawn only until one matches, so an infinite feed completes unless none does.
+ * > - **Streaming**: items are tested one at a time, none retained.
+ * > - **Stateless**: every item is tested on its own.
+ *
  * @typeParam V The type of items in the feed
  *
  * @param predicate The function testing each item
@@ -34,7 +40,7 @@ import { Sink } from "../index.js";
  *
  * ```typescript
  * await pipe(
- *   (items(1, 2, 3, 4, 5))
+ *   (items([1, 2, 3, 4, 5]))
  *   (some(n => n > 3))
  * );  // true
  * ```

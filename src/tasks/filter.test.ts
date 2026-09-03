@@ -15,24 +15,34 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { items } from "../feeds/index.js";
+import { inlet, items } from "../feeds/index.js";
+import { pipe } from "../index.js";
 import { toArray } from "../sinks/index.js";
 import { filter } from "./filter.js";
+import { take } from "./take.js";
 
 
 describe("filter()", () => {
 
-	it("should filter items by predicate", async () => {
+	it("should retain the matching items in source order", async () => {
 
-		const values = await items(1, 2, 3, 4, 5)(filter(x => x%2 === 0))(toArray());
+		const values = await items([1, 2, 3, 4, 5])(filter(x => x%2 === 0))(toArray());
 
 		expect(values).toEqual([2, 4]);
 
 	});
 
-	it("should support async predicates", async () => {
+	it("should retain falsy items the predicate matches", async () => {
 
-		const values = await items(1, 2, 3, 4, 5)(filter(async x => {
+		const values = await items([0, 1, undefined, 2])(filter(x => x !== 1))(toArray());
+
+		expect(values).toEqual([0, undefined, 2]);
+
+	});
+
+	it("should await asynchronous predicates", async () => {
+
+		const values = await items([1, 2, 3, 4, 5])(filter(async x => {
 			await Promise.resolve();
 			return x > 2;
 		}))(toArray());
@@ -41,30 +51,43 @@ describe("filter()", () => {
 
 	});
 
-	it("should handle empty results", async () => {
+	it("should emit items as they are drawn", async () => {
 
-		const values = await items(1, 2, 3)(filter(() => false))(toArray());
+		const count = { next: 0 };
+
+		const values = await pipe( // an infinite feed completes, as the quota downstream is met before it runs dry
+			(inlet(() => count.next++))
+			(filter(x => x%2 === 0))
+			(take(3))
+			(toArray())
+		);
+
+		expect(values).toEqual([0, 2, 4]);
+
+	});
+
+	it("should emit nothing where no item matches", async () => {
+
+		const values = await items([1, 2, 3])(filter(() => false))(toArray());
 
 		expect(values).toEqual([]);
 
 	});
 
-	it("should treat undefined as false", async () => {
+	it("should propagate predicate failures", async () => {
 
-		const values = await items(1, 2, 3, 4, 5)(filter(x => x > 3 ? true : undefined))(toArray());
-
-		expect(values).toEqual([4, 5]);
+		await expect(items([1, 2, 3])(filter(x => {
+			if ( x === 2 ) { throw new Error("predicate failed"); }
+			return true;
+		}))(toArray())).rejects.toThrow("predicate failed");
 
 	});
 
-	it("should handle async predicates returning undefined", async () => {
+	it("should reject optional predicate results", async () => {
 
-		const values = await items(1, 2, 3, 4, 5)(filter(async x => {
-			await Promise.resolve();
-			return x%2 === 0 ? true : undefined;
-		}))(toArray());
+		// @ts-expect-error items are retained or discarded on a definite verdict
 
-		expect(values).toEqual([2, 4]);
+		filter((x: number) => x > 3 ? true : undefined);
 
 	});
 

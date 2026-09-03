@@ -16,98 +16,62 @@
 
 import { by, descending } from "@metreeca/core/order";
 import { describe, expect, it } from "vitest";
-import { items, range } from "../feeds/index.js";
-import { filter, map } from "../tasks/index.js";
+import { items } from "../feeds/index.js";
 import { min } from "./min.js";
 
 
 describe("min()", () => {
 
-	it("should select the least item in feed", async () => {
+	describe("with the default comparator", () => {
 
-		const result = await items(3, 1, 4, 1, 5)(min());
+		it("should resolve to the least item in natural order", async () => {
 
-		expect(result).toBe(1);
+			const result = await items([3, 1, 4, 1, 5])(min());
 
-	});
+			expect(result).toBe(1);
 
-	it("should return undefined for empty feed", async () => {
+		});
 
-		const result = await items<number>()(min());
+		it("should rank strings lexicographically", async () => {
 
-		expect(result).toBeUndefined();
+			const result = await items(["cherry", "apple", "banana"])(min());
 
-	});
+			expect(result).toBe("apple");
 
-	it("should return the only item of a singleton feed", async () => {
+		});
 
-		const result = await items(42)(min());
+		it("should resolve to null where the feed carries it", async () => {
 
-		expect(result).toBe(42);
+			const result = await items([2, null, 1])(min());
 
-	});
+			expect(result).toBeNull();
 
-	it("should select the least of negative and fractional items", async () => {
-
-		const result = await items(1.5, -2.5, 3)(min());
-
-		expect(result).toBe(-2.5);
+		});
 
 	});
 
-	it("should select the least item lexicographically", async () => {
-
-		const result = await items("cherry", "apple", "banana")(min());
-
-		expect(result).toBe("apple");
-
-	});
-
-	it("should select the least item after filtering", async () => {
-
-		const result = await items(1, 2, 3, 4, 5, 6)(filter(x => x%2 === 0))(min());
-
-		expect(result).toBe(2);
-
-	});
-
-	it("should select the least item after mapping", async () => {
-
-		const result = await range(1, 5)(map(x => x*2))(min());
-
-		expect(result).toBe(2);
-
-	});
 
 	describe("with a custom comparator", () => {
 
-		it("should use selector to extract ranking key", async () => {
+		it("should rank items by an extracted key", async () => {
 
-			const result = await items(
-				{ id: 3, name: "c" },
-				{ id: 1, name: "a" },
-				{ id: 2, name: "b" }
-			)(min(by(item => item.id)));
+			const result = await items([{ id: 3 }, { id: 1 }, { id: 2 }])(min(by(item => item.id)));
 
-			expect(result).toEqual({ id: 1, name: "a" });
+			expect(result).toEqual({ id: 1 });
 
 		});
 
-		it("should support custom comparators", async () => {
+		it("should rank items by an arbitrary criterion", async () => {
 
-			const result = await items(
-				{ id: 3, name: "c" },
-				{ id: 1, name: "a" },
-				{ id: 2, name: "b" }
-			)(min((a, b) => a.id-b.id));
+			const result = await items([{ id: 3 }, { id: 1 }, { id: 2 }])(min((a, b) => a.id-b.id));
 
-			expect(result).toEqual({ id: 1, name: "a" });
+			expect(result).toEqual({ id: 1 });
 
 		});
 
-		it("should invert ranking with a descending comparator", async () => {
+		it("should invert the natural order with a descending comparator", async () => {
 
-			const result = await items(3, 1, 4, 1, 5)(min(descending));
+			const result = await items([3, 1, 4, 1, 5])(min(descending));
 
 			expect(result).toBe(5);
 
@@ -115,14 +79,31 @@ describe("min()", () => {
 
 	});
 
-	it("should select the first of equally ranking items", async () => {
+
+	it("should resolve to the first of equally ranking items", async () => {
 
 		const first = { key: 1, value: "a" };
 		const other = { key: 1, value: "b" };
 
-		const result = await items(first, other)(min(by(item => item.key)));
+		const result = await items([first, other])(min(by(item => item.key)));
 
 		expect(result).toBe(first);
+
+	});
+
+	it("should resolve to the only item of a singleton feed", async () => {
+
+		const result = await items([42])(min());
+
+		expect(result).toBe(42);
+
+	});
+
+	it("should resolve to undefined for an empty feed", async () => {
+
+		const result = await items<number>([])(min());
+
+		expect(result).toBeUndefined();
 
 	});
 

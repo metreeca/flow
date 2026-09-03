@@ -22,17 +22,23 @@ import { reduce } from "./reduce.js";
 /**
  * Creates a sink selecting the least item of the feed.
  *
- * Items are ranked in source order, seeding the result with the first one and retaining only the least ranking item
- * seen so far, so selection stays within constant memory whatever the size of the feed, but never completes on an
- * infinite source; equally ranking items resolve to the first one in source order.
+ * Items are ranked in source order, seeding the result with the first one; equally ranking items resolve to the first
+ * one in source order.
  *
  * An empty feed resolves to `undefined`; callers wanting a default supply it with `??`. As {@link ascending} ranks
  * `null` before any other value, a feed carrying `null` resolves to it unless the comparator states otherwise.
  *
+ * > [!WARNING]
+ * >
+ * > - **Exhaustive**: every item is drawn before the sink resolves, so an infinite feed never completes.
+ * > - **Streaming**: no more than the least ranking item seen so far is held in memory, whatever the size of the
+ * >   feed.
+ * > - **Stateful**: the outcome covers the items drawn, so a sink closing a nested or truncated feed sees those alone.
+ *
  * > [!TIP]
  * >
- * > The @metreeca/core [order](https://metreeca.github.io/core/modules/order.html) module provides helper functions for
- * > assembling complex ranking criteria.
+ * > The {@link https://metreeca.github.io/core/modules/order.html order} module of `@metreeca/core` provides helper
+ * > functions for assembling complex ranking criteria.
  *
  * @typeParam V The type of items in the feed
  *
@@ -45,17 +51,17 @@ import { reduce } from "./reduce.js";
  *
  * ```typescript
  * await pipe(
- *   (items(3, 1, 2))
+ *   (items([3, 1, 2]))
  *   (min())
  * );  // 1
  *
  * await pipe(
- *   (items({ age: 30 }, { age: 20 }))
+ *   (items([{ age: 30 }, { age: 20 }]))
  *   (min(by(x => x.age)))
  * );  // { age: 20 }
  *
  * await pipe(
- *   (items<number>())
+ *   (items<number>([]))
  *   (min())
  * );  // undefined
  * ```

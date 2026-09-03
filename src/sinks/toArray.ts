@@ -26,7 +26,9 @@ import { Sink } from "../index.js";
  *
  * > [!WARNING]
  * >
- * > Accumulates the whole feed in memory. For large or infinite feeds, this may exhaust memory or never complete.
+ * > - **Exhaustive**: every item is collected before the sink resolves, so an infinite feed never completes.
+ * > - **Materialising**: the whole feed is held in memory, so a large feed may exhaust it.
+ * > - **Stateful**: the array covers the items drawn, so a sink closing a nested or truncated feed sees those alone.
  *
  * > [!WARNING]
  * >
@@ -41,7 +43,7 @@ import { Sink } from "../index.js";
  *
  * ```typescript
  * await pipe(
- *   (items(1, 2, 3))
+ *   (items([1, 2, 3]))
  *   (toArray())
  * );  // [1, 2, 3]
  * ```

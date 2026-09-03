@@ -33,7 +33,10 @@ import { Sink } from "../index.js";
  *
  * > [!WARNING]
  * >
- * > Accumulates the whole feed in memory. For large or infinite feeds, this may exhaust memory or never complete.
+ * > - **Exhaustive**: every item is collected before the sink resolves, so an infinite feed never completes.
+ * > - **Materialising**: the whole feed is held in memory, so a large feed may exhaust it.
+ * > - **Stateful**: the object covers the items drawn, so a sink closing a nested or truncated feed sees those alone,
+ * >   and a key repeated across two of them fails neither.
  *
  * > [!WARNING]
  * >
@@ -54,7 +57,7 @@ import { Sink } from "../index.js";
  *
  * ```typescript
  * await pipe(
- *   (items({ id: 1, name: "Alice" }, { id: 2, name: "Bob" }))
+ *   (items([{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }]))
  *   (toObject(x => x.id))
  * );  // { 1: { id: 1, name: "Alice" }, 2: { id: 2, name: "Bob" } }
  * ```
@@ -64,10 +67,10 @@ export function toObject<V, K extends PropertyKey>(
 ): Sink<V, Readonly<Record<K, V>>>;
 
 /**
- * Creates a sink collecting extracted values into a deeply immutable object under extracted keys.
+ * Creates a sink collecting extracted values into an object under extracted keys.
  *
- * Collects like {@link toObject} without a `value` argument, pairing each key with an extracted value rather than
- * with the item itself.
+ * Collects like {@link toObject} without a `value` argument, subject to the same key, freezing and axis rules, pairing
+ * each key with an extracted value rather than with the item itself.
  *
  * @typeParam V The type of items in the feed
  * @typeParam K The type of object keys
@@ -85,7 +88,7 @@ export function toObject<V, K extends PropertyKey>(
  *
  * ```typescript
  * await pipe(
- *   (items({ id: 1, name: "Alice" }, { id: 2, name: "Bob" }))
+ *   (items([{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }]))
  *   (toObject(x => x.id, x => x.name))
  * );  // { 1: "Alice", 2: "Bob" }
  * ```
@@ -96,7 +99,7 @@ export function toObject<V, K extends PropertyKey, T>(
 ): Sink<V, Readonly<Record<K, T>>>;
 
 /**
- * Creates a sink collecting items or extracted values into a deeply immutable object under extracted keys.
+ * Creates a sink collecting items or extracted values into an object under extracted keys.
  */
 export function toObject<V, K extends PropertyKey, R>(
 	key: (item: V) => Awaitable<K>,

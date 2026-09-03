@@ -15,29 +15,37 @@
  */
 
 /**
- * Factory functions that open new feeds from various input sources.
+ * Factory functions that open a feed over values and data sources.
  *
- * Feeds open the {@link index.Feed Feed} a pipe is built on, either adapting values and data sources into one ready
- * for task and sink composition, or combining several feeds into a single one, drawn either in sequence or
- * concurrently. Work is deferred until a sink or a manual iteration consumes the feed.
+ * Feeds open the {@link index.Feed Feed} a pipe is built on, adapting values and data sources into one ready for task
+ * and sink composition; several feeds are combined into a single one by carrying them in a feed of their own and
+ * splicing it with {@link tasks.flat flat} or {@link tasks.join join}. Work is deferred until a sink or a manual
+ * iteration consumes the feed.
  *
- * > [!CAUTION]
+ * Every feed is classified as **bounded** or **infinite**: a bounded feed runs dry on its own, while an infinite one
+ * has to be bounded downstream, with a task such as {@link tasks.take take} or with a sink deciding its outcome
+ * early.
+ *
+ * > [!NOTE]
  * >
- * > When creating custom feeds, always wrap async generators, async generator functions or `AsyncIterable<T>` objects
- * > with {@link feed} to ensure `undefined` filtering and conformance to the {@link index.Feed Feed} contract.
+ * > A custom feed is only required to honour the {@link index.Feed Feed} contract, however it is assembled: handing
+ * > the source to {@link items} is the shortest route there, as the adapter takes the contract on, while a source
+ * > that is already a feed honours it as it is. Whichever route is taken, a feed replays only as far as its source
+ * > does, so one opened from a generator object runs dry after the first pass, while one opened from a repeatable
+ * > source is consumed afresh at each.
  *
- * **Custom Feeds** are functions opening a feed over a source of their own:
+ * **Custom Feeds** open a pipe over a source of your own:
  *
  * ```typescript
  * import { pipe } from '@metreeca/flow';
- * import { feed } from '@metreeca/flow/feeds';
+ * import { items } from '@metreeca/flow/feeds';
  * import { toArray } from '@metreeca/flow/sinks';
  * import type { Feed } from '@metreeca/flow';
  *
  * function repeat<V>(value: V, count: number): Feed<V> {
- *   return feed(async function* () {
+ *   return items((async function* () {
  *     for (let i = 0; i < count; i++) { yield value; }
- *   }());
+ *   })());
  * }
  *
  * await pipe(
@@ -49,14 +57,6 @@
  * @module
  */
 
-// generators
-
-export * from "./feed.js";
 export * from "./items.js";
 export * from "./range.js";
-export * from "./iterate.js";
-
-// combinators
-
-export * from "./chain.js";
-export * from "./merge.js";
+export * from "./inlet.js";

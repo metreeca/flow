@@ -16,14 +16,14 @@
 
 import { describe, expect, it } from "vitest";
 import { pipe } from "../index.js";
-import { reduce, toArray } from "../sinks/index.js";
-import { filter, map } from "../tasks/index.js";
+import { toArray } from "../sinks/index.js";
+import { map } from "../tasks/index.js";
 import { range } from "./range.js";
 
 
 describe("range()", () => {
 
-	it("should generate ascending range", async () => {
+	it("should yield the numbers from the lower bound towards the greater one", async () => {
 
 		const values = await range(1, 5)(toArray());
 
@@ -31,7 +31,7 @@ describe("range()", () => {
 
 	});
 
-	it("should generate descending range", async () => {
+	it("should yield the numbers from the greater bound down towards the lower one", async () => {
 
 		const values = await range(5, 1)(toArray());
 
@@ -39,15 +39,7 @@ describe("range()", () => {
 
 	});
 
-	it("should generate empty range when start equals end", async () => {
-
-		const values = await range(3, 3)(toArray());
-
-		expect(values).toEqual([]);
-
-	});
-
-	it("should work with negative numbers", async () => {
+	it("should exclude the bound the range stops at", async () => {
 
 		const values = await range(-2, 2)(toArray());
 
@@ -55,37 +47,39 @@ describe("range()", () => {
 
 	});
 
-	describe("should create a compliant feed object", () => {
+	it("should yield nothing for equal bounds", async () => {
 
-		it("should return async iterable when called without transform", async () => {
-			expect(await pipe(range(1, 4)(toArray()))).toEqual([1, 2, 3]);
-		});
+		const values = await range(3, 3)(toArray());
 
-		it("should apply task and return new feed", async () => {
-			expect(await pipe(range(1, 4)(map(x => x*2))(toArray()))).toEqual([2, 4, 6]);
-		});
-
-		it("should apply sink and return promise", async () => {
-			expect(await range(1, 4)(reduce((acc, x) => acc+x, 0))).toBe(6);
-		});
-
-		it("should chain multiple tasks", async () => {
-			expect(await pipe(
-				range(1, 6)
-				(filter(x => x%2 === 0))
-				(map(x => x*2))
-				(toArray())
-			)).toEqual([4, 8]);
-		});
+		expect(values).toEqual([]);
 
 	});
 
-	it("should reject non-integer bounds", () => {
+	it("should run dry after the first pass", async () => {
 
-		expect(() => range(1.5, 4)).toThrow(TypeError);
-		expect(() => range(1, 4.5)).toThrow(TypeError);
-		expect(() => range(NaN, 4)).toThrow(TypeError);
-		expect(() => range(1, Infinity)).toThrow(TypeError);
+		const source = range(1, 4);
+
+		expect(await source(toArray())).toEqual([1, 2, 3]);
+		expect(await source(toArray())).toEqual([]);
+
+	});
+
+	it("should compose as a feed", async () => {
+
+		const values = await pipe(range(1, 4)(map(x => x*2))(toArray()));
+
+		expect(values).toEqual([2, 4, 6]);
+
+	});
+
+	it.each([
+		[1.5, 4],
+		[1, 4.5],
+		[NaN, 4],
+		[1, Infinity]
+	])("should reject the non-integer bounds <%s, %s>", async (start, end) => {
+
+		expect(() => range(start, end)).toThrow(TypeError);
 
 	});
 

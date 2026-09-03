@@ -37,7 +37,10 @@ const readonly = () => { throw new TypeError("unsupported mutation of immutable 
  *
  * > [!WARNING]
  * >
- * > Accumulates the whole feed in memory. For large or infinite feeds, this may exhaust memory or never complete.
+ * > - **Exhaustive**: every item is collected before the sink resolves, so an infinite feed never completes.
+ * > - **Materialising**: the whole feed is held in memory, so a large feed may exhaust it.
+ * > - **Stateful**: the map covers the items drawn, so a sink closing a nested or truncated feed sees those alone,
+ * >   and a key repeated across two of them fails neither.
  *
  * > [!WARNING]
  * >
@@ -59,7 +62,7 @@ const readonly = () => { throw new TypeError("unsupported mutation of immutable 
  *
  * ```typescript
  * await pipe(
- *   (items({ id: 1, name: "Alice" }, { id: 2, name: "Bob" }))
+ *   (items([{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }]))
  *   (toMap(x => x.id))
  * );  // Map(2) { 1 => { id: 1, name: "Alice" }, 2 => { id: 2, name: "Bob" } }
  * ```
@@ -71,8 +74,8 @@ export function toMap<V, K>(
 /**
  * Creates a sink collecting extracted values into a map under extracted keys.
  *
- * Collects like {@link toMap} without a `value` argument, pairing each key with an extracted value rather than with
- * the item itself.
+ * Collects like {@link toMap} without a `value` argument, subject to the same key, freezing and axis rules, pairing
+ * each key with an extracted value rather than with the item itself.
  *
  * @typeParam V The type of items in the feed
  * @typeParam K The type of map keys
@@ -90,7 +93,7 @@ export function toMap<V, K>(
  *
  * ```typescript
  * await pipe(
- *   (items({ id: 1, name: "Alice" }, { id: 2, name: "Bob" }))
+ *   (items([{ id: 1, name: "Alice" }, { id: 2, name: "Bob" }]))
  *   (toMap(x => x.id, x => x.name))
  * );  // Map(2) { 1 => "Alice", 2 => "Bob" }
  * ```

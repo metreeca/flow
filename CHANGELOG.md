@@ -7,6 +7,70 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unpublished](https://github.com/metreeca/flow/commits/HEAD)
 
+### Added
+
+- `flat` and `join` tasks collapsing a feed of feeds into a single one: `flat` splices the nested feeds, draining one
+  at a time and keeping the items of each together and in source order, while `join` opens them together and
+  interleaves their items as they are reported; both optionally apply a task to every nested feed
+
+### Changed
+
+- `feed` and `items` merged into a single `items` feed, opened over a data source of any shape: a batch contributes
+  the items it carries, while any other value, a promise once awaited, is contributed whole, so `feed(source)` becomes
+  `items(source)`, the variadic `items(a, b, c)` becomes `items([a, b, c])` and a lone value no longer needs wrapping
+  in an array
+
+- `Feed` contract extends `AsyncIterable`: a feed is iterated directly, replacing the call with no arguments that
+  retrieved the underlying async iterable
+
+- `Task` and `Sink` contracts are handed a `Feed` rather than a bare `AsyncIterable`, and a task reports one in turn,
+  mirroring the feed it is applied to: a step may delegate the whole job, or part of it, to steps already available,
+  applying them to the feed it draws from, while a step reporting an async generator of its own adapts it with
+  `items()`, as custom feeds already do
+
+- `pipe()` collapses its two overloads into a single signature accepting a `Feed` or a `Promise` and reporting it back
+  as handed in: a pipe left open now brackets to the feed it ends with, rather than to the async iterable underlying
+  it, leaving consumers typing the result as `AsyncIterable` unaffected, as a feed is one
+
+- `Data` no longer names `Feed` among its shapes, subsumed by `AsyncIterable` now that a feed is one: the shapes a
+  feed can be opened from are unchanged
+
+- feeds carry items exactly as contributed, dropping the filtering that withdrew `undefined` from the item domain:
+  data shapes, `items` sources and `map` results are no longer widened to accept it, and pipes relying on the
+  filtering discard those items explicitly, with `filter` or within the task reporting them
+
+- `filter` predicates report a definite verdict, no longer widened to accept `undefined` as a stand-in for `false`:
+  predicates leaning on it settle the undecided case themselves, typically with `?? false`
+
+- `iterate` renamed to `inlet` and no longer bounded by an `undefined` result: a source ends its feed by reporting
+  the new `done` marker, a unique symbol no produced value is mistaken for, so `undefined` and every other falsy value
+  stay legal items, while a source never reporting it opens an endless feed, bounded downstream
+
+- `inlet` accepts an optional `AbortSignal` bounding the feed from the outside, tested before each source call and
+  ending the feed as an exhausted source does, leaving the items already contributed to the pipe consuming them
+
+- `forEach` sink renamed to `each`, dropping the prefix the surrounding pipe already implies: `forEach(consumer)`
+  becomes `each(consumer)`
+
+- `concurrent` task renamed to `fork`, opening its runs on demand rather than all at once and reading `0` as an
+  uncapped fork, a run per item drawn, in place of the sequential fallback it stood for: `concurrent(n, task)` becomes
+  `fork(n, task)`
+
+- `find` predicate is optional, defaulting to a test matching every item, so `find()` retrieves the first item of the
+  feed
+
+### Removed
+
+- `chain` and `merge` feeds, expressed as a composition of the steps already available: `chain(a, b)` becomes
+  `items([a, b])(flat())` and `merge(a, b)` becomes `items([a, b])(join())`, with the feeds to combine carried by a
+  feed of their own
+
+- `flatMap` task, expressed as `map()` reporting a feed for each item followed by `flat()`: `flatMap(mapper)` becomes
+  `map(item => items(mapper(item)))(flat())`, with the expansion opened as a feed before being spliced
+
+- `Data` type, no longer part of the surface now that `flatMap` is gone: the shapes a feed is opened from are declared
+  by the `items` signature
+
 ## [0.9.21](https://github.com/metreeca/flow/releases/tag/v0.9.21) - 2026-08-28
 
 ### Added

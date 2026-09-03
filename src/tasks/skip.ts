@@ -16,13 +16,22 @@
 
 import { assert } from "@metreeca/core";
 import { Task } from "../index.js";
+import { items } from "../feeds/items.js";
 
 
 /**
  * Creates a task discarding a prefix of the feed.
  *
- * The leading items are pulled from the source and dropped, then the rest of the feed is emitted lazily, in source
- * order; a shorter feed is consumed entirely and nothing is emitted.
+ * The leading items are drawn and dropped, then the rest of the feed is emitted in source order; a shorter feed is
+ * consumed entirely and nothing is emitted.
+ *
+ * > [!NOTE]
+ * >
+ * > - **Incremental**: items are emitted as they are drawn, so the reported feed runs dry as the feed drawn from
+ * >   does.
+ * > - **Streaming**: items are emitted one at a time, none retained.
+ * > - **Stateful**: the items already discarded decide the ones that follow, so a task invoked per nested feed or per
+ * >   run discards a prefix of each rather than of the feed as a whole.
  *
  * @typeParam V The type of items in the feed
  *
@@ -36,7 +45,7 @@ import { Task } from "../index.js";
  *
  * ```typescript
  * await pipe(
- *   (items(1, 2, 3, 4, 5))
+ *   (items([1, 2, 3, 4, 5]))
  *   (skip(2))
  *   (toArray())
  * );  // [3, 4, 5]
@@ -46,7 +55,7 @@ export function skip<V>(n: number): Task<V> {
 
 	const limit = assert(n, Number.isInteger, value => `expected integer count <${value}>`);
 
-	return async function* (source: AsyncIterable<V>) {
+	return source => items((async function* () {
 
 		let count = 0;
 
@@ -57,6 +66,6 @@ export function skip<V>(n: number): Task<V> {
 				count++;
 			}
 		}
-	};
+	})());
 
 }

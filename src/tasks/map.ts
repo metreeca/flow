@@ -16,18 +16,26 @@
 
 import type { Awaitable } from "@metreeca/core/async";
 import { Task } from "../index.js";
+import { items } from "../feeds/items.js";
 
 
 /**
  * Creates a task converting each item into a new value.
  *
- * Items are converted lazily, one at a time, and emitted in source order.
+ * Items are emitted in source order.
+ *
+ * > [!NOTE]
+ * >
+ * > - **Incremental**: items are emitted as they are drawn, so the reported feed runs dry as the feed drawn from
+ * >   does.
+ * > - **Streaming**: items are converted one at a time, none retained.
+ * > - **Stateless**: every item is converted on its own, so the outcome is unaffected by how the feed is split across
+ * >   nested feeds or runs.
  *
  * @typeParam V The type of input items
  * @typeParam R The type of output items
  *
- * @param mapper The function converting each item; an `undefined` result contributes nothing, so mapping doubles as
- *   filtering
+ * @param mapper The function converting each item
  *
  * @returns A task yielding the values `mapper` converts the items into
  *
@@ -35,18 +43,20 @@ import { Task } from "../index.js";
  *
  * ```typescript
  * await pipe(
- *   (items(1, 2, 3))
+ *   (items([1, 2, 3]))
  *   (map(n => n*2))
  *   (toArray())
  * );  // [2, 4, 6]
  * ```
+ *
+ * @see {@link flat} to expand each item into several, converting it into a feed of its own and splicing the result
  */
-export function map<V, R>(mapper: (item: V) => Awaitable<undefined | R>): Task<V, R> {
+export function map<V, R>(mapper: (item: V) => Awaitable<R>): Task<V, R> {
 
-	return async function* (source: AsyncIterable<V>) {
+	return source => items((async function* () {
 		for await (const item of source) {
 			yield await mapper(item);
 		}
-	};
+	})());
 
 }

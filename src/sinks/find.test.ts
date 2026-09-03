@@ -15,31 +15,68 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { feed, items } from "../feeds/index.js";
+import { inlet, items } from "../feeds/index.js";
+import { Feed } from "../index.js";
 import { find } from "./find.js";
 
 
+/**
+ * Creates an endless feed of consecutive integers from 0, reporting how many items it was drawn for.
+ */
+function endless(): { readonly feed: Feed<number>, readonly drawn: () => number } {
+
+	const draws = { count: 0 };
+
+	return {
+
+		feed: inlet(() => draws.count++),
+
+		drawn: () => draws.count
+
+	};
+
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 describe("find()", () => {
 
-	it("should find first matching item", async () => {
+	it("should resolve to the first matching item", async () => {
 
-		const result = await items(1, 2, 3, 4, 5)(find(x => x > 2));
+		const result = await items([1, 2, 3, 4, 5])(find(x => x > 2));
 
 		expect(result).toBe(3);
 
 	});
 
-	it("should return undefined when no match", async () => {
+	it("should resolve to the first item where no predicate is given", async () => {
 
-		const result = await items(1, 2, 3)(find(x => x > 10));
+		const result = await items([1, 2, 3])(find());
+
+		expect(result).toBe(1);
+
+	});
+
+	it("should resolve to undefined where no item matches", async () => {
+
+		const result = await items([1, 2, 3])(find(x => x > 10));
 
 		expect(result).toBeUndefined();
 
 	});
 
-	it("should support async predicates", async () => {
+	it("should resolve to undefined for an empty feed", async () => {
 
-		const result = await items(1, 2, 3, 4)(find(async x => {
+		const result = await items<number>([])(find(x => x > 0));
+
+		expect(result).toBeUndefined();
+
+	});
+
+	it("should await asynchronous predicates", async () => {
+
+		const result = await items([1, 2, 3, 4])(find(async x => {
 			await Promise.resolve();
 			return x === 3;
 		}));
@@ -48,28 +85,23 @@ describe("find()", () => {
 
 	});
 
-	it("should terminate infinite generator when match found", async () => {
+	it("should stop drawing at the first match, completing an infinite feed", async () => {
 
-		let generatorCalls = 0;
-		let iteratorReturned = false;
+		const source = endless();
 
-		const infiniteGenerator = feed((async function* () {
-			try {
-				let i = 0;
-				while ( true ) {
-					generatorCalls++;
-					yield i++;
-				}
-			} finally {
-				iteratorReturned = true;
-			}
-		})());
-
-		const result = await infiniteGenerator(find(x => x === 3));
+		const result = await source.feed(find(x => x === 3));
 
 		expect(result).toBe(3);
-		expect(generatorCalls).toBe(4); // Checked items 0, 1, 2, 3
-		expect(iteratorReturned).toBe(true); // Generator was properly cleaned up
+		expect(source.drawn()).toBe(4); // the items failing the predicate, plus the one matching it
+
+	});
+
+	it("should propagate predicate failures", async () => {
+
+		await expect(items([1, 2, 3])(find(x => {
+			if ( x === 2 ) { throw new Error("predicate failed"); }
+			return false;
+		}))).rejects.toThrow("predicate failed");
 
 	});
 

@@ -15,70 +15,91 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { items } from "../feeds/index.js";
+import { inlet, items } from "../feeds/index.js";
+import { pipe } from "../index.js";
 import { toArray } from "../sinks/index.js";
 import { batch } from "./batch.js";
-import { map } from "./map.js";
+import { take } from "./take.js";
 
 
 describe("batch()", () => {
 
-	it("should group items into batches of specified size", async () => {
+	it("should emit the items in fixed-size batches, in source order", async () => {
 
-		const values = await items(1, 2, 3, 4, 5)(batch(2))(toArray());
+		const values = await items([1, 2, 3, 4, 5, 6])(batch(2))(toArray());
 
-		expect(values).toEqual([[1, 2], [3, 4], [5]]);
-
-	});
-
-	it("should collect all items when size is 0", async () => {
-
-		const values = await items(1, 2, 3, 4, 5)(batch(0))(toArray());
-
-		expect(values).toEqual([[1, 2, 3, 4, 5]]);
+		expect(values).toEqual([[1, 2], [3, 4], [5, 6]]);
 
 	});
 
-	it("should handle empty feed", async () => {
+	it("should emit a short final batch where the feed ends before it fills up", async () => {
 
-		const values = await items<number>()(batch(2))(toArray());
-
-		expect(values).toEqual([]);
-
-	});
-
-	it("should yield final partial batch", async () => {
-
-		const values = await items(1, 2, 3)(batch(2))(toArray());
+		const values = await items([1, 2, 3])(batch(2))(toArray());
 
 		expect(values).toEqual([[1, 2], [3]]);
 
 	});
 
-	it("should create individual batches when size is 1", async () => {
+	it("should emit one batch per item where the size is 1", async () => {
 
-		const values = await items(1, 2, 3, 4)(batch(1))(toArray());
+		const values = await items([1, 2, 3])(batch(1))(toArray());
 
-		expect(values).toEqual([[1], [2], [3], [4]]);
-
-	});
-
-	it("should process batches through pipe", async () => {
-
-		const result = await items(1, 2, 3, 4, 5, 6, 7)
-		(batch(3))
-		(map(batch => batch.reduce((sum, n) => sum+n, 0)))
-		(toArray());
-
-		expect(result).toEqual([6, 15, 7]);
+		expect(values).toEqual([[1], [2], [3]]);
 
 	});
 
-	it("should reject non-integer size", () => {
+	it.each([
+		[undefined],
+		[0],
+		[-5]
+	])("should collect the whole feed into a single batch where the size is <%s>", async size => {
 
-		expect(() => batch(1.5)).toThrow(TypeError);
-		expect(() => batch(NaN)).toThrow(TypeError);
-		expect(() => batch(Infinity)).toThrow(TypeError);
+		const values = await items([1, 2, 3])(batch(size))(toArray());
+
+		expect(values).toEqual([[1, 2, 3]]);
+
+	});
+
+	it("should emit nothing for an empty feed", async () => {
+
+		const values = await items<number>([])(batch(2))(toArray());
+
+		expect(values).toEqual([]);
+
+	});
+
+	it("should emit batches as they fill up", async () => {
+
+		const count = { next: 0 };
+
+		const values = await pipe( // an infinite feed completes, as the batches downstream fill up before it runs dry
+			(inlet(() => count.next++))
+			(batch(2))
+			(take(2))
+			(toArray())
+		);
+
+		expect(values).toEqual([[0, 1], [2, 3]]);
+
+	});
+
+	it("should close every run with a short batch rather than filling it from the run that follows", async () => {
+
+		const source = items([1, 2, 3]);
+		const task = batch<number>(2); // the same task, invoked once per run
+
+		expect(await source(task)(toArray())).toEqual([[1, 2], [3]]);
+		expect(await source(task)(toArray())).toEqual([[1, 2], [3]]);
+
+	});
+
+	it.each([
+		[1.5],
+		[NaN],
+		[Infinity]
+	])("should reject the non-integer size <%s>", async size => {
+
+		expect(() => batch(size)).toThrow(TypeError);
 
 	});
 

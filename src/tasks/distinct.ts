@@ -16,19 +16,24 @@
 
 import type { Awaitable } from "@metreeca/core/async";
 import { Task } from "../index.js";
+import { items } from "../feeds/items.js";
 
 
 /**
  * Creates a task discarding repeated items.
  *
- * Items are emitted lazily, in source order, keeping the first occurrence of each key and discarding the ones
- * following it. Keys are compared with `SameValueZero` semantics, so `NaN` matches itself and `-0` matches `0`, and
- * structured keys are matched by identity rather than by content.
+ * Items are emitted in source order, keeping the first occurrence of each key and discarding the ones following it.
+ * Keys are compared with `SameValueZero` semantics, so `NaN` matches itself and `-0` matches `0`, and structured keys
+ * are matched by identity rather than by content.
  *
  * > [!WARNING]
  * >
- * > Retains every key seen so far in memory. For large or infinite feeds carrying many distinct keys, this may
- * > exhaust memory.
+ * > - **Incremental**: items are emitted as they are drawn, so the reported feed runs dry as the feed drawn from
+ * >   does.
+ * > - **Materialising**: every key seen so far is held in memory, so a feed carrying many distinct keys may exhaust
+ * >   it.
+ * > - **Stateful**: the keys already seen decide the items that follow, so a task invoked per nested feed or per run
+ * >   deduplicates within each rather than across the feed as a whole.
  *
  * @typeParam V The type of items in the feed
  * @typeParam K The type of the comparison key
@@ -42,13 +47,13 @@ import { Task } from "../index.js";
  *
  * ```typescript
  * await pipe(
- *   (items(1, 2, 2, 3, 1))
+ *   (items([1, 2, 2, 3, 1]))
  *   (distinct())
  *   (toArray())
  * );  // [1, 2, 3]
  *
  * await pipe(
- *   (items({ id: 1 }, { id: 2 }, { id: 1 }))
+ *   (items([{ id: 1 }, { id: 2 }, { id: 1 }]))
  *   (distinct(x => x.id))
  *   (toArray())
  * );  // [{ id: 1 }, { id: 2 }]
@@ -56,7 +61,7 @@ import { Task } from "../index.js";
  */
 export function distinct<V, K>(selector?: (item: V) => Awaitable<K>): Task<V> {
 
-	return async function* (source: AsyncIterable<V>) {
+	return source => items((async function* () {
 
 		const seen = new Set();
 
@@ -71,6 +76,6 @@ export function distinct<V, K>(selector?: (item: V) => Awaitable<K>): Task<V> {
 
 		}
 
-	};
+	})());
 
 }

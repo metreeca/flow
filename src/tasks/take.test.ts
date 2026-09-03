@@ -15,108 +15,130 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { feed, items } from "../feeds/index.js";
+import { items } from "../feeds/index.js";
+import { Feed } from "../index.js";
 import { toArray } from "../sinks/index.js";
 import { filter } from "./filter.js";
 import { take } from "./take.js";
 
 
+/**
+ * Creates an endless feed, reporting how many items it was drawn for and whether it was closed.
+ */
+function endless(): {
+
+	readonly feed: Feed<number>,
+	readonly drawn: () => number,
+	readonly closed: () => boolean
+
+} {
+
+	const draws = { count: 0, closed: false };
+
+	return {
+
+		feed: items((async function* () {
+
+			try {
+
+				const value = { next: 0 };
+
+				while ( true ) {
+					draws.count++;
+					yield value.next++;
+				}
+
+			} finally {
+
+				draws.closed = true;
+
+			}
+
+		})()),
+
+		drawn: () => draws.count,
+		closed: () => draws.closed
+
+	};
+
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 describe("take()", () => {
 
-	it("should take first n items", async () => {
+	it("should emit the leading items, in source order", async () => {
 
-		const values = await items(1, 2, 3, 4, 5)(take(3))(toArray());
-
-		expect(values).toEqual([1, 2, 3]);
-
-	});
-
-	it("should take all items when n >= length", async () => {
-
-		const values = await items(1, 2, 3)(take(5))(toArray());
+		const values = await items([1, 2, 3, 4, 5])(take(3))(toArray());
 
 		expect(values).toEqual([1, 2, 3]);
 
 	});
 
-	it("should take zero items", async () => {
+	it("should emit the whole feed where it is shorter than the quota", async () => {
 
-		const values = await items(1, 2, 3)(take(0))(toArray());
+		const values = await items([1, 2, 3])(take(5))(toArray());
+
+		expect(values).toEqual([1, 2, 3]);
+
+	});
+
+	it.each([
+		[0],
+		[-5]
+	])("should empty the feed where the quota is <%s>", async quota => {
+
+		const values = await items([1, 2, 3])(take(quota))(toArray());
 
 		expect(values).toEqual([]);
 
 	});
 
-	it("should treat negative n as zero", async () => {
+	it("should grant its quota to each run rather than to the feed as a whole", async () => {
 
-		const values = await items(1, 2, 3)(take(-5))(toArray());
+		const source = items([1, 2, 3]);
+		const task = take<number>(2); // the same task, invoked once per run
 
-		expect(values).toEqual([]);
+		expect(await source(task)(toArray())).toEqual([1, 2]);
+		expect(await source(task)(toArray())).toEqual([1, 2]);
 
 	});
 
-	it("should terminate infinite generator after n items", async () => {
+	it("should end an infinite feed at the quota, closing the source", async () => {
 
-		let generatorCalls = 0;
-		let iteratorReturned = false;
+		const source = endless();
 
-		// Create an infinite generator that tracks cleanup
-		const infiniteGenerator = feed((async function* () {
-			try {
-				let i = 0;
-				while ( true ) {
-					generatorCalls++;
-					yield i++;
-				}
-			} finally {
-				iteratorReturned = true;
-			}
-		})());
-
-		const values = await infiniteGenerator(take(5))(toArray());
+		const values = await source.feed(take(5))(toArray());
 
 		expect(values).toEqual([0, 1, 2, 3, 4]);
-		expect(generatorCalls).toBe(6); // Called 6 times: yields 0-4, then one more call before return
-		expect(iteratorReturned).toBe(true); // Generator was properly cleaned up
+		expect(source.drawn()).toBe(6); // the quota, plus the draw the end is detected on
+		expect(source.closed()).toBeTruthy();
 
 	});
 
-	it("should backsignal through intermediate tasks", async () => {
+	it("should end an infinite feed through intermediate tasks", async () => {
 
-		let generatorCalls = 0;
-		let iteratorReturned = false;
+		const source = endless();
 
-		// Create an infinite generator that tracks cleanup
-		const infiniteGenerator = feed((async function* () {
-			try {
-				let i = 0;
-				while ( true ) {
-					generatorCalls++;
-					yield i++;
-				}
-			} finally {
-				iteratorReturned = true;
-			}
-		})());
-
-		// Pipe: infinite generator > filter (evens) > take(3)
-		const values = await infiniteGenerator
+		const values = await source.feed
 		(filter(x => x%2 === 0))
 		(take(3))
 		(toArray());
 
 		expect(values).toEqual([0, 2, 4]);
-		// Generator yields: 0(✓), 1(✗), 2(✓), 3(✗), 4(✓), 5(✗), 6(passes filter, triggers take return)
-		expect(generatorCalls).toBe(7); // 7 calls: take needs one more to detect count >= 3
-		expect(iteratorReturned).toBe(true); // Generator was properly cleaned up
+		expect(source.drawn()).toBe(7); // the six items the filter drew for the quota, plus the detecting draw
+		expect(source.closed()).toBeTruthy();
 
 	});
 
-	it("should reject non-integer n", () => {
+	it.each([
+		[1.5],
+		[NaN],
+		[Infinity]
+	])("should reject the non-integer quota <%s>", async quota => {
 
-		expect(() => take(1.5)).toThrow(TypeError);
-		expect(() => take(NaN)).toThrow(TypeError);
-		expect(() => take(Infinity)).toThrow(TypeError);
+		expect(() => take(quota)).toThrow(TypeError);
 
 	});
 

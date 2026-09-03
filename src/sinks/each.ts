@@ -20,8 +20,15 @@ import { Sink } from "../index.js";
 /**
  * Creates a sink handing every item to a consumer.
  *
- * The feed is drained without retaining any item, making this the sink of choice for pipes run for their side
- * effects rather than for a collected result.
+ * Items are handed over in source order. This is the sink of choice for pipes run for their side effects rather than
+ * for a collected result.
+ *
+ * > [!WARNING]
+ * >
+ * > - **Exhaustive**: every item is handed over before the sink resolves, so an infinite feed never completes.
+ * > - **Streaming**: items are handed over one at a time, none retained.
+ * > - **Stateful**: the resolved count covers the items drawn, so a sink closing a nested or truncated feed counts
+ * >   those alone.
  *
  * @typeParam V The type of items in the feed
  *
@@ -34,12 +41,12 @@ import { Sink } from "../index.js";
  *
  * ```typescript
  * await pipe(
- *   (items(1, 2, 3))
- *   (forEach(n => console.log(n)))
+ *   (items([1, 2, 3]))
+ *   (each(n => console.log(n)))
  * );  // logs 1, 2, 3; 3
  * ```
  */
-export function forEach<V>(consumer: (item: V) => unknown): Sink<V, number> {
+export function each<V>(consumer: (item: V) => unknown): Sink<V, number> {
 
 	return async source => {
 

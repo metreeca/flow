@@ -14,36 +14,64 @@
  * limitations under the License.
  */
 
+import { sleep } from "@metreeca/core/async";
 import { describe, expect, it } from "vitest";
 import { items } from "../feeds/index.js";
 import { toArray } from "../sinks/index.js";
+import { map } from "./map.js";
 import { peek } from "./peek.js";
 
 
 describe("peek()", () => {
 
-	it("should execute side effect for each item", async () => {
+	it("should hand every item to the consumer, emitting it unchanged", async () => {
 
-		const sideEffects: number[] = [];
-		const values = await items(1, 2, 3)(peek(x => {
-			sideEffects.push(x*10);
+		const observed: number[] = [];
+
+		const values = await items([1, 2, 3])(peek(x => {
+			observed.push(x);
 		}))(toArray());
 
+		expect(observed).toEqual([1, 2, 3]);
 		expect(values).toEqual([1, 2, 3]);
-		expect(sideEffects).toEqual([10, 20, 30]);
 
 	});
 
-	it("should support async consumers", async () => {
+	it("should hold the item back until an asynchronous consumer completes", async () => {
 
-		const sideEffects: number[] = [];
-		const values = await items(1, 2, 3)(peek(async x => {
-			await Promise.resolve();
-			sideEffects.push(x);
+		const order: string[] = [];
+
+		const values = await items([1, 2])(peek(async x => {
+			await sleep(10);
+			order.push(`observe:${x}`);
+		}))(map(x => {
+			order.push(`emit:${x}`);
+			return x;
 		}))(toArray());
 
-		expect(values).toEqual([1, 2, 3]);
-		expect(sideEffects).toEqual([1, 2, 3]);
+		expect(order).toEqual(["observe:1", "emit:1", "observe:2", "emit:2"]);
+		expect(values).toEqual([1, 2]);
+
+	});
+
+	it("should emit nothing for an empty feed", async () => {
+
+		const observed: number[] = [];
+
+		const values = await items<number>([])(peek(x => {
+			observed.push(x);
+		}))(toArray());
+
+		expect(observed).toEqual([]);
+		expect(values).toEqual([]);
+
+	});
+
+	it("should propagate consumer failures", async () => {
+
+		await expect(items([1, 2, 3])(peek(x => {
+			if ( x === 2 ) { throw new Error("consumer failed"); }
+		}))(toArray())).rejects.toThrow("consumer failed");
 
 	});
 

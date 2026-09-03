@@ -15,37 +15,44 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { feed, items, range } from "./feeds/index.js";
+import { items } from "./feeds/index.js";
 import { pipe } from "./index.js";
 import { toArray } from "./sinks/index.js";
-import { filter } from "./tasks/index.js";
+import { filter, map } from "./tasks/index.js";
 
 
 describe("pipe()", () => {
 
-	it("should return promise value directly", async () => {
+	it("should hand back the feed a pipe left open ends with", async () => {
 
-		const value = await pipe(Promise.resolve(42));
+		const feed = items([1, 2, 3])(map(x => x*2));
 
-		expect(value).toBe(42);
-
-	});
-
-	it("should retrieve async iterable from feed", async () => {
-
-		const values = await feed(pipe(feed(range(1, 4))))(toArray());
-
-		expect(values).toEqual([1, 2, 3]);
+		expect(pipe(feed)).toBe(feed);
 
 	});
 
-	it("should return async iterable for manual iteration", async () => {
+	it("should hand back the promise the closing sink reports", async () => {
 
-		const iterable = pipe((items(1, 2, 3, 4))(filter(x => x > 1)));
+		const result = items([1, 2, 3])(toArray());
+
+		expect(pipe(result)).toBe(result);
+		expect(await result).toEqual([1, 2, 3]);
+
+	});
+
+	it("should leave the bracketed feed open for further composition", async () => {
+
+		const values = await pipe(items([1, 2, 3, 4]))(filter(x => x > 2))(toArray());
+
+		expect(values).toEqual([3, 4]);
+
+	});
+
+	it("should leave the bracketed feed open for manual iteration", async () => {
 
 		const values: number[] = [];
 
-		for await (const value of iterable) {
+		for await (const value of pipe((items([1, 2, 3, 4]))(filter(x => x > 1)))) {
 			values.push(value);
 		}
 

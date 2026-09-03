@@ -15,15 +15,39 @@
  */
 
 /**
- * Intermediate operations that filter, transform, or process feed items.
+ * Intermediate operations that transform, filter or reshape the items of a feed.
  *
  * Tasks apply to a {@link index.Feed Feed} and yield a new feed, so they chain freely into longer pipes. Items are
- * processed lazily, sequentially and in source order, unless a task reorders them or wraps another to run it
- * concurrently, trading output order for throughput. Tasks buffering the whole feed in memory never complete on
- * infinite sources.
+ * processed lazily, sequentially and in source order, unless a task reorders them, interleaves the nested feeds
+ * carrying them or wraps another to run it concurrently, trading output order for throughput.
  *
- * **Custom Tasks** are functions that transform async iterables by returning async generator functions; items to be
- * dropped are left unyielded or yielded as `undefined`, as feeds never carry it:
+ * A task wrapping another applies it to a feed of its own, invoking it once per run or nested feed, so whatever state
+ * it initialises on invocation is scoped to that feed rather than to the pipe as a whole. The feed a task draws from
+ * and the one it reports are both drained by a single pass, however repeatable the source behind them: a composition
+ * to be consumed twice is built afresh from the feed it opens with.
+ *
+ * Every task is classified along three axes:
+ *
+ * - **incremental** or **exhaustive**, for how much of the feed it draws before emitting
+ * - **streaming** or **materialising**, for what it holds in memory
+ * - **stateless** or **stateful**, for whether its outcome depends on the items drawn before it
+ *
+ * > [!WARNING]
+ * >
+ * > An exhaustive task never completes on an infinite feed, and a materialising one may exhaust memory on a large
+ * > feed, bounded or not. {@link sort}, {@link group} and an unbounded {@link batch} are both; {@link distinct},
+ * > {@link join} and an uncapped {@link fork} are incremental yet materialising. Bound the feed upstream with
+ * > {@link take}, batch by a positive size, or cap the runs of a fork.
+ *
+ * > [!NOTE]
+ * >
+ * > A custom task is only required to report a feed honouring the {@link index.Feed Feed} contract, however it is
+ * > obtained: handing the generator object to {@link feeds.items items()} is the shortest route there, while a
+ * > transformation delegating to tasks already available composes the feed it draws from with them and reports what
+ * > they report, a feed already.
+ *
+ * **Custom Tasks** extend a pipe, drawing the items of a feed and reporting a new one; the transformation is most
+ * easily written as an async generator handed to {@link feeds.items items()}, with items to be dropped left unyielded:
  *
  * ```typescript
  * import { pipe } from '@metreeca/flow';
@@ -32,13 +56,13 @@
  * import type { Task } from '@metreeca/flow';
  *
  * function double<V extends number>(): Task<V, V> {
- *   return async function* (source) {
+ *   return source => items((async function* () {
  *     for await (const item of source) { yield item*2 as V; }
- *   };
+ *   })());
  * }
  *
  * await pipe(
- *   (items(1, 2, 3))
+ *   (items([1, 2, 3]))
  *   (double())
  *   (toArray())
  * );  // [2, 4, 6]
@@ -59,10 +83,11 @@ export * from "./peek.js";
 // transformers
 
 export * from "./map.js";
-export * from "./flatMap.js";
 export * from "./batch.js";
 export * from "./group.js";
 
-// combinators
+// splicers
 
-export * from "./concurrent.js";
+export * from "./flat.js";
+export * from "./join.js";
+export * from "./fork.js";

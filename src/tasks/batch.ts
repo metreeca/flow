@@ -16,20 +16,24 @@
 
 import { assert } from "@metreeca/core";
 import { Task } from "../index.js";
+import { items } from "../feeds/items.js";
 
 
 /**
  * Creates a task collecting consecutive items into fixed-size batches.
  *
- * Batches are emitted as soon as they fill up, in source order and with items in source order, so only one batch is
- * held in memory at a time; the last batch is emitted short if the feed ends before it fills up, and no batch is
- * emitted at all for an empty feed.
+ * Batches are emitted as soon as they fill up, in source order and with items in source order; the last batch is
+ * emitted short if the feed ends before it fills up, and no batch is emitted at all for an empty feed.
  *
  * > [!WARNING]
  * >
- * > An unbounded `size` accumulates the whole feed in memory before emitting the single batch holding it. For large
- * > or infinite feeds, this may exhaust memory or never complete: batch by a positive size to keep consumption
- * > bounded.
+ * > - **Incremental**: batches are emitted as they fill up where `size` is positive, so the reported feed runs dry as
+ * >   the feed drawn from does; an unbounded `size` drains the whole feed before emitting the single batch holding
+ * >   it, so an infinite feed never completes.
+ * > - **Materialising**: an unbounded `size` holds the whole feed in memory, so a large feed may exhaust it; batch by
+ * >   a positive size to keep consumption bounded.
+ * > - **Stateful**: items are collected across draws, so a task invoked per nested feed or per run batches each
+ * >   independently, closing every one with a short batch rather than filling it from the items that follow.
  *
  * @typeParam V The type of items in the feed
  *
@@ -44,13 +48,13 @@ import { Task } from "../index.js";
  *
  * ```typescript
  * await pipe(
- *   (items(1, 2, 3, 4, 5))
+ *   (items([1, 2, 3, 4, 5]))
  *   (batch(2))
  *   (toArray())
  * );  // [[1, 2], [3, 4], [5]]
  *
  * await pipe(
- *   (items(1, 2, 3))
+ *   (items([1, 2, 3]))
  *   (batch())
  *   (toArray())
  * );  // [[1, 2, 3]]
@@ -60,7 +64,7 @@ export function batch<V>(size: number = 0): Task<V, readonly V[]> {
 
 	const limit = assert(size, Number.isInteger, value => `expected integer size <${value}>`);
 
-	return async function* (source: AsyncIterable<V>) {
+	return source => items((async function* () {
 
 		const batch: V[] = [];
 
@@ -77,6 +81,6 @@ export function batch<V>(size: number = 0): Task<V, readonly V[]> {
 		if ( batch.length > 0 ) {
 			yield batch;
 		}
-	};
+	})());
 
 }

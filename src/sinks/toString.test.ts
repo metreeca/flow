@@ -16,114 +16,54 @@
 
 import { describe, expect, it } from "vitest";
 import { items } from "../feeds/index.js";
-import { filter, map } from "../tasks/index.js";
 import { toString } from "./toString.js";
 
 
 describe("toString()", () => {
 
-	it("should join items with comma separator by default", async () => {
+	it.each([
+		[undefined, "1,2,3"],
+		[",", "1,2,3"],
+		[" - ", "1 - 2 - 3"],
+		["\n", "1\n2\n3"],
+		["", "123"]
+	])("should join the items on the separator <%s>", async (separator, expected) => {
 
-		const result = await items(1, 2, 3)(toString());
+		const result = await items([1, 2, 3])(toString(separator));
 
-		expect(result).toBe("1,2,3");
-
-	});
-
-	it("should join string items", async () => {
-
-		const result = await items("a", "b", "c")(toString());
-
-		expect(result).toBe("a,b,c");
+		expect(result).toBe(expected);
 
 	});
 
-	it("should handle undefined separator as default", async () => {
+	it("should render items through their default string representation", async () => {
 
-		const result = await items(1, 2, 3)(toString(undefined));
+		const result = await items([true, { id: 1 }, "text"])(toString("|"));
 
-		expect(result).toBe("1,2,3");
-
-	});
-
-	it("should handle custom separator", async () => {
-
-		const result = await items(1, 2, 3)(toString(" - "));
-
-		expect(result).toBe("1 - 2 - 3");
+		expect(result).toBe("true|[object Object]|text");
 
 	});
 
-	it("should handle empty separator", async () => {
+	it("should render null and undefined items as empty strings", async () => {
 
-		const result = await items("a", "b", "c")(toString(""));
+		const result = await items([1, null, undefined, 2])(toString());
 
-		expect(result).toBe("abc");
-
-	});
-
-	it("should handle empty feed", async () => {
-
-		const result = await items<number>()(toString());
-
-		expect(result).toBe("");
+		expect(result).toBe("1,,,2");
 
 	});
 
-	it("should handle single item", async () => {
+	it("should resolve to a lone item without separators", async () => {
 
-		const result = await items(42)(toString());
+		const result = await items([42])(toString());
 
 		expect(result).toBe("42");
 
 	});
 
-	it("should convert objects to strings", async () => {
+	it("should resolve to an empty string for an empty feed", async () => {
 
-		const result = await items({ id: 1 }, { id: 2 })(toString("|"));
+		const result = await items<number>([])(toString());
 
-		expect(result).toBe("[object Object]|[object Object]");
-
-	});
-
-	it("should handle null and undefined", async () => {
-
-		// Note: undefined values are automatically filtered out by items()
-		const result = await items(1, null, undefined, 2)(toString(","));
-
-		expect(result).toBe("1,,2");
-
-	});
-
-	it("should handle items after filtering", async () => {
-
-		const result = await items(1, 2, 3, 4, 5, 6)(filter(x => x%2 === 0))(toString("-"));
-
-		expect(result).toBe("2-4-6");
-
-	});
-
-	it("should handle items after mapping", async () => {
-
-		const result = await items(1, 2, 3)(map(x => x*10))(toString(" "));
-
-		expect(result).toBe("10 20 30");
-
-	});
-
-	it("should work with boolean values", async () => {
-
-		const result = await items(true, false, true)(toString(","));
-
-		expect(result).toBe("true,false,true");
-
-	});
-
-	it("should handle newline separator", async () => {
-
-		const result = await items("line1", "line2", "line3")(toString("\n"));
-
-		expect(result).toBe("line1\nline2\nline3");
+		expect(result).toBe("");
 
 	});
 

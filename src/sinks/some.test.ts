@@ -15,61 +15,85 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { feed, items } from "../feeds/index.js";
+import { inlet, items } from "../feeds/index.js";
+import { Feed } from "../index.js";
 import { some } from "./some.js";
 
 
+/**
+ * Creates an endless feed of consecutive integers from 0, reporting how many items it was drawn for.
+ */
+function endless(): { readonly feed: Feed<number>, readonly drawn: () => number } {
+
+	const draws = { count: 0 };
+
+	return {
+
+		feed: inlet(() => draws.count++),
+
+		drawn: () => draws.count
+
+	};
+
+}
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 describe("some()", () => {
 
-	it("should return true when any item matches", async () => {
+	it("should resolve to true where some item matches", async () => {
 
-		const result = await items(1, 2, 3, 4)(some(x => x > 3));
+		const result = await items([1, 2, 3, 4])(some(x => x > 3));
 
-		expect(result).toBe(true);
-
-	});
-
-	it("should return false when no items match", async () => {
-
-		const result = await items(1, 2, 3)(some(x => x > 10));
-
-		expect(result).toBe(false);
+		expect(result).toBeTruthy();
 
 	});
 
-	it("should support async predicates", async () => {
+	it("should resolve to false where no item matches", async () => {
 
-		const result = await items(1, 2, 3)(some(async x => {
+		const result = await items([1, 2, 3])(some(x => x > 10));
+
+		expect(result).toBeFalsy();
+
+	});
+
+	it("should resolve to false for an empty feed", async () => {
+
+		const result = await items<number>([])(some(x => x > 0));
+
+		expect(result).toBeFalsy();
+
+	});
+
+	it("should await asynchronous predicates", async () => {
+
+		const result = await items([1, 2, 3])(some(async x => {
 			await Promise.resolve();
 			return x === 2;
 		}));
 
-		expect(result).toBe(true);
+		expect(result).toBeTruthy();
 
 	});
 
-	it("should terminate infinite generator when match found", async () => {
+	it("should stop drawing at the first match, completing an infinite feed", async () => {
 
-		let generatorCalls = 0;
-		let iteratorReturned = false;
+		const source = endless();
 
-		const infiniteGenerator = feed((async function* () {
-			try {
-				let i = 0;
-				while ( true ) {
-					generatorCalls++;
-					yield i++;
-				}
-			} finally {
-				iteratorReturned = true;
-			}
-		})());
+		const result = await source.feed(some(x => x > 5));
 
-		const result = await infiniteGenerator(some(x => x > 5));
+		expect(result).toBeTruthy();
+		expect(source.drawn()).toBe(7); // the items failing the predicate, plus the one matching it
 
-		expect(result).toBe(true);
-		expect(generatorCalls).toBe(7); // Checked items 0-6 (6 is first > 5)
-		expect(iteratorReturned).toBe(true); // Generator was properly cleaned up
+	});
+
+	it("should propagate predicate failures", async () => {
+
+		await expect(items([1, 2, 3])(some(x => {
+			if ( x === 2 ) { throw new Error("predicate failed"); }
+			return false;
+		}))).rejects.toThrow("predicate failed");
 
 	});
 

@@ -21,12 +21,17 @@ import { Sink } from "../index.js";
 /**
  * Creates a sink summing the items of the feed.
  *
- * Items are added in source order, seeding the total with the first one, so summing stays within constant memory
- * whatever the size of the feed, but never completes on an infinite source. `number` items are added as IEEE 754
- * doubles and `bigint` items as exact integers: a feed is expected to carry one numeric type throughout, and mixing
- * the two is reported rather than silently coerced.
+ * Items are added in source order, seeding the total with the first one. `number` items are added as IEEE 754 doubles
+ * and `bigint` items as exact integers: a feed is expected to carry one numeric type throughout, and mixing the two
+ * is reported rather than silently coerced.
  *
  * An empty feed resolves to `undefined`; callers wanting the additive identity supply it with `?? 0` or `?? 0n`.
+ *
+ * > [!WARNING]
+ * >
+ * > - **Exhaustive**: every item is drawn before the sink resolves, so an infinite feed never completes.
+ * > - **Streaming**: no more than the running total is held in memory, whatever the size of the feed.
+ * > - **Stateful**: the total covers the items drawn, so a sink closing a nested or truncated feed sees those alone.
  *
  * @typeParam V The type of items in the feed
  *
@@ -38,17 +43,17 @@ import { Sink } from "../index.js";
  *
  * ```typescript
  * await pipe(
- *   (items(1, 2, 3, 4, 5))
+ *   (items([1, 2, 3, 4, 5]))
  *   (sum())
  * );  // 15
  *
  * await pipe(
- *   (items(1n, 2n, 3n))
+ *   (items([1n, 2n, 3n]))
  *   (sum())
  * );  // 6n
  *
  * await pipe(
- *   (items<number>())
+ *   (items<number>([]))
  *   (sum())
  * ) ?? 0;  // 0
  * ```

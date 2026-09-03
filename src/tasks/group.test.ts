@@ -14,57 +14,41 @@
  * limitations under the License.
  */
 
+import { describe, expect, it } from "vitest";
 import { items } from "../feeds/index.js";
 import { toArray } from "../sinks/index.js";
-import { describe, expect, it } from "vitest";
 import { group } from "./group.js";
 
 
 describe("group()", () => {
 
-	it("should group items sharing the same key", async () => {
+	it("should collect the items sharing the same key", async () => {
 
-		const values = await items(1, 2, 3, 4)(group(n => n%2))(toArray());
+		const values = await items([1, 2, 3, 4])(group(n => n%2))(toArray());
 
 		expect(values).toEqual([[1, [1, 3]], [0, [2, 4]]]);
 
 	});
 
-	it("should emit groups in first-appearance order of their key", async () => {
+	it("should emit the groups in first-appearance order of their key", async () => {
 
-		const values = await items("bb", "a", "cc", "d")(group(s => s.length))(toArray());
+		const values = await items(["bb", "a", "cc", "d"])(group(s => s.length))(toArray());
 
 		expect(values).toEqual([[2, ["bb", "cc"]], [1, ["a", "d"]]]);
 
 	});
 
-	it("should preserve source order inside groups", async () => {
+	it("should keep the items of each group in source order", async () => {
 
-		const values = await items(3, 1, 5, 2)(group(() => "all"))(toArray());
+		const values = await items([3, 1, 5, 2])(group(() => "all"))(toArray());
 
 		expect(values).toEqual([["all", [3, 1, 5, 2]]]);
 
 	});
 
-	it("should emit nothing for an empty source", async () => {
-
-		const values = await items<number>()(group(n => n))(toArray());
-
-		expect(values).toEqual([]);
-
-	});
-
-	it("should support asynchronous key functions", async () => {
-
-		const values = await items(1, 2, 3)(group(async n => n%2))(toArray());
-
-		expect(values).toEqual([[1, [1, 3]], [0, [2]]]);
-
-	});
-
 	it("should collapse keys sharing SameValueZero identity", async () => {
 
-		const values = await items(1, 2, 3)(group(n => n === 2 ? -0 : NaN))(toArray());
+		const values = await items([1, 2, 3])(group(n => n === 2 ? -0 : NaN))(toArray());
 
 		expect(values).toEqual([[NaN, [1, 3]], [0, [2]]]);
 
@@ -72,7 +56,7 @@ describe("group()", () => {
 
 	it("should group items under boolean keys", async () => {
 
-		const values = await items(1, 2, 3, 4)(group(n => n%2 === 1))(toArray());
+		const values = await items([1, 2, 3, 4])(group(n => n%2 === 1))(toArray());
 
 		expect(values).toEqual([[true, [1, 3]], [false, [2, 4]]]);
 
@@ -80,13 +64,48 @@ describe("group()", () => {
 
 	it("should group items under nullish keys", async () => {
 
-		const values = await items(1, 2, 3)(group(n => n === 2 ? null : undefined))(toArray());
+		const values = await items([1, 2, 3])(group(n => n === 2 ? null : undefined))(toArray());
 
 		expect(values).toEqual([[undefined, [1, 3]], [null, [2]]]);
 
 	});
 
-	it("should reject keys that are not record keys", () => {
+	it("should await asynchronous key functions", async () => {
+
+		const values = await items([1, 2, 3])(group(async n => n%2))(toArray());
+
+		expect(values).toEqual([[1, [1, 3]], [0, [2]]]);
+
+	});
+
+	it("should emit nothing for an empty feed", async () => {
+
+		const values = await items<number>([])(group(n => n))(toArray());
+
+		expect(values).toEqual([]);
+
+	});
+
+	it("should group each run independently rather than the feed as a whole", async () => {
+
+		const source = items([1, 2, 3, 4]);
+		const task = group<number, number>(n => n%2); // the same task, invoked once per run
+
+		expect(await source(task)(toArray())).toEqual([[1, [1, 3]], [0, [2, 4]]]);
+		expect(await source(task)(toArray())).toEqual([[1, [1, 3]], [0, [2, 4]]]);
+
+	});
+
+	it("should propagate key failures", async () => {
+
+		await expect(items([1, 2, 3])(group(n => {
+			if ( n === 2 ) { throw new Error("key failed"); }
+			return n;
+		}))(toArray())).rejects.toThrow("key failed");
+
+	});
+
+	it("should reject keys that are not record keys", async () => {
 
 		// @ts-expect-error object keys don't support identity comparison
 
