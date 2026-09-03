@@ -13,6 +13,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   at a time and keeping the items of each together and in source order, while `join` opens them together and
   interleaves their items as they are reported; both optionally apply a task to every nested feed
 
+- `seek` sink retrieving the first matching item of a feed, failing where none does instead of resolving to
+  `undefined` as `find` does, so the item handed back is usable as is, with no check to tell a missing item from an
+  `undefined` item the feed legitimately carries
+
 ### Changed
 
 - `feed` and `items` merged into a single `items` feed, opened over a data source of any shape: a batch contributes

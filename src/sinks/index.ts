@@ -22,7 +22,7 @@
  * those collecting items into a container return it deeply immutable, freezing the container together with the items,
  * keys and values collected into it. Those reducing the feed to a single value, whether computed over its items or
  * selected among them, resolve to `undefined` when the feed carries none and no result is defined, leaving the
- * choice of a fallback to the caller.
+ * choice of a fallback to the caller; {@link seek} fails instead, so the item it hands back is usable as is.
  *
  * Every sink is classified along three axes:
  *
@@ -33,9 +33,9 @@
  * > [!WARNING]
  * >
  * > An exhaustive sink never resolves on an infinite feed, and a materialising one may exhaust memory on a large
- * > feed, bounded or not. Every sink but {@link find}, {@link some} and {@link every} is exhaustive, and the ones
- * > collecting items, into a container or into a single string, materialise the whole feed as well. Bound the feed
- * > upstream with {@link tasks.take take}.
+ * > feed, bounded or not. Every sink but {@link find}, {@link seek}, {@link some} and {@link every} is exhaustive,
+ * > and the ones collecting items, into a container or into a single string, materialise the whole feed as well.
+ * > Bound the feed upstream with {@link tasks.take take}.
  *
  * **Custom Sinks** close a pipe, consuming the items and returning a promise for the final result; a computation
  * delegating to operations already available applies them to the feed it draws from, which is drained by a single
@@ -79,6 +79,7 @@ export * from "./max.js";
 // scanners
 
 export * from "./find.js";
+export * from "./seek.js";
 export * from "./reduce.js";
 
 // collectors

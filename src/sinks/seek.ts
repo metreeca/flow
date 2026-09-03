@@ -16,17 +16,17 @@
 
 import type { Awaitable } from "@metreeca/core/async";
 import { Sink } from "../index.js";
-import type { Optional } from "@metreeca/core";
 
 
 /**
- * Creates a sink retrieving the first matching item of the feed.
+ * Creates a sink retrieving the first matching item of the feed, failing if none does.
  *
  * Items are tested in source order and consumption stops at the first match, leaving the rest of the feed
  * unconsumed.
  *
- * A feed carrying no matching item resolves to `undefined`; callers wanting a default supply it with `??`, and those
- * requiring a value reach for {@link seek} instead.
+ * A feed carrying no matching item fails the sink instead of resolving to `undefined` as {@link find} does, so the
+ * item handed back is usable as is, with no check to tell a missing item from an `undefined` item the feed
+ * legitimately carries.
  *
  * > [!NOTE]
  * >
@@ -39,23 +39,25 @@ import type { Optional } from "@metreeca/core";
  * @param predicate The function testing each item, defaulting to a test matching every item, which retrieves the
  *   first item of the feed
  *
- * @returns A sink resolving to the first item matching `predicate`, or to `undefined` if no item does
+ * @returns A sink resolving to the first item matching `predicate`
+ *
+ * @throws {Error} If no item matches `predicate`
  *
  * @example
  *
  * ```typescript
  * await pipe(
  *   (items([1, 2, 3, 4, 5]))
- *   (find(n => n > 3))
+ *   (seek(n => n > 3))
  * );  // 4
  *
  * await pipe(
  *   (items([1, 2, 3, 4, 5]))
- *   (find())
+ *   (seek())
  * );  // 1
  * ```
  */
-export function find<V>(predicate: (item: V) => Awaitable<boolean> = () => true): Sink<V, Optional<V>> {
+export function seek<V>(predicate: (item: V) => Awaitable<boolean> = () => true): Sink<V, V> {
 
 	return async source => {
 
@@ -65,7 +67,7 @@ export function find<V>(predicate: (item: V) => Awaitable<boolean> = () => true)
 			}
 		}
 
-		return undefined;
+		throw new Error("missing matching item");
 	};
 
 }

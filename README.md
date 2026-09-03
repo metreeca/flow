@@ -309,15 +309,22 @@ await pipe(
 
 ### Scanners
 
-Retrieve a single item from the feed or fold it into a value of an arbitrary type.
+Retrieve a single item from the feed or fold it into a value of an arbitrary type. Where no item matches, `find()`
+resolves to `undefined`, leaving the choice of a fallback to the caller, while `seek()` fails, so the item it hands
+back is usable as is.
 
 ```typescript
-import { find, reduce } from '@metreeca/flow/sinks';
+import { find, reduce, seek } from '@metreeca/flow/sinks';
 
 await pipe(
 	(items([1, 2, 3, 4]))
 	(find(n => n > 2))
 );  // 3
+
+await pipe(
+	(items([1, 2, 3, 4]))
+	(seek(n => n > 10))
+);  // fails, as no item matches
 
 await pipe(
 	(items([1, 2, 3, 4]))
@@ -399,7 +406,7 @@ for await (const value of evens) {
 
 Use `inlet()` to open infinite feeds over an external source. Items are pulled lazily, so an infinite feed is consumed
 only as far as the pipe demands: bound it with a task like `take()`, or with a sink deciding its outcome early, such as
-`some()`, `every()` or `find()`.
+`some()`, `every()`, `find()` or `seek()`.
 
 A source knowing when it is exhausted ends the feed itself, either reporting the `done` marker in place of a value or
 wrapped in a generator of its own; an `AbortSignal` bounds it from the outside instead, ending it as an exhausted source
@@ -414,7 +421,7 @@ inlet(() => cursor.next(), AbortSignal.timeout(1_000));  // every value reported
 Two hazards follow, the first on infinite feeds alone, the second on any feed large enough:
 
 - **never completing**: `sort()`, `group()` and an unbounded `batch()` drain the whole feed before emitting anything,
-  and every sink but `some()`, `every()` and `find()` needs every item
+  and every sink but `some()`, `every()`, `find()` and `seek()` needs every item
 - **exhausting memory**: the same three tasks materialise the feed whole, `distinct()` retains every key seen,
   `join()` holds a pending item per open nested feed and an uncapped `fork()` a run per item drawn, and the collectors
   build the whole container before resolving
