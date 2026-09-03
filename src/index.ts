@@ -15,7 +15,7 @@
  */
 
 /**
- * Composable building blocks for pipes over async iterable sources.
+ * Composable primitives for asynchronous data flows.
  *
  * A pipe is written as nested applications, one stage per step, over the three symmetric contracts declared here: a
  * {@link Feed} opens the data and accepts the steps advancing it, a {@link Task} moves it on by transforming,
