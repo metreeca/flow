@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { isAsyncIterable, isIterable, isString } from "@metreeca/core";
+import { isAsyncIterable, isFunction, isIterable, isString } from "@metreeca/core";
 import type { Awaitable, Awaitables } from "@metreeca/core/async";
 import { Feed, Sink, Task } from "../index.js";
 
@@ -35,7 +35,7 @@ import { Feed, Sink, Task } from "../index.js";
  *
  * This is the adapter a custom feed or task reaches for to obtain a feed from a generator object of its own,
  * honouring the {@link index.Feed Feed} contract without assembling one by hand; a source that is itself a feed
- * honours it already and is composed as it is.
+ * honours it already and is handed back unchanged, so wrapping is safe to repeat and costs nothing.
  *
  * > [!NOTE]
  * >
@@ -88,8 +88,13 @@ export function items<V>(source: Awaitable<V> | Awaitables<V>): Feed<V> {
 	}
 
 
-	return Object.freeze(Object.assign(feed, { [Symbol.asyncIterator]: generator }));
+	return isFeed<V>(source) ? source // a callable async iterable already honours the feed contract
+		: Object.freeze(Object.assign(feed, { [Symbol.asyncIterator]: generator }));
 
+
+	function isFeed<V>(value: unknown): value is Feed<V> {
+		return isFunction(value) && isAsyncIterable<V>(value);
+	}
 
 	async function* generator(): AsyncGenerator<V, void, unknown> {
 

@@ -58,6 +58,14 @@ describe("items()", () => {
 
 		});
 
+		it("should hand back a feed as it is", async () => {
+
+			const feed = range(1, 4);
+
+			expect(items(feed)).toBe(feed);
+
+		});
+
 		it("should carry the falsy items of a batch", async () => {
 
 			const values = await items([0, false, "", null, undefined])(toArray());

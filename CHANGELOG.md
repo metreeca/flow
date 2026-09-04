@@ -24,6 +24,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `items(source)`, the variadic `items(a, b, c)` becomes `items([a, b, c])` and a lone value no longer needs wrapping
   in an array
 
+- `items` hands back a source that is already a feed, rather than wrapping it in a new one: opening a feed over a feed
+  is safe to repeat and preserves identity, so a step adapting the source it draws from costs nothing
+
 - `Feed` contract extends `AsyncIterable`: a feed is iterated directly, replacing the call with no arguments that
   retrieved the underlying async iterable
 
