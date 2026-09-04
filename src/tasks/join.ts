@@ -70,72 +70,69 @@ import type { Feed, Task } from "../index.js";
 export function join<V>(): Task<Feed<V>, V>;
 
 /**
- * Creates a task interleaving a feed of feeds into a single feed, processing every nested feed on its own.
+ * Creates a task interleaving the feeds another task reports into a single feed.
  *
- * Interleaves as the overload taking no argument does, handing each nested feed to `task` before its items enter the
- * reported feed, so that a whole pipe is applied within the bounds of a nested feed rather than across the interleaved
- * items.
+ * Hands the feed drawn from to `task` and interleaves the feeds it reports as the overload taking no argument does, so
+ * that an item mapped to a feed of its own is expanded in place into the items of that feed.
  *
  * > [!WARNING]
  * >
- * > - **Incremental**: items are emitted as the nested feeds report them, so the reported feed runs dry as the
- * >   source, its nested feeds and `task` do, an infinite nested feed keeping it open without holding back the items
- * >   of the others.
- * > - **Materialising**: a pending item is held for every nested feed open at the same time, and nothing bounds their
- * >   number, so a source yielding feeds faster than they run dry may exhaust memory; splice with {@link flat}
- * >   instead where the source carries an unbounded number of feeds.
- * > - **Stateless**: the interleaving carries no state across nested feeds, whatever `task` carries within each.
+ * > - **Incremental**: items are emitted as the reported feeds report them, so the reported feed runs dry as the
+ * >   source, `task` and the feeds it reports do, an infinite one keeping it open without holding back the items of
+ * >   the others.
+ * > - **Materialising**: a pending item is held for every reported feed open at the same time, and nothing bounds
+ * >   their number, so feeds opened faster than they run dry may exhaust memory; splice with {@link flat} instead
+ * >   where `task` reports an unbounded number of feeds.
+ * > - **Stateless**: the interleaving carries no state across the reported feeds, whatever `task` carries across the
+ * >   items it draws.
  *
- * > [!CAUTION]
+ * > [!NOTE]
  * >
- * > A stateful `task` never sees the whole feed. It is invoked once per nested feed, so state it initialises on
- * > invocation is scoped to that feed alone: {@link distinct} deduplicates within a nested feed, {@link take} yields
- * > its quota to each one and {@link sort} orders each independently. State captured in its enclosing closure is
- * > shared across all of them instead, and reached concurrently.
- * >
- * > Interleave a stateful task only where its outcome is sound on one nested feed at a time; apply it to the
- * > interleaved feed instead, downstream of `join()`, where it is to decide on every item.
+ * > `task` draws from the whole feed, so state it initialises on invocation decides on every item, as it would
+ * > anywhere else in the pipe. Where a source already carries feeds and a task is to be scoped to each of them,
+ * > apply it within {@link map}: `join(map(feed => feed(take(2))))` yields its quota to every nested feed.
  *
- * @typeParam V The type of items carried by the nested feeds
- * @typeParam R The type of items reported by `task`
+ * @typeParam V The type of items drawn from the feed
+ * @typeParam R The type of items carried by the feeds `task` reports
  *
- * @param task The task applied to each nested feed
+ * @param task The task opening the feeds to interleave
  *
- * @returns A task yielding the items `task` reports for every nested feed, as they become available
+ * @returns A task yielding the items of every feed `task` reports, as they become available
  *
  * @example
  *
  * ```typescript
  * await pipe(
- *   (items([slow, fast]))  // slow yields 1, 2; fast yields 3, 4
- *   (join(map(n => n*10)))
+ *   (items([30, 10]))  // the delay of each retrieval
+ *   (join(map(ms => retrieve(ms))))
  *   (toArray())
- * );  // [30, 40, 10, 20], as the faster feed reports first
+ * );  // the items of the faster retrieval first
  * ```
  *
+ * @see {@link map} to open a feed for each item
  * @see {@link flat} to splice the same feeds in source order
  * @see {@link fork} to interleave several runs of a task over the same feed
  */
-export function join<V, R>(task: Task<V, R>): Task<Feed<V>, R>;
+export function join<V, R>(task: Task<V, Feed<R>>): Task<V, R>;
 
 /**
- * Creates a task interleaving a feed of feeds, with or without a task processing every nested feed.
+ * Creates a task interleaving nested feeds into a single feed, with or without a task opening the feeds to interleave.
  */
-export function join<V, R>(task: Task<V, V | R> = feed => feed): Task<Feed<V>, V | R> {
+export function join<R>(task: Task<Feed<R>> = feed => feed): Task<Feed<R>, R> {
 
 	return source => items((async function* () {
 
-		type Feeds = AsyncIterator<Feed<V>, void, undefined>; // the source, drawn for the feeds it carries
-		type Items = AsyncIterator<V | R, void, undefined>; // one nested feed, drawn for the items it reports
+		type Feeds = AsyncIterator<Feed<R>, void, undefined>; // the task, drawn for the feeds it reports
+		type Items = AsyncIterator<R, void, undefined>; // one reported feed, drawn for the items it carries
 
 		type Event =
-			| { kind: "feed", iterator: Feeds, result: IteratorResult<Feed<V>, void> }
-			| { kind: "item", iterator: Items, result: IteratorResult<V | R, void> };
+			| { kind: "feed", iterator: Feeds, result: IteratorResult<Feed<R>, void> }
+			| { kind: "item", iterator: Items, result: IteratorResult<R, void> };
 
 
-		// the source is raced with the feeds it reports, so that a feed opened mid-race joins it at once
+		// the task is raced with the feeds it reports, so that a feed opened mid-race joins it at once
 
-		const feeds = source[Symbol.asyncIterator]();
+		const feeds = task(source)[Symbol.asyncIterator]();
 		const polls = new Map<Feeds | Items, Promise<Event>>([[feeds, feed()]]);
 
 
@@ -154,15 +151,15 @@ export function join<V, R>(task: Task<V, V | R> = feed => feed): Task<Feed<V>, V
 		}
 
 
-		async function* process(event: Event): AsyncGenerator<V | R, void, undefined> {
+		async function* process(event: Event): AsyncGenerator<R, void, undefined> {
 
-			if ( event.result.done ) { // the source reported its last feed, or a nested feed ran dry
+			if ( event.result.done ) { // the task reported its last feed, or a reported feed ran dry
 
 				polls.delete(event.iterator);
 
-			} else if ( event.kind === "feed" ) { // a new nested feed: open it and keep drawing from the source
+			} else if ( event.kind === "feed" ) { // a new reported feed: open it and keep drawing from the task
 
-				const iterator = task(event.result.value)[Symbol.asyncIterator]();
+				const iterator = event.result.value[Symbol.asyncIterator]();
 
 				polls.set(iterator, item(iterator));
 				polls.set(feeds, feed());

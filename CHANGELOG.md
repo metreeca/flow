@@ -11,7 +11,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - `flat` and `join` tasks collapsing a feed of feeds into a single one: `flat` splices the nested feeds, draining one
   at a time and keeping the items of each together and in source order, while `join` opens them together and
-  interleaves their items as they are reported; both optionally apply a task to every nested feed
+  interleaves their items as they are reported; both optionally wrap a task opening the feeds to collapse, so
+  `flat(map(mapper))` expands each item into the items of its own feed
 
 - `seek` sink retrieving the first matching item of a feed, failing where none does instead of resolving to
   `undefined` as `find` does, so the item handed back is usable as is, with no check to tell a missing item from an
@@ -72,8 +73,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `items([a, b])(flat())` and `merge(a, b)` becomes `items([a, b])(join())`, with the feeds to combine carried by a
   feed of their own
 
-- `flatMap` task, expressed as `map()` reporting a feed for each item followed by `flat()`: `flatMap(mapper)` becomes
-  `map(item => items(mapper(item)))(flat())`, with the expansion opened as a feed before being spliced
+- `flatMap` task, expressed as `flat()` wrapping a `map()` reporting a feed for each item: `flatMap(mapper)` becomes
+  `flat(map(item => items(mapper(item))))`, with the expansion opened as a feed before being spliced
 
 - `Data` type, no longer part of the surface now that `flatMap` is gone: the shapes a feed is opened from are declared
   by the `items` signature

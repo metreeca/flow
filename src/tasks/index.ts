@@ -21,10 +21,11 @@
  * processed lazily, sequentially and in source order, unless a task reorders them, interleaves the nested feeds
  * carrying them or wraps another to run it concurrently, trading output order for throughput.
  *
- * A task wrapping another applies it to a feed of its own, invoking it once per run or nested feed, so whatever state
- * it initialises on invocation is scoped to that feed rather than to the pipe as a whole. The feed a task draws from
- * and the one it reports are both drained by a single pass, however repeatable the source behind them: a composition
- * to be consumed twice is built afresh from the feed it opens with.
+ * A task wrapping another either hands it the whole feed, as {@link flat} and {@link join} do, leaving whatever state
+ * it initialises on invocation to decide on every item, or invokes it once per run over a share of the items, as
+ * {@link fork} does, scoping that state to the run rather than to the pipe as a whole. The feed a task draws from and
+ * the one it reports are both drained by a single pass, however repeatable the source behind them: a composition to be
+ * consumed twice is built afresh from the feed it opens with.
  *
  * Every task is classified along three axes:
  *

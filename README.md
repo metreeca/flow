@@ -192,8 +192,8 @@ await pipe(
 
 ### Splicers
 
-Splice several feeds into the pipe: the nested feeds carried by the source, in source order or interleaved as their
-items become available, or the concurrent runs of a task.
+Splice several feeds into the pipe: the nested feeds a source carries or a task opens, in source order or interleaved
+as their items become available, or the concurrent runs of a task.
 
 ```typescript
 import { flat, fork, join, map, take } from '@metreeca/flow/tasks';
@@ -206,14 +206,13 @@ await pipe(
 
 await pipe(
 	(items([1, 2, 3]))
-	(map(n => items([n, n*10])))
-	(flat())
+	(flat(map(n => items([n, n*10]))))
 	(toArray())
 );  // [1, 10, 2, 20, 3, 30], as each item is expanded into the items of its own feed
 
 await pipe(
 	(items([items([1, 2, 3]), items([4, 5, 6])]))
-	(flat(take(2)))
+	(flat(map(feed => feed(take(2)))))
 	(toArray())
 );  // [1, 2, 4, 5], as the quota is scoped to each nested feed
 
@@ -231,10 +230,10 @@ await pipe(
 ```
 
 `flat()` splices one level only: a feed carried by a nested feed is reported as an item, ready for a further splice. Its
-optional task is applied within the bounds of each nested feed, so state it initialises on invocation, as `distinct()`,
-`take()` and `sort()` do, is scoped to that feed alone. `join()` splices the same way, but opens every nested feed as
-the source reports it and emits items as they become available, so output order is not preserved and nothing bounds the
-number of feeds open at once.
+optional task opens the feeds to splice, drawing from the whole feed, so an item mapped to a feed of its own is expanded
+in place; scope a task to each nested feed by applying it within `map()`, where the source already carries feeds.
+`join()` splices the same way, but opens every nested feed as soon as it is reported and emits items as they become
+available, so output order is not preserved and nothing bounds the number of feeds open at once.
 
 See [Concurrent Processing](#concurrent-processing) for the bounds `fork()` sets and the state it tolerates.
 
@@ -471,9 +470,9 @@ invocation, as `distinct()`, `sort()`, `take()`, `skip()`, `batch()` and `group(
 across the feed as a whole, while state captured in its enclosing closure is shared by every run and accessed
 concurrently. Fork a stateful task only where its outcome is sound on the items one run happens to draw.
 
-Where the state belongs to one item rather than to the feed, open a pipe per item with `map()` and collapse them with
-`join()`, which keeps it scoped to that item while still drawing from every pipe at once. `fork()` composes inside
-`join()` in turn, bounding the work carried out within each nested feed.
+Where the state belongs to one item rather than to the feed, open a pipe per item and collapse the pipes with
+`join(map(…))`, which keeps it scoped to that item while still drawing from every pipe at once. `fork()` composes
+within each nested feed in turn, as `join(map(feed => feed(fork(…))))`, bounding the work carried out inside it.
 
 Control the rate at which work is submitted with utilities from the
 [async](https://metreeca.github.io/core/modules/async.html) module of `@metreeca/core`, such as throttling:

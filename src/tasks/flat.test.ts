@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import type { Awaitable } from "@metreeca/core/async";
 import { describe, expect, it } from "vitest";
 import { inlet, items, range } from "../feeds/index.js";
 import { Feed, pipe, Task } from "../index.js";
@@ -153,33 +152,107 @@ describe("flat()", () => {
 
 	describe("with a task", () => {
 
-		it("should apply the task to every nested feed", async () => {
+		it("should splice the feeds the task reports", async () => {
 
-			const values = await items([items([1, 2]), items([3, 4])])(flat(map(n => n*10)))(toArray());
+			const values = await items([1, 2, 3])(flat(map(n => items([n, n*10]))))(toArray());
 
-			expect(values).toEqual([10, 20, 30, 40]);
-
-		});
-
-		it("should report the items of the task in source order", async () => {
-
-			const values = await items([items([3, 1, 2]), items([6, 5, 4])])(flat(sort()))(toArray());
-
-			expect(values).toEqual([1, 2, 3, 4, 5, 6]);
+			expect(values).toEqual([1, 10, 2, 20, 3, 30]);
 
 		});
 
-		it("should scope task state to each nested feed", async () => {
+		it("should drop items expanding to nothing", async () => {
 
-			const values = await items([items([1, 2, 3]), items([4, 5, 6])])(flat(take(2)))(toArray());
+			const values = await items([1, 2, 3])(flat(map(n => items(n%2 ? [n] : []))))(toArray());
+
+			expect(values).toEqual([1, 3]);
+
+		});
+
+		it("should report the type of the feeds the task reports", async () => {
+
+			const values = await items([1, 2])(flat(map(n => items([`<${n}>`]))))(toArray());
+
+			expect(values).toEqual(["<1>", "<2>"]);
+
+		});
+
+		it("should draw the task from the whole feed", async () => {
+
+			const values = await items([items([1, 2]), items([3, 4]), items([5, 6])])(flat(take(2)))(toArray());
+
+			expect(values).toEqual([1, 2, 3, 4]); // the quota is spent on the feeds, not on the items of each
+
+		});
+
+		it("should await asynchronous mappers", async () => {
+
+			const values = await items([1, 2])(flat(map(async n => items([n, n*10]))))(toArray());
+
+			expect(values).toEqual([1, 10, 2, 20]);
+
+		});
+
+		it("should open one feed at a time", async () => {
+
+			const order: string[] = [];
+
+			const values = await items([1, 2])(flat(map(n => {
+				order.push(`open:${n}`);
+				return items([n, n*10]);
+			})))(peek(n => {
+				order.push(`report:${n}`);
+			}))(toArray());
+
+			expect(values).toEqual([1, 10, 2, 20]);
+			expect(order).toEqual(["open:1", "report:1", "report:10", "open:2", "report:2", "report:20"]);
+
+		});
+
+		it("should handle an empty source", async () => {
+
+			const values = await items<number>([])(flat(map(n => items([n]))))(toArray());
+
+			expect(values).toEqual([]);
+
+		});
+
+		it("should propagate task failures", async () => {
+
+			await expect(items([1, 2])(flat(map(n => {
+				if ( n === 2 ) { throw new Error("task failed"); }
+				return items([n]);
+			})))(toArray())).rejects.toThrow("task failed");
+
+		});
+
+	});
+
+
+	describe("composed with map()", () => { // applying a task to each nested feed scopes it to that feed
+
+		const scoped = <V, R>(task: Task<V, R>): Task<Feed<V>, R> =>
+			flat(map(feed => feed(task)));
+
+
+		it("should apply the task within the bounds of each nested feed", async () => {
+
+			const values = await items([items([1, 2, 3]), items([4, 5, 6])])(scoped(take(2)))(toArray());
 
 			expect(values).toEqual([1, 2, 4, 5]);
 
 		});
 
+		it("should report the items of the task in source order", async () => {
+
+			const values = await items([items([3, 1, 5]), items([6, 2, 4])])(scoped(sort()))(toArray());
+
+			expect(values).toEqual([1, 3, 5, 2, 4, 6]); // each nested feed ordered on its own
+
+		});
+
 		it("should report the type of the task", async () => {
 
-			const values = await items([items([1, 2, 3]), items([4, 5])])(flat(batch(2)))(toArray());
+			const values = await items([items([1, 2, 3]), items([4, 5])])(scoped(batch(2)))(toArray());
 
 			expect(values).toEqual([[1, 2], [3], [4, 5]]);
 
@@ -187,17 +260,9 @@ describe("flat()", () => {
 
 		it("should drop nested feeds the task empties", async () => {
 
-			const values = await items([items([1, 2]), items([3, 4])])(flat(filter(n => n > 2)))(toArray());
+			const values = await items([items([1, 2]), items([3, 4])])(scoped(filter(n => n > 2)))(toArray());
 
 			expect(values).toEqual([3, 4]);
-
-		});
-
-		it("should handle an empty source", async () => {
-
-			const values = await items<Feed<number>>([])(flat(map(n => n*10)))(toArray());
-
-			expect(values).toEqual([]);
 
 		});
 
@@ -205,7 +270,7 @@ describe("flat()", () => {
 
 			const order: string[] = [];
 
-			const values = await items([items([1, 2]), items([3, 4])])(flat(peek(n => {
+			const values = await items([items([1, 2]), items([3, 4])])(scoped(peek(n => {
 				order.push(`peek:${n}`);
 			})))(map(n => {
 				order.push(`map:${n}`);
@@ -214,73 +279,6 @@ describe("flat()", () => {
 
 			expect(values).toEqual([1, 2, 3, 4]);
 			expect(order).toEqual(["peek:1", "map:1", "peek:2", "map:2", "peek:3", "map:3", "peek:4", "map:4"]);
-
-		});
-
-		it("should propagate task failures", async () => {
-
-			await expect(items([items([1, 2])])(flat(map(n => {
-				if ( n === 2 ) { throw new Error("task failed"); }
-				return n;
-			})))(toArray())).rejects.toThrow("task failed");
-
-		});
-
-	});
-
-
-	describe("composed with map()", () => { // mapping each item to a feed and splicing expands it
-
-		const spliced = <V, R>(mapper: (item: V) => Awaitable<Feed<R>>): Task<V, R> =>
-			feed => feed(map(mapper))(flat());
-
-
-		it("should expand each item into the items of its feed", async () => {
-
-			const values = await items([1, 2, 3])(spliced(n => items([n, n*2])))(toArray());
-
-			expect(values).toEqual([1, 2, 2, 4, 3, 6]);
-
-		});
-
-		it("should drop items expanding to nothing", async () => {
-
-			const values = await items([1, 2, 3])(spliced(n => items(n%2 ? [n] : [])))(toArray());
-
-			expect(values).toEqual([1, 3]);
-
-		});
-
-		it("should await asynchronous mappers", async () => {
-
-			const values = await items([1, 2])(spliced(async n => items([n, n*2])))(toArray());
-
-			expect(values).toEqual([1, 2, 2, 4]);
-
-		});
-
-		it("should expand one item at a time", async () => {
-
-			const order: string[] = [];
-
-			const values = await items([1, 2])(spliced(n => {
-				order.push(`expand:${n}`);
-				return items([n, n*10]);
-			}))(peek(n => {
-				order.push(`report:${n}`);
-			}))(toArray());
-
-			expect(values).toEqual([1, 10, 2, 20]);
-			expect(order).toEqual(["expand:1", "report:1", "report:10", "expand:2", "report:2", "report:20"]);
-
-		});
-
-		it("should propagate mapper failures", async () => {
-
-			await expect(items([1, 2])(spliced(n => {
-				if ( n === 2 ) { throw new Error("mapper failed"); }
-				return items([n]);
-			}))(toArray())).rejects.toThrow("mapper failed");
 
 		});
 

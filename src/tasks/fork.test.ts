@@ -440,7 +440,7 @@ describe("fork()", () => {
 
 			const values = await pipe(
 				(items([items([1, 2]), items([3, 4])]))
-				(join(fork(2, map(n => n*10))))
+				(join(map(feed => feed(fork(2, map(n => n*10))))))
 				(toArray())
 			);
 
@@ -454,7 +454,7 @@ describe("fork()", () => {
 
 			const retrievals = await pipe(
 				(items(HOSTS.map(endpoints)))          // one nested feed per host
-				(join(fork(CONCURRENCY, wire.retrieve())))
+				(join(map(feed => feed(fork(CONCURRENCY, wire.retrieve())))))
 				(toArray())
 			);
 

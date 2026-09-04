@@ -265,17 +265,67 @@ describe("join()", () => {
 
 	describe("with a task", () => {
 
-		it("should apply the task to every nested feed", async () => {
+		it("should interleave the feeds the task reports", async () => {
 
-			const values = await items([items([1, 2]), items([3, 4])])(join(map(n => n*10)))(toArray());
+			const values = await items([1, 2])(join(map(n => items([n, n*10]))))(toArray());
 
-			expect(ordered(values)).toEqual([10, 20, 30, 40]);
+			expect(ordered(values)).toEqual([1, 2, 10, 20]);
 
 		});
 
-		it("should scope task state to each nested feed", async () => {
+		it("should emit the items of the reported feeds as they become available", async () => {
 
-			const values = await items([items([1, 2, 3]), items([4, 5, 6])])(join(take(2)))(toArray());
+			const values = await items([30, 10])(join(map(ms => delayed(ms, [ms]))))(toArray());
+
+			expect(values).toEqual([10, 30]);
+
+		});
+
+		it("should report the type of the feeds the task reports", async () => {
+
+			const values = await items([1, 2])(join(map(n => items([`<${n}>`]))))(toArray());
+
+			expect([...values].sort()).toEqual(["<1>", "<2>"]);
+
+		});
+
+		it("should draw the task from the whole feed", async () => {
+
+			const values = await items([items([1, 2]), items([3, 4]), items([5, 6])])(join(take(2)))(toArray());
+
+			expect(ordered(values)).toEqual([1, 2, 3, 4]); // the quota is spent on the feeds, not on the items of each
+
+		});
+
+		it("should handle an empty source", async () => {
+
+			const values = await items<number>([])(join(map(n => items([n]))))(toArray());
+
+			expect(values).toEqual([]);
+
+		});
+
+		it("should propagate task failures", async () => {
+
+			await expect(items([1, 2])(join(map(n => {
+				if ( n === 2 ) { throw new Error("task failed"); }
+				return items([n]);
+			})))(toArray())).rejects.toThrow("task failed");
+
+		});
+
+	});
+
+
+	describe("composed with map()", () => { // applying a task to each nested feed scopes it to that feed
+
+		const scoped = <V, R>(task: Task<V, R>): Task<Feed<V>, R> =>
+			join(map(feed => feed(task)));
+
+
+		it("should apply the task within the bounds of each nested feed", async () => {
+
+			const values = await items([items([1, 2, 3]), items([4, 5, 6])])(scoped(take(2)))(toArray());
 
 			expect(ordered(values)).toEqual([1, 2, 4, 5]);
 
@@ -283,7 +333,7 @@ describe("join()", () => {
 
 		it("should report the type of the task", async () => {
 
-			const values = await items([items([1, 2, 3]), items([4, 5])])(join(batch(2)))(toArray());
+			const values = await items([items([1, 2, 3]), items([4, 5])])(scoped(batch(2)))(toArray());
 
 			expect(values).toHaveLength(3);
 			expect(values).toContainEqual([1, 2]);
@@ -294,7 +344,7 @@ describe("join()", () => {
 
 		it("should drop nested feeds the task empties", async () => {
 
-			const values = await items([items([1, 2]), items([3, 4])])(join(filter(n => n > 2)))(toArray());
+			const values = await items([items([1, 2]), items([3, 4])])(scoped(filter(n => n > 2)))(toArray());
 
 			expect(ordered(values)).toEqual([3, 4]);
 
@@ -302,26 +352,9 @@ describe("join()", () => {
 
 		it("should interleave the items the task reports", async () => {
 
-			const values = await items([delayed(30, [1]), delayed(10, [2])])(join(map(n => n*10)))(toArray());
+			const values = await items([delayed(30, [1]), delayed(10, [2])])(scoped(map(n => n*10)))(toArray());
 
 			expect(values).toEqual([20, 10]);
-
-		});
-
-		it("should handle an empty source", async () => {
-
-			const values = await items<Feed<number>>([])(join(map(n => n*10)))(toArray());
-
-			expect(values).toEqual([]);
-
-		});
-
-		it("should propagate task failures", async () => {
-
-			await expect(items([items([1, 2])])(join(map(n => {
-				if ( n === 2 ) { throw new Error("task failed"); }
-				return n;
-			})))(toArray())).rejects.toThrow("task failed");
 
 		});
 

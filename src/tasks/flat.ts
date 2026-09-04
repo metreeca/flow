@@ -47,67 +47,64 @@ import { items } from "../feeds/items.js";
  * );  // [1, 2, 3, 4]
  * ```
  *
- * @see {@link map} to open a feed for each item, expanding it into several before the splice
+ * @see {@link map} to open a feed for each item, expanding it in place with `flat(map(…))`
  * @see {@link join} to splice the same feeds as their items become available
  * @see {@link fork} to interleave several runs of a task over the same feed
  */
 export function flat<V>(): Task<Feed<V>, V>;
 
 /**
- * Creates a task splicing a feed of feeds into a single feed, processing every nested feed on its own.
+ * Creates a task splicing the feeds another task reports into a single feed.
  *
- * Splices as the overload taking no argument does, handing each nested feed to `task` before its items enter the
- * reported feed, so that a whole pipe is applied within the bounds of a nested feed rather than across the spliced
- * items.
+ * Hands the feed drawn from to `task` and splices the feeds it reports as the overload taking no argument does, so
+ * that an item mapped to a feed of its own is expanded in place into the items of that feed.
  *
  * > [!WARNING]
  * >
- * > - **Incremental**: items are emitted as the nested feeds are drained, so the reported feed runs dry as the source,
- * >   its nested feeds and `task` do; an infinite nested feed starves the ones behind it, which are never opened.
- * > - **Streaming**: nested feeds are drained one at a time, whatever `task` holds within each.
- * > - **Stateless**: the splice carries no state across nested feeds, whatever `task` carries within each.
+ * > - **Incremental**: items are emitted as the reported feeds are drained, so the reported feed runs dry as the
+ * >   source, `task` and the feeds it reports do; an infinite one starves the feeds behind it, never opened.
+ * > - **Streaming**: reported feeds are drained one at a time, none held, whatever `task` holds.
+ * > - **Stateless**: the splice carries no state across the reported feeds, whatever `task` carries across the items
+ * >   it draws.
  *
- * > [!CAUTION]
+ * > [!NOTE]
  * >
- * > A stateful `task` never sees the whole feed. It is invoked once per nested feed, so state it initialises on
- * > invocation is scoped to that feed alone: {@link distinct} deduplicates within a nested feed, {@link take} yields
- * > its quota to each one and {@link sort} orders each independently. State captured in its enclosing closure is
- * > shared across all of them instead.
- * >
- * > Splice a stateful task only where its outcome is sound on one nested feed at a time; apply it to the spliced
- * > feed instead, downstream of `flat()`, where it is to decide on every item.
+ * > `task` draws from the whole feed, so state it initialises on invocation decides on every item, as it would
+ * > anywhere else in the pipe. Where a source already carries feeds and a task is to be scoped to each of them,
+ * > apply it within {@link map}: `flat(map(feed => feed(sort())))` orders every nested feed on its own.
  *
- * @typeParam V The type of items carried by the nested feeds
- * @typeParam R The type of items reported by `task`
+ * @typeParam V The type of items drawn from the feed
+ * @typeParam R The type of items carried by the feeds `task` reports
  *
- * @param task The task applied to each nested feed
+ * @param task The task opening the feeds to splice
  *
- * @returns A task yielding the items `task` reports for every nested feed, in source order
+ * @returns A task yielding the items of every feed `task` reports, in source order
  *
  * @example
  *
  * ```typescript
  * await pipe(
- *   (items([items([1, 2]), items([3, 4])]))
- *   (flat(map(n => n*10)))
+ *   (items([1, 2, 3]))
+ *   (flat(map(n => items([n, n*10]))))
  *   (toArray())
- * );  // [10, 20, 30, 40]
+ * );  // [1, 10, 2, 20, 3, 30]
  * ```
  *
+ * @see {@link map} to open a feed for each item
  * @see {@link join} to splice the same feeds as their items become available
  * @see {@link fork} to interleave several runs of a task over the same feed
  */
-export function flat<V, R>(task: Task<V, R>): Task<Feed<V>, R>;
+export function flat<V, R>(task: Task<V, Feed<R>>): Task<V, R>;
 
 /**
- * Creates a task splicing a feed of feeds, with or without a task processing every nested feed.
+ * Creates a task splicing nested feeds into a single feed, with or without a task opening the feeds to splice.
  */
-export function flat<V, R>(task: Task<V, V | R> = feed => feed): Task<Feed<V>, V | R> {
+export function flat<R>(task: Task<Feed<R>> = feed => feed): Task<Feed<R>, R> {
 
 	return source => items((async function* () {
 
-		for await (const feed of source) {
-			yield* task(feed);
+		for await (const feed of task(source)) {
+			yield* feed;
 		}
 
 	})());
