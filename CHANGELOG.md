@@ -15,6 +15,11 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `recast` accepting an ordinary function of the feed in place of a sink: the items to carry on with are handed back
   either directly or awaited, so a mapper composing the feed it draws from is written without an intervening generator
 
+### Fixed
+
+- `tee` stalling on a branch running dry without closing the feed it was handed, as one reporting a fixed feed or
+  drawing only part of the source: a branch running dry now drops out like one closing early, whether or not it drew
+
 ## [0.10.0](https://github.com/metreeca/flow/compare/v0.9.21...v0.10.0) - 2026-09-09
 
 ### Added

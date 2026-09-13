@@ -260,7 +260,7 @@ available, so output order is not preserved and nothing bounds the number of fee
 branch decides on every item, unlike a forked run; the items the branches report are interleaved as `join()` interleaves
 nested feeds. Branches draw in lockstep, so nothing is held beyond the item on offer and the source advances at the pace
 of the slowest branch: pacing and long-running work belong downstream of the fan-out, while a branch closing early, as
-`take()` does, drops out and stops holding back the others.
+`take()` does, or running dry on its own drops out and stops holding back the others.
 
 See [Concurrent Processing](#concurrent-processing) for the bounds `fork()` sets and the state it tolerates.
 

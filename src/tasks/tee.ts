@@ -28,7 +28,8 @@ import { join } from "./join.js";
  *
  * Branches draw in lockstep: an item is drawn only once every branch still running has taken the one on offer, so
  * nothing is held beyond that item and the source advances at the pace of the slowest branch. A branch closing early
- * drops out and stops holding back the others; a branch reporting nothing simply contributes nothing.
+ * or running dry drops out and stops holding back the others, whether or not it drew the feed it was handed; a branch
+ * reporting nothing simply contributes nothing.
  *
  * > [!WARNING]
  * >
@@ -46,7 +47,8 @@ import { join } from "./join.js";
  * >
  * > A branch idling while still running holds back every other one, as the item on offer is replaced only once all of
  * > them have taken it: pacing and long-running work belong downstream of the fan-out, where they no longer hold the
- * > branches together.
+ * > branches together. A branch that keeps running without ever drawing the feed it was handed stalls the fan-out
+ * > for good, as it is indistinguishable from a slow one.
  *
  * > [!NOTE]
  * >
@@ -126,9 +128,22 @@ export function tee<V, R>(...tasks: readonly Task<V, R>[]): Task<V, R> {
 
 		try {
 
-			// every branch draws the same chain of rounds through a cursor of its own
+			// every branch draws the same chain of rounds through a cursor of its own, and is retired as soon as
+			// its feed runs dry, as a branch never drawing the cursor it was handed would otherwise stay live forever
 
-			const feeds = branches.map(branch => branch.task(items(cursor(branch, first))));
+			const feeds = branches.map(branch => items((async function* () {
+
+				try {
+
+					yield* branch.task(items(cursor(branch, first)));
+
+				} finally {
+
+					retire(branch);
+
+				}
+
+			})()));
 
 			yield* items(feeds)(join());
 
@@ -156,6 +171,14 @@ export function tee<V, R>(...tasks: readonly Task<V, R>[]): Task<V, R> {
 				return { item, following: guard(Promise.all(arrivals).then(open)) };
 
 			}
+
+		}
+
+		function retire(branch: Branch): void { // idempotent: a branch may be retired on closing and again on running dry
+
+			live.delete(branch); // no round waits for it from here on, and
+
+			branch.notify(); // the one on offer is released, whether or not it was taken
 
 		}
 
@@ -187,9 +210,7 @@ export function tee<V, R>(...tasks: readonly Task<V, R>[]): Task<V, R> {
 
 				return: async () => {
 
-					live.delete(branch); // no round waits for it from here on, and
-
-					branch.notify(); // the one on offer is released, whether or not it was taken
+					retire(branch);
 
 					return { done: true, value: undefined };
 

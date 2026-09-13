@@ -156,6 +156,38 @@ describe("tee()", () => {
 
 	});
 
+	it("should drop branches running dry without drawing", async () => {
+
+		const values = await items([1, 2, 3])(tee(() => items([100]), map(n => n*10)))(toArray());
+
+		expect(ordered(values)).toEqual([10, 20, 30, 100]);
+
+	});
+
+	it("should drop branches running dry without drawing nor reporting", async () => {
+
+		const values = await items([1, 2, 3])(tee(() => items<number>([]), map(n => n*10)))(toArray());
+
+		expect(ordered(values)).toEqual([10, 20, 30]);
+
+	});
+
+	it("should drop branches running dry after drawing part of the feed", async () => {
+
+		const partial: Task<number, number> = source => items((async function* () {
+
+			const iterator = source[Symbol.asyncIterator]();
+
+			yield (await iterator.next()).value ?? 0; // runs dry without closing the feed it drew from
+
+		})());
+
+		const values = await items([1, 2, 3])(tee(partial, map(n => n*10)))(toArray());
+
+		expect(ordered(values)).toEqual([1, 10, 20, 30]);
+
+	});
+
 	it("should keep drawing for branches reporting nothing", async () => {
 
 		const values = await items([1, 2, 3])(tee(filter(() => false), map(n => n*10)))(toArray());
