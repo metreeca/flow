@@ -18,7 +18,7 @@ import { sleep } from "@metreeca/core/async";
 import { describe, expect, it } from "vitest";
 import { pipe } from "../index.js";
 import { find, toArray } from "../sinks/index.js";
-import { take } from "../tasks/index.js";
+import { filter, take } from "../tasks/index.js";
 import { done, inlet } from "./inlet.js";
 
 
@@ -71,7 +71,8 @@ describe("inlet()", () => {
 
 		const value = await pipe(
 			(inlet(counter()))
-			(find(value => value === 3))
+			(filter(value => value === 3))
+			(find())
 		);
 
 		expect(value).toBe(3);

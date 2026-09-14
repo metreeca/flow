@@ -335,22 +335,26 @@ await pipe(
 
 ### Scanners
 
-Retrieve a single item from the feed or fold it into a value of an arbitrary type. Where no item matches, `find()`
-resolves to `undefined`, leaving the choice of a fallback to the caller, while `seek()` fails, so the item it hands
-back is usable as is.
+Retrieve a single item from the feed or fold it into a value of an arbitrary type. Both `find()` and `seek()` retrieve
+the first item of the feed, so the first item meeting a condition is retrieved by drawing from a `filter()` upstream.
+Where the feed carries no item, `find()` resolves to `undefined`, leaving the choice of a fallback to the caller, while
+`seek()` fails, so the item it hands back is usable as is.
 
 ```typescript
 import { find, reduce, seek } from '@metreeca/flow/sinks';
+import { filter } from '@metreeca/flow/tasks';
 
 await pipe(
 	(items([1, 2, 3, 4]))
-	(find(n => n > 2))
+	(filter(n => n > 2))
+	(find())
 );  // 3
 
 await pipe(
 	(items([1, 2, 3, 4]))
-	(seek(n => n > 10))
-);  // fails, as no item matches
+	(filter(n => n > 10))
+	(seek())
+);  // fails, as the filtered feed carries no item
 
 await pipe(
 	(items([1, 2, 3, 4]))

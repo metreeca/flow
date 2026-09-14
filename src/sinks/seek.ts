@@ -14,60 +14,71 @@
  * limitations under the License.
  */
 
-import type { Awaitable } from "@metreeca/core/async";
 import { Sink } from "../index.js";
 
 
 /**
- * Creates a sink retrieving the first matching item of the feed, failing if none does.
+ * Creates a sink retrieving the first item of the feed, failing if it carries none.
  *
- * Items are tested in source order and consumption stops at the first match, leaving the rest of the feed
- * unconsumed.
+ * Consumption stops at the first item, leaving the rest of the feed unconsumed; the first item meeting a condition is
+ * retrieved by drawing from a `filter()` upstream.
  *
- * A feed carrying no matching item fails the sink instead of resolving to `undefined` as {@link find} does, so the
- * item handed back is usable as is, with no check to tell a missing item from an `undefined` item the feed
- * legitimately carries.
+ * An empty feed fails the sink instead of resolving to `undefined` as {@link find} does, so the item handed back is
+ * usable as is, with no check to tell a missing item from an `undefined` item the feed legitimately carries.
  *
  * > [!NOTE]
  * >
- * > - **Incremental**: items are drawn only until one matches, so an infinite feed completes unless none does.
- * > - **Streaming**: items are tested one at a time, none retained.
- * > - **Stateless**: every item is tested on its own.
+ * > - **Incremental**: a single item is drawn, so an infinite feed completes.
+ * > - **Streaming**: the item is handed back as it is drawn, none retained.
+ * > - **Stateless**: the outcome rests on the first item alone.
  *
  * @typeParam V The type of items in the feed
  *
- * @param predicate The function testing each item, defaulting to a test matching every item, which retrieves the
- *   first item of the feed
+ * @returns A sink resolving to the first item of the feed
  *
- * @returns A sink resolving to the first item matching `predicate`
- *
- * @throws {@link !Error Error} If no item matches `predicate`
+ * @throws {@link !Error Error} If the feed carries no item
  *
  * @example
  *
  * ```typescript
  * await pipe(
  *   (items([1, 2, 3, 4, 5]))
- *   (seek(n => n > 3))
- * );  // 4
+ *   (seek())
+ * );  // 1
  *
  * await pipe(
  *   (items([1, 2, 3, 4, 5]))
+ *   (filter(n => n > 3))
  *   (seek())
- * );  // 1
+ * );  // 4
  * ```
  */
-export function seek<V>(predicate: (item: NoInfer<V>) => Awaitable<boolean> = () => true): Sink<V, V> {
+export function seek<V>(): Sink<V, V> {
 
 	return async source => {
 
-		for await (const item of source) {
-			if ( await predicate(item) ) {
-				return item;
+		const iterator = source[Symbol.asyncIterator]();
+
+		try {
+
+			const { done, value } = await iterator.next();
+
+			if ( done ) {
+
+				throw new Error("expected at least one item");
+
+			} else {
+
+				return value;
+
 			}
+
+		} finally { // leave the rest of the feed unconsumed
+
+			await iterator.return?.();
+
 		}
 
-		throw new Error("missing matching item");
 	};
 
 }

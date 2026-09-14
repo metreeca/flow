@@ -17,6 +17,7 @@
 import { describe, expect, it } from "vitest";
 import { inlet, items } from "../feeds/index.js";
 import { Feed } from "../index.js";
+import { filter } from "../tasks/filter.js";
 import { seek } from "./seek.js";
 
 
@@ -42,15 +43,7 @@ function endless(): { readonly feed: Feed<number>, readonly drawn: () => number 
 
 describe("seek()", () => {
 
-	it("should resolve to the first matching item", async () => {
-
-		const result = await items([1, 2, 3, 4, 5])(seek(x => x > 2));
-
-		expect(result).toBe(3);
-
-	});
-
-	it("should resolve to the first item where no predicate is given", async () => {
+	it("should resolve to the first item", async () => {
 
 		const result = await items([1, 2, 3])(seek());
 
@@ -58,7 +51,15 @@ describe("seek()", () => {
 
 	});
 
-	it("should resolve to a matching undefined item", async () => {
+	it("should resolve to the first item retained by an upstream filter", async () => {
+
+		const result = await items([1, 2, 3, 4, 5])(filter(x => x > 2))(seek());
+
+		expect(result).toBe(3);
+
+	});
+
+	it("should resolve to an undefined item the feed carries", async () => {
 
 		const result = await items([undefined])(seek());
 
@@ -66,9 +67,9 @@ describe("seek()", () => {
 
 	});
 
-	it("should fail where no item matches", async () => {
+	it("should fail where an upstream filter retains no item", async () => {
 
-		await expect(items([1, 2, 3])(seek(x => x > 10))).rejects.toThrow(Error);
+		await expect(items([1, 2, 3])(filter(x => x > 10))(seek())).rejects.toThrow(Error);
 
 	});
 
@@ -78,34 +79,14 @@ describe("seek()", () => {
 
 	});
 
-	it("should await asynchronous predicates", async () => {
-
-		const result = await items([1, 2, 3, 4])(seek(async x => {
-			await Promise.resolve();
-			return x === 3;
-		}));
-
-		expect(result).toBe(3);
-
-	});
-
-	it("should stop drawing at the first match, completing an infinite feed", async () => {
+	it("should stop drawing at the first item, completing an infinite feed", async () => {
 
 		const source = endless();
 
-		const result = await source.feed(seek(x => x === 3));
+		const result = await source.feed(seek());
 
-		expect(result).toBe(3);
-		expect(source.drawn()).toBe(4); // the items failing the predicate, plus the one matching it
-
-	});
-
-	it("should propagate predicate failures", async () => {
-
-		await expect(items([1, 2, 3])(seek(x => {
-			if ( x === 2 ) { throw new Error("predicate failed"); }
-			return false;
-		}))).rejects.toThrow("predicate failed");
+		expect(result).toBe(0);
+		expect(source.drawn()).toBe(1);
 
 	});
 

@@ -17,6 +17,7 @@
 import { describe, expect, it } from "vitest";
 import { inlet, items } from "../feeds/index.js";
 import { Feed } from "../index.js";
+import { filter } from "../tasks/filter.js";
 import { find } from "./find.js";
 
 
@@ -42,15 +43,7 @@ function endless(): { readonly feed: Feed<number>, readonly drawn: () => number 
 
 describe("find()", () => {
 
-	it("should resolve to the first matching item", async () => {
-
-		const result = await items([1, 2, 3, 4, 5])(find(x => x > 2));
-
-		expect(result).toBe(3);
-
-	});
-
-	it("should resolve to the first item where no predicate is given", async () => {
+	it("should resolve to the first item", async () => {
 
 		const result = await items([1, 2, 3])(find());
 
@@ -58,9 +51,17 @@ describe("find()", () => {
 
 	});
 
-	it("should resolve to undefined where no item matches", async () => {
+	it("should resolve to the first item retained by an upstream filter", async () => {
 
-		const result = await items([1, 2, 3])(find(x => x > 10));
+		const result = await items([1, 2, 3, 4, 5])(filter(x => x > 2))(find());
+
+		expect(result).toBe(3);
+
+	});
+
+	it("should resolve to an undefined item the feed carries", async () => {
+
+		const result = await items([undefined])(find());
 
 		expect(result).toBeUndefined();
 
@@ -68,40 +69,20 @@ describe("find()", () => {
 
 	it("should resolve to undefined for an empty feed", async () => {
 
-		const result = await items<number>([])(find(x => x > 0));
+		const result = await items<number>([])(find());
 
 		expect(result).toBeUndefined();
 
 	});
 
-	it("should await asynchronous predicates", async () => {
-
-		const result = await items([1, 2, 3, 4])(find(async x => {
-			await Promise.resolve();
-			return x === 3;
-		}));
-
-		expect(result).toBe(3);
-
-	});
-
-	it("should stop drawing at the first match, completing an infinite feed", async () => {
+	it("should stop drawing at the first item, completing an infinite feed", async () => {
 
 		const source = endless();
 
-		const result = await source.feed(find(x => x === 3));
+		const result = await source.feed(find());
 
-		expect(result).toBe(3);
-		expect(source.drawn()).toBe(4); // the items failing the predicate, plus the one matching it
-
-	});
-
-	it("should propagate predicate failures", async () => {
-
-		await expect(items([1, 2, 3])(find(x => {
-			if ( x === 2 ) { throw new Error("predicate failed"); }
-			return false;
-		}))).rejects.toThrow("predicate failed");
+		expect(result).toBe(0);
+		expect(source.drawn()).toBe(1);
 
 	});
 

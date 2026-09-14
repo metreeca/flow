@@ -14,58 +14,62 @@
  * limitations under the License.
  */
 
-import type { Awaitable } from "@metreeca/core/async";
 import { Sink } from "../index.js";
 import type { Optional } from "@metreeca/core";
 
 
 /**
- * Creates a sink retrieving the first matching item of the feed.
+ * Creates a sink retrieving the first item of the feed.
  *
- * Items are tested in source order and consumption stops at the first match, leaving the rest of the feed
- * unconsumed.
+ * Consumption stops at the first item, leaving the rest of the feed unconsumed; the first item meeting a condition is
+ * retrieved by drawing from a `filter()` upstream.
  *
- * A feed carrying no matching item resolves to `undefined`; callers wanting a default supply it with `??`, and those
- * requiring a value reach for {@link seek} instead.
+ * An empty feed resolves to `undefined`; callers wanting a default supply it with `??`, and those requiring a value
+ * reach for {@link seek} instead.
  *
  * > [!NOTE]
  * >
- * > - **Incremental**: items are drawn only until one matches, so an infinite feed completes unless none does.
- * > - **Streaming**: items are tested one at a time, none retained.
- * > - **Stateless**: every item is tested on its own.
+ * > - **Incremental**: a single item is drawn, so an infinite feed completes.
+ * > - **Streaming**: the item is handed back as it is drawn, none retained.
+ * > - **Stateless**: the outcome rests on the first item alone.
  *
  * @typeParam V The type of items in the feed
  *
- * @param predicate The function testing each item, defaulting to a test matching every item, which retrieves the
- *   first item of the feed
- *
- * @returns A sink resolving to the first item matching `predicate`, or to `undefined` if no item does
+ * @returns A sink resolving to the first item of the feed, or to `undefined` if the feed carries none
  *
  * @example
  *
  * ```typescript
  * await pipe(
  *   (items([1, 2, 3, 4, 5]))
- *   (find(n => n > 3))
- * );  // 4
+ *   (find())
+ * );  // 1
  *
  * await pipe(
  *   (items([1, 2, 3, 4, 5]))
+ *   (filter(n => n > 3))
  *   (find())
- * );  // 1
+ * );  // 4
  * ```
  */
-export function find<V>(predicate: (item: NoInfer<V>) => Awaitable<boolean> = () => true): Sink<V, Optional<V>> {
+export function find<V>(): Sink<V, Optional<V>> {
 
 	return async source => {
 
-		for await (const item of source) {
-			if ( await predicate(item) ) {
-				return item;
-			}
+		const iterator = source[Symbol.asyncIterator]();
+
+		try {
+
+			const { done, value } = await iterator.next();
+
+			return done ? undefined : value;
+
+		} finally { // leave the rest of the feed unconsumed
+
+			await iterator.return?.();
+
 		}
 
-		return undefined;
 	};
 
 }

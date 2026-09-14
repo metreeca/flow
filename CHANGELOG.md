@@ -15,6 +15,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `chain` accepting an ordinary function of the feed in place of a sink: the items to carry on with are handed back
   either directly or awaited, so a mapper composing the feed it draws from is written without an intervening generator
 
+- `find` and `seek` sinks retrieve the first item of the feed, dropping the predicate testing the items: the first item
+  meeting a condition is retrieved by drawing from a `filter` upstream, which stops at the same item and leaves the rest
+  of the feed unconsumed, so `find(predicate)` becomes `filter(predicate)` followed by `find()`
+
 ### Fixed
 
 - `tee` stalling on a branch running dry without closing the feed it was handed, as one reporting a fixed feed or

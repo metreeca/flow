@@ -21,22 +21,16 @@ import { find } from "./find.js";
 
 describe("find()", () => {
 
-	it("should carry the item type over to the predicate", async () => {
+	it("should retrieve an optional item of the feed type", async () => {
 
-		await (items([1, 2, 3]))(find(item => expectTypeOf(item).toEqualTypeOf<number>() && true));
-
-	});
-
-	it("should retrieve an item of the feed type under a predicate accepting any item", async () => {
-
-		expectTypeOf(await (items([1, 2, 3]))(find(Boolean))).toEqualTypeOf<undefined | number>();
+		expectTypeOf(await (items([1, 2, 3]))(find())).toEqualTypeOf<undefined | number>();
 
 	});
 
-	it("should reject a predicate unable to test the items", async () => {
+	it("should reject a predicate", async () => {
 
-		// @ts-expect-error — a string predicate cannot test numbers
-		await (items([1, 2, 3]))(find((item: string) => item.length > 0));
+		// @ts-expect-error — items are no longer tested, as filtering is a task of its own
+		await (items([1, 2, 3]))(find(item => item > 2));
 
 	});
 
