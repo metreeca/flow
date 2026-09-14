@@ -61,18 +61,18 @@ import type { Feed, Task } from "../index.js";
  * ```typescript
  * await pipe(
  *   (items([1, 2, 3, 4]))
- *   (recast(async feed => (await feed(toArray())).slice(-2)))
+ *   (chain(async feed => (await feed(toArray())).slice(-2)))
  *   (toArray())
  * );  // [3, 4], as the last items are known only once the feed runs dry
  *
  * await pipe(
  *   (items([1, 2, 2, 3]))
- *   (recast(toSet()))
+ *   (chain(toSet()))
  *   (toArray())
  * );  // [1, 2, 3], as a sink already available is lifted back into the pipe
  * ```
  */
-export function recast<V, R>(mapper: (feed: Feed<NoInfer<V>>) => Awaitable<Awaitables<R>>): Task<V, R> {
+export function chain<V, R>(mapper: (feed: Feed<NoInfer<V>>) => Awaitable<Awaitables<R>>): Task<V, R> {
 
 	return source => items((async function* () {
 

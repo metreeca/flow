@@ -18,15 +18,15 @@ import { describe, expectTypeOf, it } from "vitest";
 import { items } from "../feeds/items.js";
 import type { Feed, Task } from "../index.js";
 import { toArray, toSet } from "../sinks/index.js";
-import { recast } from "./recast.js";
+import { chain } from "./chain.js";
 import { map } from "./map.js";
 
 
-describe("recast()", () => {
+describe("chain()", () => {
 
 	it("should carry the item type over to the mapper", async () => {
 
-		(items([1, 2, 3]))(recast(async feed => {
+		(items([1, 2, 3]))(chain(async feed => {
 
 			expectTypeOf(feed).toEqualTypeOf<Feed<number>>();
 
@@ -38,7 +38,7 @@ describe("recast()", () => {
 
 	it("should report the type of the items the mapper computes", async () => {
 
-		const feed = (items([1, 2, 3]))(recast(async feed => (await feed(toArray())).map(n => `<${n}>`)));
+		const feed = (items([1, 2, 3]))(chain(async feed => (await feed(toArray())).map(n => `<${n}>`)));
 
 		expectTypeOf(feed).toEqualTypeOf<Feed<string>>();
 
@@ -46,7 +46,7 @@ describe("recast()", () => {
 
 	it("should report the type of the items a mapper hands back without awaiting", async () => {
 
-		const feed = (items([1, 2, 3]))(recast(feed => feed(map(n => `<${n}>`))));
+		const feed = (items([1, 2, 3]))(chain(feed => feed(map(n => `<${n}>`))));
 
 		expectTypeOf(feed).toEqualTypeOf<Feed<string>>();
 
@@ -54,7 +54,7 @@ describe("recast()", () => {
 
 	it("should keep the feed type under a sink preserving it", async () => {
 
-		const feed = (items([1, 2, 3]))(recast(toSet()));
+		const feed = (items([1, 2, 3]))(chain(toSet()));
 
 		expectTypeOf(feed).toEqualTypeOf<Feed<number>>();
 
@@ -62,7 +62,7 @@ describe("recast()", () => {
 
 	it("should take the item type from the declared task", async () => {
 
-		const task: Task<number, string> = recast(async feed => (await feed(toArray())).map(n => `<${n}>`));
+		const task: Task<number, string> = chain(async feed => (await feed(toArray())).map(n => `<${n}>`));
 
 		expectTypeOf(task).toEqualTypeOf<Task<number, string>>();
 
@@ -71,7 +71,7 @@ describe("recast()", () => {
 	it("should reject a mapper unable to draw the items", async () => {
 
 		// @ts-expect-error — a string mapper cannot draw numbers
-		(items([1, 2, 3]))(recast(async (feed: Feed<string>) => feed(toArray())));
+		(items([1, 2, 3]))(chain(async (feed: Feed<string>) => feed(toArray())));
 
 	});
 

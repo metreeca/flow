@@ -18,7 +18,7 @@ import { describe, expect, it } from "vitest";
 import { items } from "../feeds/index.js";
 import { Feed, pipe } from "../index.js";
 import { toArray, toSet } from "../sinks/index.js";
-import { recast } from "./recast.js";
+import { chain } from "./chain.js";
 import { map } from "./map.js";
 import { peek } from "./peek.js";
 
@@ -33,11 +33,11 @@ function tracked(drawn: number[], values: readonly number[]): Feed<number> {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-describe("recast()", () => {
+describe("chain()", () => {
 
 	it("should emit the items the mapper computes", async () => {
 
-		const values = await items([1, 2, 3, 4])(recast(async feed => (await feed(toArray())).slice(-2)))(toArray());
+		const values = await items([1, 2, 3, 4])(chain(async feed => (await feed(toArray())).slice(-2)))(toArray());
 
 		expect(values).toEqual([3, 4]);
 
@@ -47,7 +47,7 @@ describe("recast()", () => {
 
 		const drawn: number[][] = [];
 
-		await items([1, 2, 3])(recast(async feed => {
+		await items([1, 2, 3])(chain(async feed => {
 			drawn.push([...await feed(toArray())]);
 			return [];
 		}))(toArray());
@@ -58,7 +58,7 @@ describe("recast()", () => {
 
 	it("should carry on with the items of a sink already available", async () => {
 
-		const values = await items([1, 2, 2, 3])(recast(toSet()))(toArray());
+		const values = await items([1, 2, 2, 3])(chain(toSet()))(toArray());
 
 		expect(values).toEqual([1, 2, 3]);
 
@@ -66,7 +66,7 @@ describe("recast()", () => {
 
 	it("should emit items of a different type", async () => {
 
-		const values = await items([1, 2])(recast(async feed => (await feed(toArray())).map(n => `<${n}>`)))(toArray());
+		const values = await items([1, 2])(chain(async feed => (await feed(toArray())).map(n => `<${n}>`)))(toArray());
 
 		expect(values).toEqual(["<1>", "<2>"]);
 
@@ -74,7 +74,7 @@ describe("recast()", () => {
 
 	it("should empty the feed where the mapper computes nothing", async () => {
 
-		const values = await items([1, 2, 3])(recast(async () => []))(toArray());
+		const values = await items([1, 2, 3])(chain(async () => []))(toArray());
 
 		expect(values).toEqual([]);
 
@@ -82,7 +82,7 @@ describe("recast()", () => {
 
 	it("should emit the computed items where the feed draws none", async () => {
 
-		const values = await items<number>([])(recast(async () => [0]))(toArray());
+		const values = await items<number>([])(chain(async () => [0]))(toArray());
 
 		expect(values).toEqual([0]);
 
@@ -90,7 +90,7 @@ describe("recast()", () => {
 
 	it("should accept items supplied as a feed of their own", async () => {
 
-		const values = await items([1, 2])(recast(async feed => items(await feed(toArray()))(map(n => n*10))))(toArray());
+		const values = await items([1, 2])(chain(async feed => items(await feed(toArray()))(map(n => n*10))))(toArray());
 
 		expect(values).toEqual([10, 20]);
 
@@ -98,7 +98,7 @@ describe("recast()", () => {
 
 	it("should accept items handed back without awaiting", async () => {
 
-		const values = await items([1, 2, 3])(recast(feed => feed(map(n => n*10))))(toArray());
+		const values = await items([1, 2, 3])(chain(feed => feed(map(n => n*10))))(toArray());
 
 		expect(values).toEqual([10, 20, 30]);
 
@@ -108,7 +108,7 @@ describe("recast()", () => {
 
 		const drawn: number[] = [];
 
-		tracked(drawn, [1, 2, 3])(recast(toArray()));
+		tracked(drawn, [1, 2, 3])(chain(toArray()));
 
 		expect(drawn).toEqual([]);
 
@@ -118,7 +118,7 @@ describe("recast()", () => {
 
 		const drawn: number[] = [];
 
-		const iterator = tracked(drawn, [1, 2, 3])(recast(toArray()))[Symbol.asyncIterator]();
+		const iterator = tracked(drawn, [1, 2, 3])(chain(toArray()))[Symbol.asyncIterator]();
 
 		await iterator.next();
 
@@ -128,7 +128,7 @@ describe("recast()", () => {
 
 	it("should stop emitting on early termination", async () => {
 
-		const iterator = items([1, 2, 3])(recast(toArray()))[Symbol.asyncIterator]();
+		const iterator = items([1, 2, 3])(chain(toArray()))[Symbol.asyncIterator]();
 
 		await iterator.next();
 
@@ -138,7 +138,7 @@ describe("recast()", () => {
 
 	it("should propagate failures raised by the mapper", async () => {
 
-		const failing = items([1, 2, 3])(recast<number, number>(async () => {
+		const failing = items([1, 2, 3])(chain<number, number>(async () => {
 			throw new Error("mapper failed");
 		}));
 
@@ -153,7 +153,7 @@ describe("recast()", () => {
 			throw new Error("source failed");
 		})());
 
-		await expect(failing(recast(toArray()))(toArray())).rejects.toThrow("source failed");
+		await expect(failing(chain(toArray()))(toArray())).rejects.toThrow("source failed");
 
 	});
 
@@ -161,7 +161,7 @@ describe("recast()", () => {
 
 		const values = await pipe(
 			(items([1, 2, 3]))
-			(recast(toSet()))
+			(chain(toSet()))
 			(map(n => n*10))
 			(toArray())
 		);

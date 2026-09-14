@@ -17,7 +17,7 @@
 /**
  * Intermediate operations that transform, filter or reshape the items of a feed.
  *
- * Tasks apply to a {@link index.Feed Feed} and yield a new feed, so they chain freely into longer pipes. Items are
+ * Tasks apply to a {@link index.Feed Feed} and yield a new feed, so they compose freely into longer pipes. Items are
  * processed lazily, sequentially and in source order, unless a task reorders them, interleaves the nested feeds
  * carrying them, hands each of them to several tasks at once or wraps another to run it concurrently, trading output
  * order for throughput.
@@ -43,7 +43,7 @@
  * > [!WARNING]
  * >
  * > An exhaustive task never completes on an infinite feed, and a materialising one may exhaust memory on a large
- * > feed, bounded or not. {@link sort}, {@link group}, an unbounded {@link batch} and a {@link recast} whose mapper
+ * > feed, bounded or not. {@link sort}, {@link group}, an unbounded {@link batch} and a {@link chain} whose mapper
  * > draws the feed entire are both; {@link distinct}, {@link join} and an uncapped {@link fork} are incremental yet
  * > materialising. Bound the feed upstream with {@link take}, batch by a positive size, or cap the runs of a fork.
  *
@@ -53,7 +53,7 @@
  * > obtained: handing the generator object to {@link feeds.items items()} is the shortest route there, while a
  * > transformation delegating to tasks already available composes the feed it draws from with them and reports what
  * > they report, a feed already. A transformation deciding on the feed as a whole is spared the generator altogether
- * > by {@link recast}, which carries on with the items a mapper computes over it.
+ * > by {@link chain}, which carries on with the items a mapper computes over it.
  *
  * **Custom Tasks** extend a pipe, drawing the items of a feed and reporting a new one; the transformation is most
  * easily written as an async generator handed to {@link feeds.items items()}, with items to be dropped left unyielded:
@@ -94,7 +94,7 @@ export * from "./peek.js";
 export * from "./map.js";
 export * from "./batch.js";
 export * from "./group.js";
-export * from "./recast.js";
+export * from "./chain.js";
 
 // splicers
 
