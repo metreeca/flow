@@ -103,8 +103,8 @@ handed over, so a feed opened from a generator object runs dry after the first p
 source, an array or a set among them, is consumed afresh at each. A feed reported by a task is drained by a single pass
 whatever it draws from: consume a composition twice by building it afresh from the feed it opens with.
 
-Several feeds are combined into one by carrying them in a feed of their own and splicing it with `flat()` or `join()`:
-see [Splicers](#splicers).
+Several feeds are combined into one by carrying them in a feed of their own and splicing it with `flat()` or `join()`,
+or by naming them at the call site of `mix()`: see [Splicers](#splicers).
 
 ## Transforming Data
 
@@ -208,10 +208,11 @@ by item, so the items carried on need be neither the ones drawn, nor as many, no
 ### Splicers
 
 Splice several feeds into the pipe: the nested feeds a source carries or a task opens, in source order or interleaved
-as their items become available, the concurrent runs of a task, or the branches every item is handed to.
+as their items become available, the concurrent runs of a task, the branches every item is handed to, or sources named
+at the call site.
 
 ```typescript
-import { filter, flat, fork, join, map, take, tee } from '@metreeca/flow/tasks';
+import { filter, flat, fork, join, map, mix, take, tee } from '@metreeca/flow/tasks';
 
 await pipe(
 	(items([items([1, 2]), items([3, 4])]))
@@ -248,6 +249,12 @@ await pipe(
 	(tee(map(n => n*2), filter(n => n > 2)))
 	(toArray())
 );  // 2, 4, 6 from the doubling branch and 3 from the filtering one, interleaved in no defined order
+
+await pipe(
+	(items([1, 2]))
+	(mix(items([3, 4]), 5))
+	(toArray())
+);  // 1, 2 from the feed, 3, 4 from the mixed feed and 5 as a single item, in no defined order
 ```
 
 `flat()` splices one level only: a feed carried by a nested feed is reported as an item, ready for a further splice. Its
@@ -261,6 +268,11 @@ branch decides on every item, unlike a forked run; the items the branches report
 nested feeds. Branches draw in lockstep, so nothing is held beyond the item on offer and the source advances at the pace
 of the slowest branch: pacing and long-running work belong downstream of the fan-out, while a branch closing early, as
 `take()` does, or running dry on its own drops out and stops holding back the others.
+
+`mix()` mixes in sources of its own, rather than splicing the nested feeds a source carries, so a pipe gathering items
+from several origins names them at the call site and keeps the fan-in to a single stage. Each source is opened as
+`items()` opens it, and none of them draws from the feed or paces the others: one idling or long-running delays its own
+items alone.
 
 See [Concurrent Processing](#concurrent-processing) for the bounds `fork()` sets and the state it tolerates.
 

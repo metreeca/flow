@@ -19,8 +19,8 @@
  *
  * Feeds open the {@link index.Feed Feed} a pipe is built on, adapting values and data sources into one ready for task
  * and sink composition; several feeds are combined into a single one by carrying them in a feed of their own and
- * splicing it with {@link tasks.flat flat} or {@link tasks.join join}. Work is deferred until a sink or a manual
- * iteration consumes the feed.
+ * splicing it with {@link tasks.flat flat} or {@link tasks.join join}, or by naming them at the call site of
+ * {@link tasks.mix mix}. Work is deferred until a sink or a manual iteration consumes the feed.
  *
  * Every feed is classified as **bounded** or **infinite**: a bounded feed runs dry on its own, while an infinite one
  * has to be bounded downstream, with a task such as {@link tasks.take take} or with a sink deciding its outcome

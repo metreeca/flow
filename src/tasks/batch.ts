@@ -81,6 +81,7 @@ export function batch<V>(size: number = 0): Task<V, readonly V[]> {
 		if ( batch.length > 0 ) {
 			yield batch;
 		}
+
 	})());
 
 }

@@ -19,8 +19,8 @@
  *
  * Tasks apply to a {@link index.Feed Feed} and yield a new feed, so they compose freely into longer pipes. Items are
  * processed lazily, sequentially and in source order, unless a task reorders them, interleaves the nested feeds
- * carrying them, hands each of them to several tasks at once or wraps another to run it concurrently, trading output
- * order for throughput.
+ * carrying them or sources of its own, hands each of them to several tasks at once or wraps another to run it
+ * concurrently, trading output order for throughput.
  *
  * A task wrapping others either hands each of them the whole feed, as {@link flat}, {@link join} and {@link tee} do,
  * leaving whatever state they initialise on invocation to decide on every item, or invokes one once per run over a
@@ -102,3 +102,4 @@ export * from "./flat.js";
 export * from "./join.js";
 export * from "./fork.js";
 export * from "./tee.js";
+export * from "./mix.js";

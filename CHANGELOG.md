@@ -7,6 +7,13 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unpublished](https://github.com/metreeca/flow/compare/v0.10.0...HEAD)
 
+### Added
+
+- `mix` task interleaving sources of its own into the feed it is applied to: the sources are listed in the call rather
+  than carried by a feed, so a fan-in over several origins stays a single stage of the pipe; each source contributes
+  its items as `items` opens it, and none draws the feed or paces the others, so one idling or long-running delays its
+  own items alone
+
 ### Changed
 
 - `drain` task renamed to `chain`, leaving *drain* to the sense it carries throughout the docs, that of a feed

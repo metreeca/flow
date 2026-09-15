@@ -75,6 +75,7 @@ import { Feed, Sink, Task } from "../index.js";
  *
  * @see {@link tasks.flat flat} to combine several feeds, carried in a feed of their own, into a single one
  * @see {@link tasks.join join} to combine them as their items become available
+ * @see {@link tasks.mix mix} to combine a feed with further sources named at the call site
  */
 export function items<V>(source: Awaitable<V> | Awaitables<V>): Feed<V> {
 
