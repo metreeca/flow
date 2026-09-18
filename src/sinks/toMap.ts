@@ -15,7 +15,7 @@
  */
 
 import type { Awaitable } from "@metreeca/core/async";
-import { immutable } from "@metreeca/core/structures";
+import { immutable } from "@metreeca/core/values";
 import { Sink } from "../index.js";
 
 

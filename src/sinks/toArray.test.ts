@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { immutable } from "@metreeca/core/structures";
+import { immutable } from "@metreeca/core/values";
 import { describe, expect, it } from "vitest";
 import { items } from "../feeds/index.js";
 import { toArray } from "./toArray.js";
