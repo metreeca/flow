@@ -37,6 +37,18 @@ describe("flat()", () => {
 
 	});
 
+	it("should splice nested iterables and async iterables", async () => {
+
+		const values = await items<Iterable<number> | AsyncIterable<number>>([
+			[1, 2],
+			new Set([3]),
+			(async function* () { yield 4; })()
+		])(flat())(toArray());
+
+		expect(values).toEqual([1, 2, 3, 4]);
+
+	});
+
 	it("should drop empty nested feeds", async () => {
 
 		const values = await items([items<number>([]), items([1, 2]), items<number>([])])(flat())(toArray());
@@ -157,6 +169,17 @@ describe("flat()", () => {
 			const values = await items([1, 2, 3])(flat(map(n => items([n, n*10]))))(toArray());
 
 			expect(values).toEqual([1, 10, 2, 20, 3, 30]);
+
+		});
+
+		it("should splice the iterables and async iterables the task reports", async () => {
+
+			const values = await items([1, 2])(flat(map(async n => n%2
+				? [n, n*10]
+				: (async function* () { yield n; })()
+			)))(toArray());
+
+			expect(values).toEqual([1, 10, 2]);
 
 		});
 

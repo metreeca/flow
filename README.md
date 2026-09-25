@@ -222,9 +222,9 @@ await pipe(
 
 await pipe(
 	(items([1, 2, 3]))
-	(flat(map(n => items([n, n*10]))))
+	(flat(map(n => [n, n*10])))
 	(toArray())
-);  // [1, 10, 2, 20, 3, 30], as each item is expanded into the items of its own feed
+);  // [1, 10, 2, 20, 3, 30], as each item is expanded into the items it is mapped to
 
 await pipe(
 	(items([items([1, 2, 3]), items([4, 5, 6])]))
@@ -257,11 +257,12 @@ await pipe(
 );  // 1, 2 from the feed, 3, 4 from the mixed feed and 5 as a single item, in no defined order
 ```
 
-`flat()` splices one level only: a feed carried by a nested feed is reported as an item, ready for a further splice. Its
-optional task opens the feeds to splice, drawing from the whole feed, so an item mapped to a feed of its own is expanded
-in place; scope a task to each nested feed by applying it within `map()`, where the source already carries feeds.
-`join()` splices the same way, but opens every nested feed as soon as it is reported and emits items as they become
-available, so output order is not preserved and nothing bounds the number of feeds open at once.
+`flat()` splices one level only: a feed carried by a nested feed is reported as an item, ready for a further splice.
+Nested feeds may be any sync or async iterable, so an array is spliced as is, with no feed opened around it. The
+optional task opens the feeds to splice, drawing from the whole feed, so an item mapped to an array or to a feed of its
+own is expanded in place; scope a task to each nested feed by applying it within `map()`, where the source already
+carries feeds. `join()` splices nested feeds the same way, but opens every one as soon as it is reported and emits
+items as they become available, so output order is not preserved and nothing bounds the number of feeds open at once.
 
 `tee()` fans out instead of splitting: every branch is applied to the whole feed and handed every item, so a stateful
 branch decides on every item, unlike a forked run; the items the branches report are interleaved as `join()` interleaves

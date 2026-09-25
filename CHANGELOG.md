@@ -14,6 +14,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   its items as `items` opens it, and none draws the feed or paces the others, so one idling or long-running delays its
   own items alone
 
+- `flat` task splicing any sync or async iterable, not only nested feeds: an item is expanded by mapping it straight to
+  an array of its expansions, as `flat(map(n => [n, n*10]))` does, with no feed opened around it
+
 ### Changed
 
 - `drain` task renamed to `chain`, leaving *drain* to the sense it carries throughout the docs, that of a feed
