@@ -112,7 +112,7 @@ Chain [tasks](https://metreeca.github.io/flow/modules/tasks.html) to reshape the
 
 ### Operators
 
-Select, reorder and inspect items, leaving their type unchanged.
+Select, reorder and inspect items, leaving their type unchanged but for the `undefined` dropped by `trim()`.
 
 > [!TIP]
 >
@@ -120,13 +120,25 @@ Select, reorder and inspect items, leaving their type unchanged.
 > for assembling complex sorting criteria.
 
 ```typescript
-import { distinct, filter, peek, skip, sort, take } from '@metreeca/flow/tasks';
+import { distinct, filter, map, peek, skip, sort, take, trim } from '@metreeca/flow/tasks';
 
 await pipe(
 	(items([1, 2, 3, 4, 5]))
 	(filter(n => n%2 === 0))
 	(toArray())
 );  // [2, 4]
+
+await pipe(
+	(items([undefined, 1, undefined, 2]))
+	(trim())
+	(toArray())
+);  // [1, 2]
+
+await pipe(
+	(items([1, 2, 3, 4]))
+	(trim(map(n => n%2 ? n*10 : undefined)))
+	(toArray())
+);  // [10, 30], as items mapped to undefined are dropped
 
 await pipe(
 	(items([1, 2, 2, 3, 1]))

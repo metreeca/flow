@@ -22,10 +22,10 @@
  * carrying them or sources of its own, hands each of them to several tasks at once or wraps another to run it
  * concurrently, trading output order for throughput.
  *
- * A task wrapping others either hands each of them the whole feed, as {@link flat}, {@link join} and {@link tee} do,
- * leaving whatever state they initialise on invocation to decide on every item, or invokes one once per run over a
- * share of the items, as {@link fork} does, scoping that state to the run rather than to the pipe as a whole. The feed
- * a task draws from and the one it reports are both drained by a single pass, however repeatable the source behind
+ * A task wrapping others either hands each of them the whole feed, as {@link flat}, {@link join}, {@link tee} and
+ * {@link trim} do, leaving whatever state they initialise on invocation to decide on every item, or invokes one once
+ * per run over a share of the items, as {@link fork} does, scoping that state to the run rather than to the pipe as a
+ * whole. The feed a task draws from and the one it reports are both drained by a single pass, however repeatable the source behind
  * them: a composition to be consumed twice is built afresh from the feed it opens with.
  *
  * The item type of a task is taken from the feed it is applied to, or from the {@link index.Task Task} type it is
@@ -83,6 +83,7 @@
 // operators
 
 export * from "./filter.js";
+export * from "./trim.js";
 export * from "./distinct.js";
 export * from "./sort.js";
 export * from "./skip.js";

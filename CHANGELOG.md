@@ -14,6 +14,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   its items as `items` opens it, and none draws the feed or paces the others, so one idling or long-running delays its
   own items alone
 
+- `trim` task dropping `undefined` items wherever they occur, narrowing the item type accordingly: an item is mapped
+  and dropped in a single stage by wrapping the mapper, as `trim(map(n => n%2 ? n*10 : undefined))` does
+
 - `flat` task splicing any sync or async iterable, not only nested feeds: an item is expanded by mapping it straight to
   an array of its expansions, as `flat(map(n => [n, n*10]))` does, with no feed opened around it
 
