@@ -104,7 +104,8 @@ source, an array or a set among them, is consumed afresh at each. A feed reporte
 whatever it draws from: consume a composition twice by building it afresh from the feed it opens with.
 
 Several feeds are combined into one by carrying them in a feed of their own and splicing it with `flat()` or `join()`,
-or by naming them at the call site of `mix()`: see [Splicers](#splicers).
+in a pipe or in place as `flat(items([a, b]))`, or by naming them at the call site of `mix()`: see
+[Splicers](#splicers).
 
 ## Transforming Data
 
@@ -139,6 +140,11 @@ await pipe(
 	(trim(map(n => n%2 ? n*10 : undefined)))
 	(toArray())
 );  // [10, 30], as items mapped to undefined are dropped
+
+await pipe(
+	(trim(items([undefined, 1, undefined, 2])))
+	(toArray())
+);  // [1, 2], as the feed is trimmed in place
 
 await pipe(
 	(items([1, 2, 2, 3, 1]))
@@ -233,6 +239,11 @@ await pipe(
 );  // [1, 2, 3, 4]
 
 await pipe(
+	(flat(items([items([1, 2]), items([3, 4])])))
+	(toArray())
+);  // [1, 2, 3, 4], as the feed is spliced in place
+
+await pipe(
 	(items([1, 2, 3]))
 	(flat(map(n => [n, n*10])))
 	(toArray())
@@ -273,8 +284,10 @@ await pipe(
 Nested feeds may be any sync or async iterable, so an array is spliced as is, with no feed opened around it. The
 optional task opens the feeds to splice, drawing from the whole feed, so an item mapped to an array or to a feed of its
 own is expanded in place; scope a task to each nested feed by applying it within `map()`, where the source already
-carries feeds. `join()` splices nested feeds the same way, but opens every one as soon as it is reported and emits
-items as they become available, so output order is not preserved and nothing bounds the number of feeds open at once.
+carries feeds. Handed a feed of feeds instead of a task, `flat()` splices it in place, with no pipe routing it.
+`join()` splices nested feeds the same way, in a pipe or in place, but opens every one as soon as it is reported and
+emits items as they become available, so output order is not preserved and nothing bounds the number of feeds open at
+once.
 
 `tee()` fans out instead of splitting: every branch is applied to the whole feed and handed every item, so a stateful
 branch decides on every item, unlike a forked run; the items the branches report are interleaved as `join()` interleaves

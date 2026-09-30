@@ -17,33 +17,27 @@
 import { describe, expectTypeOf, it } from "vitest";
 import { items } from "../feeds/items.js";
 import type { Feed } from "../index.js";
+import { flat } from "./flat.js";
 import { map } from "./map.js";
-import { trim } from "./trim.js";
 
 
-describe("trim()", () => {
+describe("flat()", () => {
 
-	it("should strip undefined from the item type", async () => {
+	it("should unwrap the item type of the nested feeds", async () => {
 
-		expectTypeOf((items([1, undefined]))(trim())).toEqualTypeOf<Feed<number>>();
-
-	});
-
-	it("should retain null in the item type", async () => {
-
-		expectTypeOf((items([1, null, undefined]))(trim())).toEqualTypeOf<Feed<null | number>>();
+		expectTypeOf((items([items([1, 2])]))(flat())).toEqualTypeOf<Feed<number>>();
 
 	});
 
-	it("should strip undefined from the item type the task reports", async () => {
+	it("should unwrap the item type of the feeds the task reports", async () => {
 
-		expectTypeOf((items([1, 2]))(trim(map(n => n%2 ? `${n}` : undefined)))).toEqualTypeOf<Feed<string>>();
+		expectTypeOf((items([1, 2]))(flat(map(n => [`${n}`])))).toEqualTypeOf<Feed<string>>();
 
 	});
 
-	it("should strip undefined from the item type of the feed", async () => {
+	it("should unwrap the item type of the nested feeds of the feed", async () => {
 
-		expectTypeOf(trim(items([1, null, undefined]))).toEqualTypeOf<Feed<null | number>>();
+		expectTypeOf(flat(items([items([1, 2])]))).toEqualTypeOf<Feed<number>>();
 
 	});
 

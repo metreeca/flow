@@ -16,7 +16,7 @@
 
 import type { Awaitables } from "@metreeca/core/async";
 import { items } from "../feeds/items.js";
-import type { Task } from "../index.js";
+import type { Feed, Task } from "../index.js";
 
 
 /**
@@ -92,19 +92,51 @@ export function flat<V>(): Task<Awaitables<V>, V>;
  * );  // [1, 10, 2, 20, 3, 30]
  * ```
  */
-export function flat<V, R>(task: Task<V, Awaitables<R>>): Task<V, R>;
+export function flat<V, R>(task: Task<V, Awaitables<R>> & { readonly [Symbol.asyncIterator]?: never }): Task<V, R>;
 
 /**
- * Creates a task splicing nested feeds into a single feed, with or without a task opening the feeds to splice.
+ * Opens a feed splicing the nested feeds of another feed.
+ *
+ * Splices a feed in place, without routing it through a pipe: `flat(feed)` carries the same items as `feed(flat())`.
+ * Nested feeds are consumed one at a time, each fully drained before the next is opened, so items are emitted in source
+ * order, those of every nested feed kept together and in their own order. As with the overload taking no argument,
+ * nested feeds may be any sync or async iterable.
+ *
+ * > [!WARNING]
+ * >
+ * > - **Incremental**: items are emitted as the nested feeds are drained, so the opened feed runs dry as `feed` and its
+ * >   nested feeds do; an infinite nested feed starves the ones behind it, which are never opened.
+ * > - **Streaming**: nested feeds are drained one at a time, none held.
+ * > - **Stateless**: nested feeds are spliced without state carried across them.
+ *
+ * @typeParam V The type of items carried by the nested feeds
+ *
+ * @param feed The feed carrying the nested feeds to splice
+ *
+ * @returns A feed carrying the items of every nested feed of `feed` in source order
+ *
+ * @example
+ *
+ * ```typescript
+ * await flat(items([items([1, 2]), items([3, 4])]))(toArray());  // [1, 2, 3, 4]
+ * ```
  */
-export function flat<R>(task: Task<Awaitables<R>> = feed => feed): Task<Awaitables<R>, R> {
+export function flat<V>(feed: Feed<Awaitables<V>>): Feed<V>;
 
-	return source => items((async function* () {
+/**
+ * Creates a task splicing nested feeds into a single feed, with or without a task opening the feeds to splice, or
+ * opens a feed splicing the nested feeds of another feed.
+ */
+export function flat<V>(target?: Feed<Awaitables<V>> | Task<Awaitables<V>>): Feed<V> | Task<Awaitables<V>, V> {
 
-		for await (const feed of task(source)) {
-			yield* feed;
-		}
+	return target !== undefined && Symbol.asyncIterator in target
+		? target(flat<V>())
+		: (source: Feed<Awaitables<V>>) => items((async function* () {
 
-	})());
+			for await (const feed of target ? target(source) : source) {
+				yield* feed;
+			}
+
+		})());
 
 }

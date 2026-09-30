@@ -17,7 +17,8 @@
 /**
  * Intermediate operations that transform, filter or reshape the items of a feed.
  *
- * Tasks apply to a {@link index.Feed Feed} and yield a new feed, so they compose freely into longer pipes. Items are
+ * Tasks apply to a {@link index.Feed Feed} and yield a new feed, so they compose freely into longer pipes; a few also
+ * take the feed itself, opening the transformed feed in place where no pipe is needed. Items are
  * processed lazily, sequentially and in source order, unless a task reorders them, interleaves the nested feeds
  * carrying them or sources of its own, hands each of them to several tasks at once or wraps another to run it
  * concurrently, trading output order for throughput.

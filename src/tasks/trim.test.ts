@@ -137,4 +137,54 @@ describe("trim()", () => {
 
 	});
 
+
+	describe("with a feed", () => {
+
+		it("should drop the undefined items of the feed", async () => {
+
+			const values = await trim(items([undefined, 1, undefined, 2, undefined]))(toArray());
+
+			expect(values).toEqual([1, 2]);
+
+		});
+
+		it("should retain null and other falsy items", async () => {
+
+			const values = await trim(items([0, "", false, null, NaN, undefined]))(toArray());
+
+			expect(values).toEqual([0, "", false, null, NaN]);
+
+		});
+
+		it("should handle an empty feed", async () => {
+
+			const values = await trim(items<undefined | number>([]))(toArray());
+
+			expect(values).toEqual([]);
+
+		});
+
+		it("should emit items as they are drawn", async () => {
+
+			const count = { next: 0 };
+
+			const values = await trim(inlet(() => count.next++%2 ? count.next : undefined))(take(3))(toArray());
+
+			expect(values).toEqual([2, 4, 6]);
+
+		});
+
+		it("should propagate failures of the feed", async () => {
+
+			const failing = items((async function* (): AsyncGenerator<undefined | number> {
+				yield 1;
+				throw new Error("source failed");
+			})());
+
+			await expect(trim(failing)(toArray())).rejects.toThrow("source failed");
+
+		});
+
+	});
+
 });

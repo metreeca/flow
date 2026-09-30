@@ -317,6 +317,54 @@ describe("join()", () => {
 	});
 
 
+	describe("with a feed", () => {
+
+		it("should interleave the nested feeds of the feed", async () => {
+
+			const values = await join(items([delayed(20, [1, 2]), delayed(10, [3])]))(toArray());
+
+			expect([...values].sort()).toEqual([1, 2, 3]);
+
+		});
+
+		it("should emit items as they become available", async () => {
+
+			const values = await join(items([delayed(30, [1]), delayed(10, [2])]))(toArray());
+
+			expect(values).toEqual([2, 1]);
+
+		});
+
+		it("should handle an empty feed", async () => {
+
+			const values = await join(items<Feed<number>>([]))(toArray());
+
+			expect(values).toEqual([]);
+
+		});
+
+		it("should chain with further tasks", async () => {
+
+			const values = await join(items([delayed(10, [1, 2, 3])]))(take(2))(toArray());
+
+			expect(values).toEqual([1, 2]);
+
+		});
+
+		it("should propagate failures of the feed", async () => {
+
+			const failing = items((async function* (): AsyncGenerator<Feed<number>> {
+				yield delayed(10, [1]);
+				throw new Error("source failed");
+			})());
+
+			await expect(join(failing)(toArray())).rejects.toThrow("source failed");
+
+		});
+
+	});
+
+
 	describe("composed with map()", () => { // applying a task to each nested feed scopes it to that feed
 
 		const scoped = <V, R>(task: Task<V, R>): Task<Feed<V>, R> =>

@@ -251,6 +251,54 @@ describe("flat()", () => {
 	});
 
 
+	describe("with a feed", () => {
+
+		it("should splice the nested feeds of the feed in source order", async () => {
+
+			const values = await flat(items([range(5, 8), range(1, 3)]))(toArray());
+
+			expect(values).toEqual([5, 6, 7, 1, 2]);
+
+		});
+
+		it("should splice nested iterables and async iterables", async () => {
+
+			const values = await flat(items<Iterable<number> | AsyncIterable<number>>([[1, 2], range(3, 5)]))(toArray());
+
+			expect(values).toEqual([1, 2, 3, 4]);
+
+		});
+
+		it("should handle an empty feed", async () => {
+
+			const values = await flat(items<Feed<number>>([]))(toArray());
+
+			expect(values).toEqual([]);
+
+		});
+
+		it("should chain with further tasks", async () => {
+
+			const values = await flat(items([range(1, 4), range(4, 7)]))(take(4))(toArray());
+
+			expect(values).toEqual([1, 2, 3, 4]);
+
+		});
+
+		it("should propagate failures of the feed", async () => {
+
+			const failing = items((async function* (): AsyncGenerator<Feed<number>> {
+				yield range(1, 3);
+				throw new Error("source failed");
+			})());
+
+			await expect(flat(failing)(toArray())).rejects.toThrow("source failed");
+
+		});
+
+	});
+
+
 	describe("composed with map()", () => { // applying a task to each nested feed scopes it to that feed
 
 		const scoped = <V, R>(task: Task<V, R>): Task<Feed<V>, R> =>

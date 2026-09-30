@@ -20,6 +20,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `flat` task splicing any sync or async iterable, not only nested feeds: an item is expanded by mapping it straight to
   an array of its expansions, as `flat(map(n => [n, n*10]))` does, with no feed opened around it
 
+- `flat`, `join` and `trim` applied to a feed in place of a task, opening the transformed feed without routing it
+  through a pipe: `flat(feed)` carries the same items as `feed(flat())`, so several feeds are combined into one as
+  `flat(items([a, b]))` does
+
 ### Changed
 
 - `drain` task renamed to `chain`, leaving *drain* to the sense it carries throughout the docs, that of a feed
