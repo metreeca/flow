@@ -36,7 +36,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   meeting a condition is retrieved by drawing from a `filter` upstream, which stops at the same item and leaves the rest
   of the feed unconsumed, so `find(predicate)` becomes `filter(predicate)` followed by `find()`
 
-- Realign to the renamed `@metreeca/core` values module, raising the minimum supported version: `immutable` is imported
+- Realign to the renamed `@metreeca/core` values module, raising the minimum supported version to 0.12.0: `immutable` is imported
   from `@metreeca/core/values` in place of `@metreeca/core/structures`
 
 ### Fixed
