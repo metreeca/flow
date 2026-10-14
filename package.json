@@ -24,10 +24,22 @@
   "type": "module",
   "sideEffects": false,
   "exports": {
-    ".": "./dist/index.js",
-    "./feeds": "./dist/feeds/index.js",
-    "./tasks": "./dist/tasks/index.js",
-    "./sinks": "./dist/sinks/index.js"
+    ".": {
+      "@metreeca/source": "./src/index.ts",
+      "default": "./dist/index.js"
+    },
+    "./feeds": {
+      "@metreeca/source": "./src/feeds/index.ts",
+      "default": "./dist/feeds/index.js"
+    },
+    "./tasks": {
+      "@metreeca/source": "./src/tasks/index.ts",
+      "default": "./dist/tasks/index.js"
+    },
+    "./sinks": {
+      "@metreeca/source": "./src/sinks/index.ts",
+      "default": "./dist/sinks/index.js"
+    }
   },
   "files": [
     "README.md",
