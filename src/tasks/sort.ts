@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ascending } from "@metreeca/core/order";
+import { ascending, type Comparator } from "@metreeca/core/order";
 import { Task } from "../index.js";
 import { items } from "../feeds/items.js";
 
@@ -67,12 +67,12 @@ import { items } from "../feeds/items.js";
  *
  * await pipe(
  *   (items(["Émile", "Alice"]))
- *   (sort((a, b) => a.localeCompare(b)))
+ *   (sort(locale()))
  *   (toArray())
  * );  // ["Alice", "Émile"]
  * ```
  */
-export function sort<V>(comparator: (a: NoInfer<V>, b: NoInfer<V>) => number = ascending): Task<V> {
+export function sort<V>(comparator: Comparator<NoInfer<V>> = ascending): Task<V> {
 
 	return source => items((async function* () {
 

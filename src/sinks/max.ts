@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ascending } from "@metreeca/core/order";
+import { ascending, type Comparator } from "@metreeca/core/order";
 import { Sink } from "../index.js";
 import { reduce } from "./reduce.js";
 
@@ -68,7 +68,7 @@ import { reduce } from "./reduce.js";
  * );  // undefined
  * ```
  */
-export function max<V>(comparator: (a: NoInfer<V>, b: NoInfer<V>) => number = ascending): Sink<V, undefined | V> {
+export function max<V>(comparator: Comparator<NoInfer<V>> = ascending): Sink<V, undefined | V> {
 
 	return reduce((max: V, item: V) => comparator(item, max) > 0 ? item : max);
 
