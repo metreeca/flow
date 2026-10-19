@@ -226,11 +226,11 @@ by item, so the items carried on need be neither the ones drawn, nor as many, no
 ### Splicers
 
 Splice several feeds into the pipe: the nested feeds a source carries or a task opens, in source order or interleaved
-as their items become available, the concurrent runs of a task, the branches every item is handed to, or sources named
-at the call site.
+as their items become available, the concurrent runs of a task, the branches every item is handed to, the two tasks a
+condition chooses between for each item, or sources named at the call site of the task splicing them in.
 
 ```typescript
-import { filter, flat, fork, join, map, mix, take, tee } from '@metreeca/flow/tasks';
+import { filter, flat, fork, join, map, mix, take, tee, when } from '@metreeca/flow/tasks';
 
 await pipe(
 	(items([items([1, 2]), items([3, 4])]))
@@ -274,6 +274,12 @@ await pipe(
 );  // 2, 4, 6 from the doubling branch and 3 from the filtering one, interleaved in no defined order
 
 await pipe(
+	(items([1, 2, 3, 4]))
+	(when(n => n%2 === 0, map(n => n*10), map(n => -n)))
+	(toArray())
+);  // 20, 40 from the even route and -1, -3 from the odd one, interleaved in no defined order
+
+await pipe(
 	(items([1, 2]))
 	(mix(items([3, 4]), 5))
 	(toArray())
@@ -294,6 +300,10 @@ branch decides on every item, unlike a forked run; the items the branches report
 nested feeds. Branches draw in lockstep, so nothing is held beyond the item on offer and the source advances at the pace
 of the slowest branch: pacing and long-running work belong downstream of the fan-out, while a branch closing early, as
 `take()` does, or running dry on its own drops out and stops holding back the others.
+
+`when()` routes instead of fanning out: each item is tested once and handed to one of two tasks, the first if it meets
+the condition and the second otherwise. Each task decides only on the items routed to it, so a quota or a deduplication
+covers its own share of the feed. The two tasks draw in lockstep and interleave their items as `tee()` branches do.
 
 `mix()` mixes in sources of its own, rather than splicing the nested feeds a source carries, so a pipe gathering items
 from several origins names them at the call site and keeps the fan-in to a single stage. Each source is opened as

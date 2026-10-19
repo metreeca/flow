@@ -7,6 +7,11 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.12.0](https://github.com/metreeca/flow/compare/v0.11.1...HEAD)
 
+### Added
+
+- `when` task routing each item to one of two tasks according to a condition, tested once per item: each task decides
+  on the items routed to it alone, and the items both report are interleaved into a single feed as they become ready
+
 ### Changed
 
 - Upgrade `@metreeca/core` to `^0.13.0`
