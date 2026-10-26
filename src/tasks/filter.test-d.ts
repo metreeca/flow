@@ -42,6 +42,30 @@ describe("filter()", () => {
 
 	});
 
+	it("should narrow the item type to the type a guard admits", async () => {
+
+		const feed = (items<unknown>([1, "a"]))(filter((item): item is string => typeof item === "string"));
+
+		expectTypeOf(feed).toEqualTypeOf<Feed<string>>();
+
+	});
+
+	it("should narrow a union item type to the members a guard admits", async () => {
+
+		const feed = (items<string | number>([1, "a"]))(filter((item): item is string => typeof item === "string"));
+
+		expectTypeOf(feed).toEqualTypeOf<Feed<string>>();
+
+	});
+
+	it("should keep the item type under a guard admitting a type unrelated to the items", async () => {
+
+		const feed = (items([1, 2, 3]))(filter((item: unknown): item is Date => item instanceof Date));
+
+		expectTypeOf(feed).toEqualTypeOf<Feed<number>>();
+
+	});
+
 	it("should reject a predicate unable to test the items", async () => {
 
 		// @ts-expect-error — a string predicate cannot test numbers

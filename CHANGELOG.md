@@ -7,6 +7,11 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.13.0](https://github.com/metreeca/flow/compare/v0.12.0...HEAD)
 
+### Added
+
+- Type guard support in `filter`, narrowing the retained items to the type the guard admits
+- Type guard support in `when`, narrowing the items routed to the first task to the type the guard admits
+
 ## [0.12.0](https://github.com/metreeca/flow/compare/v0.11.1...v0.12.0) - 2026-10-19
 
 ### Added

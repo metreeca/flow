@@ -113,7 +113,7 @@ Chain [tasks](https://metreeca.github.io/flow/modules/tasks.html) to reshape the
 
 ### Operators
 
-Select, reorder and inspect items, leaving their type unchanged but for the `undefined` dropped by `trim()`.
+Select, reorder and inspect items, leaving their type unchanged unless `trim()` or a `filter()` type guard narrows it.
 
 > [!TIP]
 >
@@ -302,8 +302,9 @@ of the slowest branch: pacing and long-running work belong downstream of the fan
 `take()` does, or running dry on its own drops out and stops holding back the others.
 
 `when()` routes instead of fanning out: each item is tested once and handed to one of two tasks, the first if it meets
-the condition and the second otherwise. Each task decides only on the items routed to it, so a quota or a deduplication
-covers its own share of the feed. The two tasks draw in lockstep and interleave their items as `tee()` branches do.
+the condition and the second otherwise. A condition written as a type guard narrows the items handed to the first task.
+Each task decides only on the items routed to it, so a quota or a deduplication covers its own share of the feed. The
+two tasks draw in lockstep and interleave their items as `tee()` branches do, so output order is not preserved.
 
 `mix()` mixes in sources of its own, rather than splicing the nested feeds a source carries, so a pipe gathering items
 from several origins names them at the call site and keeps the fan-in to a single stage. Each source is opened as

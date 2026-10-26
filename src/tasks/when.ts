@@ -24,11 +24,14 @@ import { tee } from "./tee.js";
  * Creates a task routing each item to one of two tasks, according to a condition.
  *
  * Each item is tested once and handed to a single task: the first one if it meets the condition, the second one
- * otherwise. The items both tasks report are interleaved into a single feed, each one as soon as it is ready.
+ * otherwise. The items both tasks yield are interleaved into a single feed, each one as soon as it is ready.
+ *
+ * A condition written as a type guard narrows the items handed to the first task to the type it admits. The second
+ * task receives its items with their type unchanged, and so do both tasks if the guard admits an unrelated type.
  *
  * > [!WARNING]
  * >
- * > - **Incremental**: items are emitted as the tasks report them, until the source and both tasks run dry.
+ * > - **Incremental**: items are emitted as the tasks yield them, until the source and both tasks run dry.
  * > - **Streaming**: one item is on offer at a time and none is retained, whatever the tasks retain.
  * > - **Stateless**: each item is routed on its own, whatever state the tasks carry.
  *
@@ -58,13 +61,14 @@ import { tee } from "./tee.js";
  * > work in flight to settle, so a source idling between items delays it; errors raised while closing are suppressed.
  *
  * @typeParam V The type of items drawn from the feed
- * @typeParam R The type of items reported by the tasks
+ * @typeParam R The type of items yielded by the tasks
+ * @typeParam T The type of the condition, narrowing the items handed to `pass` if it is a type guard
  *
- * @param test The condition each item is tested against
+ * @param test The condition or type guard each item is tested against
  * @param pass The task handed the items meeting `test`
  * @param fail The task handed the items failing `test`
  *
- * @returns A task yielding the items both tasks report, as they become available
+ * @returns A task yielding the items both tasks yield, as they become available
  *
  * @example
  *
@@ -76,10 +80,19 @@ import { tee } from "./tee.js";
  * );  // "1 odd", "2 even", "3 odd", "4 even", interleaved in no defined order
  * ```
  */
-export function when<V, R>(
-	test: (value: NoInfer<V>) => boolean,
-	pass: Task<NoInfer<V>, R>,
+export function when<V, R, T extends (value: NoInfer<V>) => boolean = (value: V) => boolean>(
+	test: T,
+	pass: Task<T extends (value: V) => value is (infer P extends V) ? P : NoInfer<V>, R>,
 	fail: Task<NoInfer<V>, R>
+): Task<V, R>;
+
+/**
+ * Creates a task routing each item to one of two tasks, according to a condition or a type guard.
+ */
+export function when<V, R>(
+	test: (value: V) => boolean,
+	pass: Task<V, R>,
+	fail: Task<V, R>
 ): Task<V, R> {
 
 	return feed => pipe(feed

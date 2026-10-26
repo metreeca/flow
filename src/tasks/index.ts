@@ -32,8 +32,9 @@
  * The item type of a task is taken from the feed it is applied to, or from the {@link index.Task Task} type it is
  * declared under, never from the predicate, selector, mapper or comparator handed to it: a function accepting any
  * item, `console.log` or `Boolean` among them, leaves the feed type untouched, while one accepting a different type
- * is rejected. A task composed on its own, outside a pipe, states its item type in the type it is declared under or
- * as an explicit type argument.
+ * is rejected. The one exception is a type guard handed to {@link filter} or {@link when}, which narrows the items it
+ * admits to the type it guards. A task composed on its own, outside a pipe, states its item type either in the type
+ * it is declared under or as an explicit type argument, since no feed is there to supply it.
  *
  * Every task is classified along three axes:
  *

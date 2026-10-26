@@ -20,17 +20,45 @@ import { Task } from "../index.js";
 
 
 /**
- * Creates a task retaining only the items matching a predicate.
+ * Creates a task retaining only the items admitted by a type guard, narrowed to the type it admits.
  *
- * Items are emitted in source order.
+ * Items are emitted in source order. A guard admitting an unrelated type filters them without narrowing their type.
  *
  * > [!NOTE]
  * >
- * > - **Incremental**: items are emitted as they are drawn, so the reported feed runs dry as the feed drawn from
- * >   does.
+ * > - **Incremental**: items are emitted as they are drawn, so the returned feed runs dry with the source feed.
  * > - **Streaming**: items are tested one at a time, none retained.
- * > - **Stateless**: every item is tested on its own, so the outcome is unaffected by how the feed is split across
- * >   nested feeds or runs.
+ * > - **Stateless**: every item is tested on its own, so the outcome does not depend on how the feed is split.
+ *
+ * @typeParam V The type of items in the feed
+ * @typeParam R The type of items admitted by `guard`
+ *
+ * @param guard The type guard testing each item
+ *
+ * @returns A task yielding the items admitted by `guard`
+ *
+ * @example
+ *
+ * ```typescript
+ * await pipe(
+ *   (items<unknown>([1, "a", 2, "b"]))
+ *   (filter((item): item is string => typeof item === "string"))
+ *   (toArray())
+ * );  // ["a", "b"], typed as string[]
+ * ```
+ */
+export function filter<V, R extends V>(guard: (item: NoInfer<V>) => item is R): Task<V, R>;
+
+/**
+ * Creates a task retaining only the items matching a predicate.
+ *
+ * Items are emitted in source order, with their type unchanged.
+ *
+ * > [!NOTE]
+ * >
+ * > - **Incremental**: items are emitted as they are drawn, so the returned feed runs dry with the source feed.
+ * > - **Streaming**: items are tested one at a time, none retained.
+ * > - **Stateless**: every item is tested on its own, so the outcome does not depend on how the feed is split.
  *
  * @typeParam V The type of items in the feed
  *
@@ -48,7 +76,12 @@ import { Task } from "../index.js";
  * );  // [2, 4]
  * ```
  */
-export function filter<V>(predicate: (item: NoInfer<V>) => Awaitable<boolean>): Task<V> {
+export function filter<V>(predicate: (item: NoInfer<V>) => Awaitable<boolean>): Task<V>;
+
+/**
+ * Creates a task retaining only the items matching a predicate or admitted by a type guard.
+ */
+export function filter<V>(predicate: (item: V) => Awaitable<boolean>): Task<V> {
 
 	return source => items((async function* () {
 
