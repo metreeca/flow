@@ -227,10 +227,11 @@ by item, so the items carried on need be neither the ones drawn, nor as many, no
 
 Splice several feeds into the pipe: the nested feeds a source carries or a task opens, in source order or interleaved
 as their items become available, the concurrent runs of a task, the branches every item is handed to, the two tasks a
-condition chooses between for each item, or sources named at the call site of the task splicing them in.
+condition chooses between for each item, the first of several alternatives yielding anything for an item, or the
+sources named at the call site of the task splicing them in, each contributing its items alongside the feed.
 
 ```typescript
-import { filter, flat, fork, join, map, mix, take, tee, when } from '@metreeca/flow/tasks';
+import { coalesce, filter, flat, fork, join, map, mix, take, tee, when } from '@metreeca/flow/tasks';
 
 await pipe(
 	(items([items([1, 2]), items([3, 4])]))
@@ -280,6 +281,12 @@ await pipe(
 );  // 20, 40 from the even route and -1, -3 from the odd one, interleaved in no defined order
 
 await pipe(
+	(items([1, 2, 3, 4]))
+	(coalesce(filter(n => n%2 === 0), map(n => -n)))
+	(toArray())
+);  // [-1, 2, -3, 4], as odd items fall back to the second alternative
+
+await pipe(
 	(items([1, 2]))
 	(mix(items([3, 4]), 5))
 	(toArray())
@@ -305,6 +312,10 @@ of the slowest branch: pacing and long-running work belong downstream of the fan
 the condition and the second otherwise. A condition written as a type guard narrows the items handed to the first task.
 Each task decides only on the items routed to it, so a quota or a deduplication covers its own share of the feed. The
 two tasks draw in lockstep and interleave their items as `tee()` branches do, so output order is not preserved.
+
+`coalesce()` falls back instead of routing: each item is handed to the alternatives in order of preference, and the
+items of the first one yielding anything are emitted, so output keeps source order. Alternatives are invoked afresh on
+every item, so a quota or a deduplication covers a single item: place it upstream or downstream of the fallback.
 
 `mix()` mixes in sources of its own, rather than splicing the nested feeds a source carries, so a pipe gathering items
 from several origins names them at the call site and keeps the fan-in to a single stage. Each source is opened as

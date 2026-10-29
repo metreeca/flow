@@ -9,6 +9,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+- `coalesce` task reading each item through the first of several alternative tasks yielding anything for it, so a pipe
+  falls back from a preferred reading to the next one item by item, keeping source order
 - Type guard support in `filter`, narrowing the retained items to the type the guard admits
 - Type guard support in `when`, narrowing the items routed to the first task to the type the guard admits
 

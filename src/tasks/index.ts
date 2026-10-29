@@ -23,11 +23,12 @@
  * carrying them or sources of its own, hands each of them to several tasks at once, routes each of them to one of two
  * tasks or wraps another to run it concurrently, trading output order for throughput.
  *
- * A task wrapping others either hands each of them the whole feed, as {@link flat}, {@link join}, {@link tee} and
- * {@link trim} do, leaving whatever state they initialise on invocation to decide on every item, or invokes each over
- * a share of the items, per run as {@link fork} does or per route as {@link when} does, scoping that state to the
- * share. The feed a task draws from and the one it reports are both drained by a single pass, however repeatable the
- * source behind them: a composition to be consumed twice is built afresh from the feed it opens with.
+ * A task wrapping others either hands each of them the whole feed or invokes each over a share of the items. In the
+ * first case, as with {@link flat}, {@link join}, {@link tee} and {@link trim}, whatever state the wrapped tasks
+ * initialise on invocation decides on every item. In the second case that state covers the share alone: a run for
+ * {@link fork}, a route for {@link when} and a single item for {@link coalesce}. The feed a task draws from and the
+ * one it yields are both drained by a single pass, however repeatable the source behind them: a composition to be
+ * consumed twice is built afresh from the feed it opens with, once for every pass.
  *
  * The item type of a task is taken from the feed it is applied to, or from the {@link index.Task Task} type it is
  * declared under, never from the predicate, selector, mapper or comparator handed to it: a function accepting any
@@ -106,4 +107,5 @@ export * from "./join.js";
 export * from "./fork.js";
 export * from "./tee.js";
 export * from "./when.js";
+export * from "./coalesce.js";
 export * from "./mix.js";
