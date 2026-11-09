@@ -55,14 +55,13 @@
     "setup": "npm ci && ush ln",
     "build": "ush rm dist docs && npx tsc && npx typedoc",
     "check": "npx vitest --typecheck run",
-    "proof": "npx typedoc && (npx typedoc --watch & npx wds --root-dir docs --watch --open)"
+    "proof": "npx typedoc --watch & ush ws --open docs"
   },
   "dependencies": {
     "@metreeca/core": "^0.13.0"
   },
   "devDependencies": {
     "@metreeca/rack": "^0.6.0",
-    "@web/dev-server": "^1.0.0",
     "typedoc": "^0.28.14",
     "typescript": "^5.9.3",
     "vitest": "^4.0.13"
